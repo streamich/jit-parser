@@ -1,6 +1,6 @@
-import type {Grammar, NonTerminal, Terminal} from './types';
+import type {Grammar, NonTerminal, TerminalShorthand} from './types';
 
-const t = (name: TemplateStringsArray): Terminal => name[0] as Terminal;
+const t = (name: TemplateStringsArray): TerminalShorthand => name[0] as TerminalShorthand;
 const n = <Name extends string>(name: TemplateStringsArray): NonTerminal<Name> => [name[0] as Name];
 
 /**
@@ -8,6 +8,21 @@ const n = <Name extends string>(name: TemplateStringsArray): NonTerminal<Name> =
  */
 export const grammar: Grammar = {
   start: 'Value',
+  // terminals: {
+  //   Whitespace: /\s*/,
+  //   LeftParen: '(',
+  //   RightParen: ')',
+  //   LeftBracket: '[',
+  //   RightBracket: ']',
+  //   LeftBrace: '{',
+  //   RightBrace: '}',
+  //   Colon: ':',
+  //   Comma: ',',
+  //   Null: 'null',
+  //   True: 'true',
+  //   False: 'false',
+  //   Quote: '"',
+  // },
   rules: {
     Value: [
       [n`Whitespace`, n`TrimmedValue`, n`Whitespace`],
@@ -17,27 +32,22 @@ export const grammar: Grammar = {
     ],
 
     TrimmedValue: [
-      n`Const`,
+      n`Null`,
+      n`Boolean`,
       n`Number`,
       n`String`,
       n`Array`,
       n`Object`,
     ],
 
-    Const: {
-      match: [
-        'null',
-        'true',
-        'false',
-      ],
-      ast: {
-        type: 'Const',
-        value: ['?', ['==', ['$', '/value'], null],
-          null,
-          ['?', ['==', ['$', '/value'], 'true'],
-            true, false]],
-      },
-    },
+    Null: [
+      'null',
+    ],
+
+    Boolean: [
+      'true',
+      'false',
+    ],
 
     Number: {
       match: [

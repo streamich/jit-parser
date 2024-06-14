@@ -2,11 +2,18 @@ import {Expr} from 'json-joy/lib/json-expression';
 
 export type MaybeArray<T> = T | T[];
 
-export type Terminal = RegExp | string | '';
-export type NonTerminal<Name extends string = string> = [name: Name];
-export type Production = (Terminal | NonTerminal<any>)[];
+export type TerminalShorthand = RegExp | string | '';
 
-export type Alternatives = Array<Terminal | NonTerminal | Production>;
+export interface Terminal<Kind extends string = string> {
+  kind: Kind;
+  match: TerminalShorthand;
+}
+
+export type NonTerminal<Name extends string = string> = [name: Name];
+
+export type Production = (Terminal | TerminalShorthand | NonTerminal<any>)[];
+
+export type Alternatives = Array<TerminalShorthand | NonTerminal | Production>;
 
 export interface Rule {
   /**
