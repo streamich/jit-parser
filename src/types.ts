@@ -36,3 +36,12 @@ export interface Grammar {
    */
   rules: Record<string, Rule | Alternatives>;
 }
+
+export interface Match {
+  kind: string;
+  pos: number;
+  end: number;
+}
+
+export type RuleParser = (str: string, pos: number) => Match | undefined;
+ 
