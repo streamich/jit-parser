@@ -1,9 +1,9 @@
-import type {Match} from './types';
+import type {MatchResult} from './types';
 
 /**
  * Generate these match classes for each grammar.
  */
-export class BaseMatch<Kind extends string = string> implements Match {
+export class BaseMatch<Kind extends string = string> implements MatchResult {
   constructor (
     public readonly kind: Kind,
     public readonly pos: number,

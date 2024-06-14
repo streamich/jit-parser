@@ -8,21 +8,6 @@ const n = <Name extends string>(name: TemplateStringsArray): NonTerminal<Name> =
  */
 export const grammar: Grammar = {
   start: 'Value',
-  // terminals: {
-  //   Whitespace: /\s*/,
-  //   LeftParen: '(',
-  //   RightParen: ')',
-  //   LeftBracket: '[',
-  //   RightBracket: ']',
-  //   LeftBrace: '{',
-  //   RightBrace: '}',
-  //   Colon: ':',
-  //   Comma: ',',
-  //   Null: 'null',
-  //   True: 'true',
-  //   False: 'false',
-  //   Quote: '"',
-  // },
   rules: {
     Value: [
       [n`Whitespace`, n`TrimmedValue`, n`Whitespace`],

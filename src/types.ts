@@ -44,11 +44,14 @@ export interface Grammar {
   rules: Record<string, Rule | Alternatives>;
 }
 
-export interface Match {
+export interface MatchResult {
   kind: string;
   pos: number;
   end: number;
 }
 
-export type RuleParser = (str: string, pos: number) => Match | undefined;
- 
+export type ProductionResult = MatchResult[];
+
+export type MatchParser = (str: string, pos: number) => MatchResult | undefined;
+
+export type ProductionParser = (str: string, pos: number) => ProductionResult | undefined;

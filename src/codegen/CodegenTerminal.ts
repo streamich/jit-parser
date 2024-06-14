@@ -2,19 +2,19 @@ import {Codegen} from '@jsonjoy.com/util/lib/codegen'
 import {emitStringMatch} from '@jsonjoy.com/util/lib/codegen/util/helpers';
 import {RegExpTerminalMatch, StringTerminalMatch} from '../matches';
 import {scrub} from '../util';
-import type {RuleParser, TerminalShorthand} from '../types';
+import type {MatchParser, TerminalShorthand} from '../types';
 
 const DEFAULT_KIND = 'Text';
 
 export class CodegenTerminal {
-  public static readonly compile = (terminal: TerminalShorthand, kind?: string): RuleParser => {
+  public static readonly compile = (terminal: TerminalShorthand, kind?: string): MatchParser => {
     const codegen = new CodegenTerminal(terminal, kind);
     codegen.generate();
     return codegen.compile();
   };
 
   public readonly kind: string;
-  public readonly codegen: Codegen<RuleParser>;
+  public readonly codegen: Codegen<MatchParser>;
 
   constructor(public readonly terminal: TerminalShorthand, kind: string = DEFAULT_KIND) {
     this.kind = scrub(kind);
@@ -49,7 +49,7 @@ export class CodegenTerminal {
     }
   }
 
-  public compile(): RuleParser {
+  public compile(): MatchParser {
     return this.codegen.compile();
   }
 }
