@@ -22,6 +22,8 @@ export class CodegenProduction {
     const results: string[] = [];
     const dPM = codegen.linkDependency(ProductionMatch);
     const rStart = codegen.var('pos');
+    const rChildren = codegen.var('[]');
+    const rNodeAst = codegen.var();
     for (const matcher of production) {
       const dep = codegen.linkDependency(matcher);
       const reg = codegen.var(`${dep}(str, pos)`);
@@ -30,8 +32,19 @@ export class CodegenProduction {
         codegen.return('');
       });
       codegen.js(`pos = ${reg}.end`);
+      codegen.js(`${rNodeAst} = ${reg}.ast`);
+      codegen.if(`${rNodeAst} === void 0`, () => {
+        codegen.js(`${rChildren}.push(${reg})`);
+      }, () => {
+        codegen.if(`${rNodeAst} !== null`, () => {
+          codegen.js(`${rChildren}.push(${rNodeAst})`);
+        });  
+      });
     }
-    const rChildren = codegen.var(`[${results.join(', ')}]`);
+    // const rChildren = codegen.var(`[${results.join(', ')}]`);
+    for (const result of results) {
+
+    }
     const rResult = codegen.var(`new ${dPM}('Production', ${rStart}, pos, ${rChildren})`);
     // for (const result of results) {
     //   codegen.js(`console.log(${result})`);
