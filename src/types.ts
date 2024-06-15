@@ -1,4 +1,5 @@
 import {Expr} from 'json-joy/lib/json-expression';
+import {RuleMatch} from './matches';
 
 export type MaybeArray<T> = T | T[];
 
@@ -53,5 +54,5 @@ export interface MatchResult {
 export type ProductionResult = MatchResult[];
 
 export type MatchParser = (str: string, pos: number) => MatchResult | undefined;
-
 export type ProductionParser = (str: string, pos: number) => ProductionResult | undefined;
+export type RuleParser = (str: string, pos: number) => RuleMatch | undefined;

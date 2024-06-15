@@ -24,3 +24,14 @@ export class StringTerminalMatch<Kind extends string = string> extends BaseMatch
 
 export class RegExpTerminalMatch<Kind extends string = string> extends BaseMatch<Kind> {
 }
+
+export class RuleMatch<Kind extends string = string> extends BaseMatch<Kind> {
+  constructor (
+    kind: Kind,
+    pos: number,
+    end: number,
+    public readonly children: BaseMatch[],
+  ) {
+    super(kind, pos, end);
+  }
+}
