@@ -10,7 +10,7 @@ export interface Terminal<Kind extends string = string> {
   match: TerminalShorthand;
 }
 
-export type NonTerminal<Name extends string = string> = [name: Name];
+export type NonTerminal<Name extends string = string> = {n: Name};
 
 export type Production = (Terminal | TerminalShorthand | NonTerminal<any>)[];
 
@@ -56,3 +56,5 @@ export type ProductionResult = MatchResult[];
 export type MatchParser = (str: string, pos: number) => MatchResult | undefined;
 export type ProductionParser = (str: string, pos: number) => ProductionResult | undefined;
 export type RuleParser = (str: string, pos: number) => RuleMatch | undefined;
+
+export type Parser = (str: string, pos: number) => MatchResult | ProductionResult | undefined;

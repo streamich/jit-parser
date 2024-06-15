@@ -1,8 +1,8 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen'
-import type {MatchParser, ProductionParser} from '../types';
+import type {Parser, ProductionParser} from '../types';
 
 export class CodegenProduction {
-  public static readonly compile = (production: MatchParser[]): ProductionParser => {
+  public static readonly compile = (production: Parser[]): ProductionParser => {
     const codegen = new CodegenProduction(production);
     codegen.generate();
     return codegen.compile();
@@ -10,7 +10,7 @@ export class CodegenProduction {
 
   public readonly codegen: Codegen<ProductionParser>;
 
-  constructor(public readonly production: MatchParser[]) {
+  constructor(public readonly production: Parser[]) {
     this.codegen = new Codegen({
       args: ['str', 'pos'],
     });

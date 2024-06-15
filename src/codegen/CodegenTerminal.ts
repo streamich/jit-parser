@@ -40,8 +40,8 @@ export class CodegenTerminal {
       const regExp = new RegExp(source, terminal.flags);
       const dRegExp = codegen.linkDependency(regExp);
       const rMatch = codegen.var(`str.slice(pos).match(${dRegExp})`);
-      const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
-      codegen.if(rLength, () => {
+      codegen.if(rMatch, () => {
+        const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
         codegen.return(`new ${dRTM}(${dKind}, pos, pos+${rLength})`);
       });
     } else {

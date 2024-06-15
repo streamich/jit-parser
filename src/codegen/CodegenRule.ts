@@ -1,10 +1,10 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen'
 import {RuleMatch} from '../matches';
-import type {MatchParser, Rule, RuleParser} from '../types';
 import {scrub} from '../util';
+import type {Parser, Rule, RuleParser} from '../types';
 
 export class CodegenRule {
-  public static readonly compile = (kind: string, rule: Rule, alternatives: MatchParser[]): RuleParser => {
+  public static readonly compile = (kind: string, rule: Rule, alternatives: Parser[]): RuleParser => {
     const codegen = new CodegenRule(kind, rule, alternatives);
     codegen.generate();
     return codegen.compile();
@@ -15,7 +15,7 @@ export class CodegenRule {
   constructor(
     public readonly kind: string,
     public readonly rule: Rule,
-    public readonly alternatives: MatchParser[],
+    public readonly alternatives: Parser[],
   ) {
     this.codegen = new Codegen({
       args: ['str', 'pos'],

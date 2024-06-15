@@ -1,7 +1,7 @@
 import type {Grammar, NonTerminal, TerminalShorthand} from './types';
 
 const t = (name: TemplateStringsArray): TerminalShorthand => name[0] as TerminalShorthand;
-const n = <Name extends string>(name: TemplateStringsArray): NonTerminal<Name> => [name[0] as Name];
+const n = <Name extends string>(name: TemplateStringsArray): NonTerminal<Name> => ({n: name[0] as Name});
 
 /**
  * JSON grammar.
