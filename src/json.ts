@@ -12,9 +12,13 @@ export const grammar: Grammar = {
     Value: [
       [n`Whitespace`, n`TrimmedValue`, n`Whitespace`],
     ],
-    Whitespace: [
-      /\s*/,
-    ],
+
+    Whitespace: {
+      match: [
+        /\s*/,
+      ],
+      ast: null,
+    },
 
     TrimmedValue: [
       n`Null`,

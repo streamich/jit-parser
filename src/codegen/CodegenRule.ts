@@ -42,7 +42,11 @@ export class CodegenRule {
       codegen.js(`${rEnd} = ${rMatch}.end;`);
       codegen.js(`${rChildren} = [${rMatch}];`);
     });
-    codegen.return(`new ${dRM}('${kind}', pos, ${rEnd}, ${rChildren})`);
+    const rResult = codegen.var(`new ${dRM}('${kind}', pos, ${rEnd}, ${rChildren})`);
+    if (this.rule.ast !== void 0) {
+      codegen.js(`${rResult}.ast = ${JSON.stringify(this.rule.ast)}`);
+    }
+    codegen.return(rResult);
   }
 
   public compile(): RuleParser {

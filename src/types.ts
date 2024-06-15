@@ -25,7 +25,7 @@ export interface Rule {
   /**
    * Optional AST transformation.
    */
-  ast?: object;
+  ast?: null | unknown;
 
   /**
    * Optional expression, executed on parse exit from the rule.
@@ -49,9 +49,12 @@ export interface MatchResult {
   kind: string;
   pos: number;
   end: number;
+  ast: undefined | null | unknown;
 }
 
-export type ProductionResult = MatchResult[];
+export interface ProductionResult extends MatchResult {
+  children: MatchResult[];
+}
 
 export type MatchParser = (str: string, pos: number) => MatchResult | undefined;
 export type ProductionParser = (str: string, pos: number) => ProductionResult | undefined;
