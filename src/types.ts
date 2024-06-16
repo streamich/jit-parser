@@ -1,5 +1,6 @@
-import {Expr} from 'json-joy/lib/json-expression';
-import {RuleMatch} from './matches';
+import type {Expr} from 'json-joy/lib/json-expression';
+// import type {RuleMatch} from './matches';
+import type {ParseContext} from './ParseContext';
 
 export type MaybeArray<T> = T | T[];
 
@@ -45,19 +46,23 @@ export interface Grammar {
   rules: Record<string, Rule | Alternatives>;
 }
 
-export interface MatchResult {
-  kind: string;
+export interface CsrNode {
+  type: string;
   pos: number;
   end: number;
+  children?: CsrNode[];
   ast: undefined | null | unknown;
 }
 
-export interface ProductionResult extends MatchResult {
-  children: MatchResult[];
+export interface CanonicalAstNode {
+  type: string;
+  pos: number;
+  end: number;
+  children?: CanonicalAstNode[];
 }
 
-export type MatchParser = (str: string, pos: number) => MatchResult | undefined;
-export type ProductionParser = (str: string, pos: number) => ProductionResult | undefined;
-export type RuleParser = (str: string, pos: number) => RuleMatch | undefined;
 
-export type Parser = (str: string, pos: number) => MatchResult | ProductionResult | undefined;
+// export type MatchParser = (str: string, pos: number) => CsrNode | undefined;
+// export type ProductionParser = (str: string, pos: number) => CsrNode | undefined;
+// export type RuleParser = (str: string, pos: number) => RuleMatch | undefined;
+export type Parser = (ctx: ParseContext, pos: number) => CsrNode | CsrNode | undefined;

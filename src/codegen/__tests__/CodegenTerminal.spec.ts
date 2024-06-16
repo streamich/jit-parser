@@ -1,4 +1,5 @@
-import {RegExpTerminalMatch, StringTerminalMatch} from '../../matches';
+import {LeafCsrMatch} from '../../matches';
+import {ParseContext} from '../../ParseContext';
 import {CodegenTerminal} from '../CodegenTerminal';
 
 describe('CodegenTerminal', () => {
@@ -6,8 +7,8 @@ describe('CodegenTerminal', () => {
     test('can match a simple string', () => {
       const terminal = 'foo';
       const parser = CodegenTerminal.compile(terminal);
-      expect(parser('bar', 0)).toBe(undefined);
-      expect(parser('foo', 0)).toStrictEqual(new StringTerminalMatch('Text', 0, 3, 'foo'));
+      expect(parser(new ParseContext('bar', false), 0)).toBe(undefined);
+      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, 'foo'));
       // console.log(parser.toString());
     });
 
@@ -15,8 +16,9 @@ describe('CodegenTerminal', () => {
       const str = 'var a = (foo) => {};';
       const terminal = '(';
       const parser = CodegenTerminal.compile(terminal, 'LeftParen');
-      expect(parser(str, 0)).toBe(undefined);
-      expect(parser(str, 8)).toStrictEqual(new StringTerminalMatch('LeftParen', 8, 9, '('));
+      const ctx = new ParseContext(str, false);
+      expect(parser(ctx, 0)).toBe(undefined);
+      expect(parser(ctx, 8)).toStrictEqual(new LeafCsrMatch('LeftParen', 8, 9, '('));
       // console.log(parser.toString());
     });
   });
@@ -25,9 +27,9 @@ describe('CodegenTerminal', () => {
     test('can match a simple regexp', () => {
       const terminal = /(true|false)/;
       const parser = CodegenTerminal.compile(terminal, 'Boolean');
-      expect(parser('foo', 0)).toBe(undefined);
-      expect(parser('true', 0)).toStrictEqual(new RegExpTerminalMatch('Boolean', 0, 4));
-      expect(parser('a = false', 4)).toStrictEqual(new RegExpTerminalMatch('Boolean', 4, 9));
+      expect(parser(new ParseContext('foo', false), 0)).toBe(undefined);
+      expect(parser(new ParseContext('true', false), 0)).toStrictEqual(new LeafCsrMatch('Boolean', 0, 4, 'true'));
+      expect(parser(new ParseContext('a = false', false), 4)).toStrictEqual(new LeafCsrMatch('Boolean', 4, 9, 'false'));
       // console.log(parser.toString());
     });
   });
