@@ -1,14 +1,17 @@
 import type {Expr} from 'json-joy/lib/json-expression';
-// import type {RuleMatch} from './matches';
 import type {ParseContext} from './ParseContext';
 
 export type MaybeArray<T> = T | T[];
 
 export type TerminalShorthand = RegExp | string | '';
 
-export interface Terminal<Kind extends string = string> {
-  kind: Kind;
+export interface Terminal {
+  /**
+   * Type of the terminal node, if not provided "Text" will be used.
+   */
+  type?: string;
   match: TerminalShorthand;
+  ast?: undefined | null | unknown;
 }
 
 export type NonTerminal<Name extends string = string> = {n: Name};
@@ -26,7 +29,7 @@ export interface Rule {
   /**
    * Optional AST transformation.
    */
-  ast?: null | unknown;
+  ast?: undefined | null | unknown;
 
   /**
    * Optional expression, executed on parse exit from the rule.
@@ -61,8 +64,8 @@ export interface CanonicalAstNode {
   children?: CanonicalAstNode[];
 }
 
-
-// export type MatchParser = (str: string, pos: number) => CsrNode | undefined;
-// export type ProductionParser = (str: string, pos: number) => CsrNode | undefined;
-// export type RuleParser = (str: string, pos: number) => RuleMatch | undefined;
 export type Parser = (ctx: ParseContext, pos: number) => CsrNode | CsrNode | undefined;
+
+export interface AstExpressionData {
+  csr: CsrNode;
+}
