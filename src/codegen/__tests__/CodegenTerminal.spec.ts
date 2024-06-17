@@ -64,6 +64,30 @@ describe('CodegenTerminal', () => {
   });
 
   describe('AST', () => {
+    test('creates default AST node if ".ast" not prop specified', () => {
+      const terminal: Terminal = {
+        match: /(true|false)/,
+      };
+      const parser = CodegenTerminal.compile(terminal);
+      const ctx = new ParseContext('true', true);
+      expect(parser(ctx, 0)!.ast).toEqual({
+        type: 'Text',
+        pos: 0,
+        end: 4,
+        raw: 'true',
+      });
+    });
+
+    test('if ".ast" prop set to "null", no AST node is created', () => {
+      const terminal: Terminal = {
+        match: /(true|false)/,
+        ast: null,
+      };
+      const parser = CodegenTerminal.compile(terminal);
+      const ctx = new ParseContext('true', true);
+      expect(parser(ctx, 0)!.ast).toBe(undefined);
+    });
+
     test('can create an AST node', () => {
       const terminal: Terminal = {
         match: /(true|false)/,
@@ -89,6 +113,38 @@ describe('CodegenTerminal', () => {
         type: 'MyNode',
         start: 0,
         length: 4,
+      });
+    });
+    
+    test('expression can reference the default AST node', () => {
+      const terminal: Terminal = {
+        match: /(true|false)/,
+        ast: ['$', '/ast'],
+      };
+      const parser = CodegenTerminal.compile(terminal);
+      const ctx = new ParseContext('true', true);
+      expect(parser(ctx, 0)!.ast).toEqual({
+        type: 'Text',
+        pos: 0,
+        end: 4,
+        raw: 'true',
+      });
+    });
+    
+    test('can overwrite props of default AST node', () => {
+      const terminal: Terminal = {
+        match: /(true|false)/,
+        ast: ['o.set', ['$', '/ast'],
+          'type', 'Boolean',
+        ],
+      };
+      const parser = CodegenTerminal.compile(terminal);
+      const ctx = new ParseContext('true', true);
+      expect(parser(ctx, 0)!.ast).toEqual({
+        type: 'Boolean',
+        pos: 0,
+        end: 4,
+        raw: 'true',
       });
     });
   });

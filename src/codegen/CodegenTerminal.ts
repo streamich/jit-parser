@@ -2,7 +2,8 @@ import {Codegen} from '@jsonjoy.com/util/lib/codegen'
 import {emitStringMatch} from '@jsonjoy.com/util/lib/codegen/util/helpers';
 import {LeafCsrMatch} from '../matches';
 import {scrub} from '../util';
-import {evaluate} from 'json-joy/lib/json-expression';
+import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
+import {operatorsMap} from 'json-joy/lib/json-expression/operators';
 import {Vars} from 'json-joy/lib/json-expression/Vars';
 import type {Parser, Terminal, TerminalShorthand} from '../types';
 
@@ -59,11 +60,18 @@ export class CodegenTerminal {
     codegen.if('ctx.ast', () => {
       if (terminal.ast === null) {
       } else if (terminal.ast) {
-        const dEv = codegen.linkDependency(evaluate);
+        const exprCodegen = new JsonExpressionCodegen({
+          expression: <any>terminal.ast,
+          operators: operatorsMap,
+        });
+        const fn = exprCodegen.run().compile();
+        const dExpr = codegen.linkDependency(fn);
         const dVars = codegen.linkDependency(Vars);
-        codegen.js(`${rResult}.ast = ${dEv}(${JSON.stringify(terminal.ast)}, {vars: new ${dVars}({csr: ${rResult}})})`);
+        const rAst = codegen.var(`{type:${dKind},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
+        codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({csr: ${rResult}, ast: ${rAst}})})`);
       } else {
-        codegen.js(`${rResult}.ast = {};`);
+        const rAst = codegen.var(`{type:${dKind},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
+        codegen.js(`${rResult}.ast = ${rAst};`);
       }
     });
     codegen.return(rResult);
