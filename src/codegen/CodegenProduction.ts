@@ -1,15 +1,15 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen'
-import type {Parser, ProductionParser} from '../types';
-import {ProductionMatch} from '../matches';
+import {CsrMatch} from '../matches';
+import type {Parser} from '../types';
 
 export class CodegenProduction {
-  public static readonly compile = (production: Parser[]): ProductionParser => {
+  public static readonly compile = (production: Parser[]): Parser => {
     const codegen = new CodegenProduction(production);
     codegen.generate();
     return codegen.compile();
   };
 
-  public readonly codegen: Codegen<ProductionParser>;
+  public readonly codegen: Codegen<Parser>;
 
   constructor(public readonly production: Parser[]) {
     this.codegen = new Codegen({
@@ -20,7 +20,7 @@ export class CodegenProduction {
   public generate() {
     const {codegen, production} = this;
     const results: string[] = [];
-    const dPM = codegen.linkDependency(ProductionMatch);
+    const dPM = codegen.linkDependency(CsrMatch);
     const rStart = codegen.var('pos');
     const rChildren = codegen.var('[]');
     const rNodeAst = codegen.var();
@@ -58,7 +58,7 @@ export class CodegenProduction {
     codegen.return(rResult);
   }
 
-  public compile(): ProductionParser {
+  public compile(): Parser {
     return this.codegen.compile();
   }
 }
