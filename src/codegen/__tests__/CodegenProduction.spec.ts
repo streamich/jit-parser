@@ -6,7 +6,7 @@ describe('CodegenProduction', () => {
   test('can parse a simple production', () => {
     const foo = CodegenTerminal.compile('foo');
     const bar = CodegenTerminal.compile('bar');
-    const parse = CodegenProduction.compile([foo, bar]);
+    const parse = CodegenProduction.compile(['foo', 'bar'], [foo, bar]);
     const ctx = new ParseContext('foobar', false);
     expect(parse(ctx, 0)).toMatchObject({
       type: 'Production',
@@ -16,6 +16,20 @@ describe('CodegenProduction', () => {
         {type: 'Text', pos: 0, end: 3, raw: 'foo'},
         {type: 'Text', pos: 3, end: 6, raw: 'bar'},
       ],
+    });
+  });
+
+  describe('AST', () => {
+    test('can create an AST node', () => {
+      const foo = CodegenTerminal.compile('foo');
+      const bar = CodegenTerminal.compile('bar');
+      const parse = CodegenProduction.compile({
+        items: ['foo', 'bar'],
+        ast: ['.', 'a', 'bc']
+      }, [foo, bar]);
+      const ctx = new ParseContext('foobar', true);
+      const cst = parse(ctx, 0)!;
+      expect(cst.ast).toBe('abc');
     });
   });
 });

@@ -1,32 +1,43 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen'
 import {CsrMatch} from '../matches';
-import type {Parser} from '../types';
+import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
+import {operatorsMap} from 'json-joy/lib/json-expression/operators';
+import {Vars} from 'json-joy/lib/json-expression/Vars';
+import {scrub} from '../util';
+import type {Parser, Production, ProductionShorthand} from '../types';
+
+const DEFAULT_TYPE = 'Production';
 
 export class CodegenProduction {
-  public static readonly compile = (production: Parser[]): Parser => {
-    const codegen = new CodegenProduction(production);
+  public static readonly compile = (production: Production | ProductionShorthand, parsers: Parser[]): Parser => {
+    const production2: Production = production instanceof Array ? {items: production} : production;
+    const codegen = new CodegenProduction(production2, parsers);
     codegen.generate();
     return codegen.compile();
   };
 
+  public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
-  constructor(public readonly production: Parser[]) {
+  constructor(public readonly production: Production, public readonly parsers: Parser[]) {
+    this.type = typeof production.type === 'string' ? scrub(production.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
-      args: ['str', 'pos'],
+      args: ['ctx', 'pos'],
+      prologue: 'var str = ctx.str;',
     });
   }
 
   public generate() {
-    const {codegen, production} = this;
+    const {codegen, production, parsers} = this;
+    const dType = codegen.linkDependency(this.type);
     const results: string[] = [];
     const dPM = codegen.linkDependency(CsrMatch);
     const rStart = codegen.var('pos');
     const rChildren = codegen.var('[]');
     const rNodeAst = codegen.var();
-    for (const matcher of production) {
-      const dep = codegen.linkDependency(matcher);
-      const reg = codegen.var(`${dep}(str, pos)`);
+    for (const parser of parsers) {
+      const dep = codegen.linkDependency(parser);
+      const reg = codegen.var(`${dep}(ctx, pos)`);
       results.push(reg);
       codegen.if(`!${reg}`, () => {
         codegen.return('');
@@ -41,20 +52,25 @@ export class CodegenProduction {
         });  
       });
     }
-    // const rChildren = codegen.var(`[${results.join(', ')}]`);
-    for (const result of results) {
-
-    }
-    const rResult = codegen.var(`new ${dPM}('Production', ${rStart}, pos, ${rChildren})`);
-    // for (const result of results) {
-    //   codegen.js(`console.log(${result})`);
-    //   const rAstNode = codegen.var(`${result}.ast`);
-    //   codegen.if(`${rAstNode} === void 0`, () => {
-    //     codegen.js(`${rChildren}.push(${result})`);
-    //   }, () => {
-    //     codegen.js(`${rChildren}.push(${rAstNode})`);
-    //   });
-    // }
+    const rResult = codegen.var(`new ${dPM}(${dType}, ${rStart}, pos, ${rChildren})`);
+    codegen.if('ctx.ast', () => {
+      if (production.ast === null) {
+      } else if (production.ast) {
+        const exprCodegen = new JsonExpressionCodegen({
+          expression: <any>production.ast,
+          operators: operatorsMap,
+        });
+        const fn = exprCodegen.run().compile();
+        const dExpr = codegen.linkDependency(fn);
+        const dVars = codegen.linkDependency(Vars);
+        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
+        codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({csr: ${rResult}, ast: ${rAst}})})`);
+      } else {
+        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
+        codegen.js(`${rResult}.ast = ${rAst};`);
+      }
+    });
+    codegen.return(rResult);
     codegen.return(rResult);
   }
 

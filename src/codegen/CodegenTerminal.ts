@@ -20,11 +20,11 @@ export class CodegenTerminal {
     return codegen.compile();
   };
 
-  public readonly kind: string;
+  public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
   constructor(public readonly terminal: Terminal) {
-    this.kind = typeof terminal.type === 'string' ? scrub(terminal.type) : DEFAULT_KIND;
+    this.type = typeof terminal.type === 'string' ? scrub(terminal.type) : DEFAULT_KIND;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],
       prologue: 'var str = ctx.str;',
@@ -34,14 +34,14 @@ export class CodegenTerminal {
   public generate() {
     const {codegen, terminal} = this;
     const match = terminal.match;
-    const dKind = codegen.linkDependency(this.kind);
+    const dType = codegen.linkDependency(this.type);
     const dLeafCsrMatch = codegen.linkDependency(LeafCsrMatch);
     const rResult = codegen.var();
     if (typeof match === 'string') {
       const cleanTerminal = scrub(match);
       const dString = codegen.linkDependency(cleanTerminal);
       codegen.if(emitStringMatch('str', 'pos', cleanTerminal), () => {
-        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dKind}, pos, pos + ${cleanTerminal.length}, ${dString});`);
+        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${cleanTerminal.length}, ${dString});`);
       });
     } else if (match instanceof RegExp) {
       let source = match.source;
@@ -52,7 +52,7 @@ export class CodegenTerminal {
       const rMatch = codegen.var(`${rSlice}.match(${dRegExp})`);
       codegen.if(rMatch, () => {
         const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
-        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dKind}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`);
+        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`);
       });
     } else {
       throw new Error('INVALID_TERMINAL');
@@ -67,10 +67,10 @@ export class CodegenTerminal {
         const fn = exprCodegen.run().compile();
         const dExpr = codegen.linkDependency(fn);
         const dVars = codegen.linkDependency(Vars);
-        const rAst = codegen.var(`{type:${dKind},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
+        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
         codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({csr: ${rResult}, ast: ${rAst}})})`);
       } else {
-        const rAst = codegen.var(`{type:${dKind},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
+        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
         codegen.js(`${rResult}.ast = ${rAst};`);
       }
     });

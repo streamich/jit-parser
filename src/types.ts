@@ -16,13 +16,19 @@ export interface Terminal {
 
 export type NonTerminal<Name extends string = string> = {n: Name};
 
-export type Production = (Terminal | TerminalShorthand | NonTerminal<any>)[];
+export interface Production {
+  type?: string;
+  items: ProductionShorthand;
+  ast?: undefined | null | unknown;
+}
 
-export type Alternatives = Array<TerminalShorthand | NonTerminal | Production>;
+export type ProductionShorthand = (Terminal | TerminalShorthand | NonTerminal<any>)[];
+
+export type Alternatives = Array<Terminal | TerminalShorthand | NonTerminal | Production | ProductionShorthand>;
 
 export interface Rule {
   /**
-   * A collection of alternatives to match.
+   * A collection of alternatives to match. Picks the first matching alternative.
    */
   match: Alternatives;
 
@@ -64,7 +70,7 @@ export interface CanonicalAstNode {
   children?: CanonicalAstNode[];
 }
 
-export type Parser = (ctx: ParseContext, pos: number) => CsrNode | CsrNode | undefined;
+export type Parser = (ctx: ParseContext, pos: number) => CsrNode | undefined;
 
 export interface AstExpressionData {
   csr: CsrNode;
