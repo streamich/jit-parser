@@ -1,5 +1,6 @@
 import {LeafCsrMatch} from '../../matches';
 import {ParseContext} from '../../ParseContext';
+import {Terminal} from '../../types';
 import {CodegenTerminal} from '../CodegenTerminal';
 
 describe('CodegenTerminal', () => {
@@ -9,28 +10,86 @@ describe('CodegenTerminal', () => {
       const parser = CodegenTerminal.compile(terminal);
       expect(parser(new ParseContext('bar', false), 0)).toBe(undefined);
       expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, 'foo'));
+      expect(parser(new ParseContext('foo', false), 0)).toEqual({
+        type: 'Text',
+        pos: 0,
+        end: 3,
+        raw: 'foo',
+      });
       // console.log(parser.toString());
     });
 
     test('can match a parent in the middle of text', () => {
       const str = 'var a = (foo) => {};';
-      const terminal = '(';
-      const parser = CodegenTerminal.compile(terminal, 'LeftParen');
+      const parser = CodegenTerminal.compile({
+        type: 'LeftParen',
+        match: '(',
+      });
       const ctx = new ParseContext(str, false);
       expect(parser(ctx, 0)).toBe(undefined);
       expect(parser(ctx, 8)).toStrictEqual(new LeafCsrMatch('LeftParen', 8, 9, '('));
+      expect(parser(ctx, 8)).toEqual({
+        type: 'LeftParen',
+        pos: 8,
+        end: 9,
+        raw: '(',
+      });
       // console.log(parser.toString());
+    });
+
+    test('does not generate AST by default', () => {
+      const terminal = 'foo';
+      const parser = CodegenTerminal.compile(terminal);
+      expect(parser(new ParseContext('foo', false), 0)!.ast).toBe(undefined);
     });
   });
 
   describe('regexp', () => {
     test('can match a simple regexp', () => {
-      const terminal = /(true|false)/;
-      const parser = CodegenTerminal.compile(terminal, 'Boolean');
+      const parser = CodegenTerminal.compile({
+        type: 'Boolean',
+        match: /(true|false)/,
+      });
       expect(parser(new ParseContext('foo', false), 0)).toBe(undefined);
       expect(parser(new ParseContext('true', false), 0)).toStrictEqual(new LeafCsrMatch('Boolean', 0, 4, 'true'));
       expect(parser(new ParseContext('a = false', false), 4)).toStrictEqual(new LeafCsrMatch('Boolean', 4, 9, 'false'));
+      expect(parser(new ParseContext('a = false', false), 4)).toEqual({
+        type: 'Boolean',
+        pos: 4,
+        end: 9,
+        raw: 'false',
+      });
       // console.log(parser.toString());
+    });
+  });
+
+  describe('AST', () => {
+    test('can create an AST node', () => {
+      const terminal: Terminal = {
+        match: /(true|false)/,
+        ast: ['+', 2, 2],
+      };
+      const parser = CodegenTerminal.compile(terminal);
+      const ctx = new ParseContext('true', true);
+      expect(parser(ctx, 0)!.ast).toBe(4);
+    });
+    
+    test('can use CSR node to extract information for the AST node', () => {
+      const terminal: Terminal = {
+        match: /(true|false)/,
+        ast: ['o.set', {},
+          'type', 'MyNode',
+          'start', ['$', '/csr/pos'],
+          'length', ['-', ['$', '/csr/end'], ['$', '/csr/pos']],
+        ],
+      };
+      const parser = CodegenTerminal.compile(terminal);
+      const ctx = new ParseContext('true', true);
+      expect(parser(ctx, 0)!.ast).toEqual({
+        type: 'MyNode',
+        start: 0,
+        length: 4,
+      });
     });
   });
 });

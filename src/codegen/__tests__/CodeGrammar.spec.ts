@@ -7,7 +7,7 @@ import {CodegenGrammar} from '../CodegenGrammar';
 describe('CodegenGrammar', () => {
   test('...', () => {
     const parser = CodegenGrammar.compile(grammar);
-    const ast = parser('{"a": "b"}', 0);
+    const ast = parser('123', 0);
     console.log(JSON.stringify(ast, null, 2));
   });
 });
