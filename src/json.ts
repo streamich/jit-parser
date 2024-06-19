@@ -53,17 +53,13 @@ export const grammar: Grammar = {
 
     Array: {
       p: ['[', {r: 'Elements'}, ']'],
-      ast: ['o.set', ['$', '/ast'],
-        'elements', [[]],
-      ],
+      // ast: ['o.set', ['$', '/ast'],
+      //   'elements', [[]],
+      // ],
     },
     Elements: {
       u: [
-        // {
-        //   l: [{r: 'Value'}, ','],
-        // },
-        [{r: 'Value'}, ',', {r: 'Elements'}],
-        {r: 'Value'},
+        [{l: [{r: 'Value'}, ',']}, {r: 'Value'}],
         '',
       ],
     },
@@ -76,8 +72,9 @@ export const grammar: Grammar = {
     },
     Members: {
       u: [
-        [{r: 'Pair'}, ',', {r: 'Members'}],
-        {r: 'Pair'},
+        [{l: [{r: 'Pair'}, ',']}, {r: 'Pair'}],
+        // [{r: 'Pair'}, ',', {r: 'Members'}],
+        // {r: 'Pair'},
         '',
       ],
     },

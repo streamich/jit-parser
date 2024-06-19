@@ -13,7 +13,9 @@ import type {
   GrammarNode,
   TerminalNode,
   ProductionNode,
+  ListNode,
 } from '../types';
+import {CodegenList} from './CodegenList';
 
 const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;
@@ -28,6 +30,9 @@ const isProductionNode = (item: any): item is ProductionNode =>
 
 const isUnionNode = (item: any): item is UnionNode =>
   typeof item === 'object' && item && (item.u instanceof Array);
+
+const isListNode = (item: any): item is ListNode =>
+  typeof item === 'object' && item && (typeof item.l !== 'undefined');
 
 const isRefNode = (item: any): item is RefNode =>
   typeof item === 'object' && item && typeof item.r === 'string';
@@ -56,6 +61,8 @@ export class CodegenGrammar {
       return this.compileProduction(node);
     } else if (isUnionNode(node)) {
       return this.compileUnion(node);
+    } else if (isListNode(node)) {
+      return this.compileList(node);
     } else if (isRefNode(node)) {
       return this.compileRule(node.r);
     } else {
@@ -79,6 +86,11 @@ export class CodegenGrammar {
     return CodegenUnion.compile(node, parsers);
   }
 
+  protected compileList(node: ListNode): Parser {
+    const parser = this.compileNode(node.l);
+    return CodegenList.compile(node, parser);
+  }
+
   private __compileRule(name: string, node: GrammarNode): Parser {
     if (isTerminalNode(node)) {
       node.type ??= name;
@@ -94,6 +106,9 @@ export class CodegenGrammar {
     } else if (isUnionNode(node)) {
       node.type ??= name;
       return lazy(() => this.compileUnion(node));
+    } else if (isListNode(node)) {
+      node.type ??= name;
+      return lazy(() => this.compileList(node));
     } else if (isRefNode(node)) {
       return lazy(() => this.compileRule(node.r));
     } else {
