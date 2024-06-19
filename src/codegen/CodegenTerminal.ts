@@ -43,6 +43,8 @@ export class CodegenTerminal {
       const condition = cleanTerminal ? emitStringMatch('str', 'pos', cleanTerminal) : 'true';
       codegen.if(condition, () => {
         codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${cleanTerminal.length}, ${dString});`);
+      }, () => {
+        codegen.return('');
       });
     } else if (match instanceof RegExp) {
       let source = match.source;
@@ -54,13 +56,15 @@ export class CodegenTerminal {
       codegen.if(rMatch, () => {
         const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
         codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`);
+      }, () => {
+        codegen.return('');
       });
     } else {
       throw new Error('INVALID_TERMINAL');
     }
     if (terminal.ast !== null) {
       codegen.if('ctx.ast', () => {
-        // TODO: generate an exteran function? `if (ctx.ast) res.ast = dx();`.
+        // TODO: generate an external function? `if (ctx.ast) res.ast = dx();`.
         if (terminal.ast) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>terminal.ast,
@@ -70,7 +74,7 @@ export class CodegenTerminal {
           const dExpr = codegen.linkDependency(fn);
           const dVars = codegen.linkDependency(Vars);
           const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
-          codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({csr: ${rResult}, ast: ${rAst}})})`);
+          codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
         } else {
           const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
           codegen.js(`${rResult}.ast = ${rAst};`);

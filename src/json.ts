@@ -6,16 +6,17 @@ import type {Grammar} from './types';
 export const grammar: Grammar = {
   start: 'Value',
   rules: {
-    Value: [
-      [{r: 'Ws'}, {r: 'TrimmedValue'}, {r: 'Ws'}],
-    ],
+    Value: {
+      p: [{r: 'Ws'}, {r: 'TValue'}, {r: 'Ws'}],
+      ast: ['$', '/cst/children/1/ast'],
+    },
 
     Ws: { // Whitespace
       t: /\s*/,
       ast: null,
     },
 
-    TrimmedValue: {
+    TValue: {
       u: [
         {r: 'Null'},
         {r: 'Boolean'},
@@ -24,27 +25,43 @@ export const grammar: Grammar = {
         {r: 'Array'},
         {r: 'Object'},
       ],
+      ast: ['$', '/cst/children/0/ast'],
     },
 
     Null: 'null',
 
     Boolean: {
       u: ['true', 'false'],
+      ast: ['o.set', ['$', '/ast'],
+        'value', ['?', ['==', ['$', '/cst/children/0/raw'], 'true'], true, false],
+      ],
     },
 
     Number: {
       t: /\-?0|(\-?[1-9][0-9]*)(\.[0-9]+)?/,
-      // ast: {
-      //   type: 'Number',
-      //   // value: ['num', ['$', '/value']],
-      // },
+      ast: ['o.set', ['$', '/ast'],
+        'value', ['num', ['$', '/cst/raw']],
+      ],
     },
 
-    String: ['"', /[^"]*/, '"'],
+    String: {
+      p: [{t: '"', ast: null}, /[^"]*/, {t: '"', ast: null}],
+      ast: ['o.set', ['$', '/ast'],
+        'value', ['$', '/cst/children/1/raw'],
+      ],
+    },
 
-    Array: ['[', {r: 'Elements'}, ']'],
+    Array: {
+      p: ['[', {r: 'Elements'}, ']'],
+      ast: ['o.set', ['$', '/ast'],
+        'elements', [[]],
+      ],
+    },
     Elements: {
       u: [
+        // {
+        //   l: [{r: 'Value'}, ','],
+        // },
         [{r: 'Value'}, ',', {r: 'Elements'}],
         {r: 'Value'},
         '',

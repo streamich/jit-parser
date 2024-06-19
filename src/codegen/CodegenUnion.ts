@@ -42,31 +42,27 @@ export class CodegenUnion {
     });
     const rEnd = codegen.var();
     const rChildren = codegen.var();
-    codegen.if(`${rMatch} instanceof Array`, () => {
-      codegen.js(`${rEnd} = ${rMatch}[${rMatch}.length - 1].end;`);
-      codegen.js(`${rChildren} = ${rMatch};`);
-    }, () => {
-      codegen.js(`${rEnd} = ${rMatch}.end;`);
-      codegen.js(`${rChildren} = [${rMatch}];`);
-    });
+    codegen.js(`${rEnd} = ${rMatch}.end;`);
+    codegen.js(`${rChildren} = [${rMatch}];`);
     const rResult = codegen.var(`new ${dCsrMatch}(${dType}, pos, ${rEnd}, ${rChildren})`);
-    codegen.if('ctx.ast', () => {
-      if (node.ast === null) {
-      } else if (node.ast) {
-        const exprCodegen = new JsonExpressionCodegen({
-          expression: <any>node.ast,
-          operators: operatorsMap,
-        });
-        const fn = exprCodegen.run().compile();
-        const dExpr = codegen.linkDependency(fn);
-        const dVars = codegen.linkDependency(Vars);
-        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
-        codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({csr: ${rResult}, ast: ${rAst}})})`);
-      } else {
-        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
-        codegen.js(`${rResult}.ast = ${rAst};`);
-      }
-    });
+    if (node.ast !== null) {
+      codegen.if('ctx.ast', () => {
+        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end}`);
+        if (node.ast) {
+          const exprCodegen = new JsonExpressionCodegen({
+            expression: <any>node.ast,
+            operators: operatorsMap,
+          });
+          const fn = exprCodegen.run().compile();
+          const dExpr = codegen.linkDependency(fn);
+          const dVars = codegen.linkDependency(Vars);
+          codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
+        } else {
+          // Collect children...
+          codegen.js(`${rResult}.ast = ${rAst};`);
+        }
+      });
+    }
     codegen.return(rResult);
   }
 

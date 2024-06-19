@@ -34,7 +34,6 @@ export class CodegenProduction {
     const dCsrMatch = codegen.linkDependency(CsrMatch);
     const rStart = codegen.var('pos');
     const rChildren = codegen.var('[]');
-    const rNodeAst = codegen.var();
     for (const parser of parsers) {
       const dep = codegen.linkDependency(parser);
       const reg = codegen.var(`${dep}(ctx, pos)`);
@@ -43,33 +42,27 @@ export class CodegenProduction {
         codegen.return('');
       });
       codegen.js(`pos = ${reg}.end`);
-      codegen.js(`${rNodeAst} = ${reg}.ast`);
-      codegen.if(`${rNodeAst} === void 0`, () => {
-        codegen.js(`${rChildren}.push(${reg})`);
-      }, () => {
-        codegen.if(`${rNodeAst} !== null`, () => {
-          codegen.js(`${rChildren}.push(${rNodeAst})`);
-        });  
-      });
+      codegen.js(`${rChildren}.push(${reg})`);
     }
     const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
-    codegen.if('ctx.ast', () => {
-      if (production.ast === null) {
-      } else if (production.ast) {
-        const exprCodegen = new JsonExpressionCodegen({
-          expression: <any>production.ast,
-          operators: operatorsMap,
-        });
-        const fn = exprCodegen.run().compile();
-        const dExpr = codegen.linkDependency(fn);
-        const dVars = codegen.linkDependency(Vars);
-        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
-        codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({csr: ${rResult}, ast: ${rAst}})})`);
-      } else {
-        const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
-        codegen.js(`${rResult}.ast = ${rAst};`);
-      }
-    });
+    if (production.ast !== null) {
+      codegen.if('ctx.ast', () => {
+        if (production.ast) {
+          const exprCodegen = new JsonExpressionCodegen({
+            expression: <any>production.ast,
+            operators: operatorsMap,
+          });
+          const fn = exprCodegen.run().compile();
+          const dExpr = codegen.linkDependency(fn);
+          const dVars = codegen.linkDependency(Vars);
+          const rAst = codegen.var(`{type:${dType},pos:${rStart},end:pos}`);
+          codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
+        } else {
+          const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos, children: ${rResult}.children.map(c => c.ast).filter(Boolean)}`);
+          codegen.js(`${rResult}.ast = ${rAst};`);
+        }
+      });
+    }
     codegen.return(rResult);
   }
 
