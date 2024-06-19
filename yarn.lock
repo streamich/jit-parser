@@ -571,10 +571,15 @@
     hyperdyperid "^1.2.0"
     thingies "^1.20.0"
 
-"@jsonjoy.com/util@^1.1.0", "@jsonjoy.com/util@^1.1.2", "@jsonjoy.com/util@^1.1.3":
+"@jsonjoy.com/util@^1.1.0", "@jsonjoy.com/util@^1.1.2":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@jsonjoy.com/util/-/util-1.1.3.tgz#75b1c3cf21b70e665789d1ad3eabeff8b7fd1429"
   integrity sha512-g//kkF4kOwUjemValCtOc/xiYzmwMRmWq3Bn+YnzOzuZLHq2PpMOxxIayN3cKbo7Ko2Np65t6D9H81IvXbXhqg==
+
+"@jsonjoy.com/util@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@jsonjoy.com/util/-/util-1.2.0.tgz#0fe9a92de72308c566ebcebe8b5a3f01d3149df2"
+  integrity sha512-4B8B+3vFsY4eo33DMKyJPlQ3sBMpPFUZK2dr3O3rXrOGKKbYG44J0XSFkDo1VOQiri5HFEhIeVvItjR2xcazmg==
 
 "@sinclair/typebox@^0.27.8":
   version "0.27.8"
