@@ -23,7 +23,8 @@ export type GrammarNode =
   | TerminalNode
   | ProductionNodeShorthand
   | ProductionNode
-  | UnionNode;
+  | UnionNode
+  | ListNode;
 
 /**
  * A named node reference is a reference to a named node in the top-level grammar
@@ -62,6 +63,10 @@ export interface ProductionNode {
   ast?: undefined | null | unknown;
 }
 
+/**
+ * A union node is a node that can match one of the alternatives. The first
+ * matching alternative is selected.
+ */
 export interface UnionNode {
   /**
    * A collection of alternatives to match. Picks the first matching alternative.
@@ -77,11 +82,26 @@ export interface UnionNode {
    * Optional AST transformation.
    */
   ast?: undefined | null | unknown;
+}
+
+/**
+ * A list node is a node that can match a list of elements - zero or more.
+ */
+export interface ListNode {
+  /**
+   * The node to use for repeating elements.
+   */
+  l: GrammarNode;
 
   /**
-   * Optional expression, executed on parse exit from the rule.
+   * Type of the list node, if not provided "List" will be used.
    */
-  onExit?: Expr;
+  type?: string;
+
+  /**
+   * Optional AST transformation.
+   */
+  ast?: AstNodeFactory;
 }
 
 /**
