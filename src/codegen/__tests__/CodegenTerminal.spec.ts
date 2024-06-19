@@ -1,6 +1,6 @@
 import {LeafCsrMatch} from '../../matches';
 import {ParseContext} from '../../ParseContext';
-import {Terminal} from '../../types';
+import {TerminalNode} from '../../types';
 import {CodegenTerminal} from '../CodegenTerminal';
 
 describe('CodegenTerminal', () => {
@@ -23,7 +23,7 @@ describe('CodegenTerminal', () => {
       const str = 'var a = (foo) => {};';
       const parser = CodegenTerminal.compile({
         type: 'LeftParen',
-        match: '(',
+        t: '(',
       });
       const ctx = new ParseContext(str, false);
       expect(parser(ctx, 0)).toBe(undefined);
@@ -48,7 +48,7 @@ describe('CodegenTerminal', () => {
     test('can match a simple regexp', () => {
       const parser = CodegenTerminal.compile({
         type: 'Boolean',
-        match: /(true|false)/,
+        t: /(true|false)/,
       });
       expect(parser(new ParseContext('foo', false), 0)).toBe(undefined);
       expect(parser(new ParseContext('true', false), 0)).toStrictEqual(new LeafCsrMatch('Boolean', 0, 4, 'true'));
@@ -65,8 +65,8 @@ describe('CodegenTerminal', () => {
 
   describe('AST', () => {
     test('creates default AST node if ".ast" not prop specified', () => {
-      const terminal: Terminal = {
-        match: /(true|false)/,
+      const terminal: TerminalNode = {
+        t: /(true|false)/,
       };
       const parser = CodegenTerminal.compile(terminal);
       const ctx = new ParseContext('true', true);
@@ -79,8 +79,8 @@ describe('CodegenTerminal', () => {
     });
 
     test('if ".ast" prop set to "null", no AST node is created', () => {
-      const terminal: Terminal = {
-        match: /(true|false)/,
+      const terminal: TerminalNode = {
+        t: /(true|false)/,
         ast: null,
       };
       const parser = CodegenTerminal.compile(terminal);
@@ -89,8 +89,8 @@ describe('CodegenTerminal', () => {
     });
 
     test('can create an AST node', () => {
-      const terminal: Terminal = {
-        match: /(true|false)/,
+      const terminal: TerminalNode = {
+        t: /(true|false)/,
         ast: ['+', 2, 2],
       };
       const parser = CodegenTerminal.compile(terminal);
@@ -99,8 +99,8 @@ describe('CodegenTerminal', () => {
     });
     
     test('can use CSR node to extract information for the AST node', () => {
-      const terminal: Terminal = {
-        match: /(true|false)/,
+      const terminal: TerminalNode = {
+        t: /(true|false)/,
         ast: ['o.set', {},
           'type', 'MyNode',
           'start', ['$', '/csr/pos'],
@@ -117,8 +117,8 @@ describe('CodegenTerminal', () => {
     });
     
     test('expression can reference the default AST node', () => {
-      const terminal: Terminal = {
-        match: /(true|false)/,
+      const terminal: TerminalNode = {
+        t: /(true|false)/,
         ast: ['$', '/ast'],
       };
       const parser = CodegenTerminal.compile(terminal);
@@ -132,8 +132,8 @@ describe('CodegenTerminal', () => {
     });
     
     test('can overwrite props of default AST node', () => {
-      const terminal: Terminal = {
-        match: /(true|false)/,
+      const terminal: TerminalNode = {
+        t: /(true|false)/,
         ast: ['o.set', ['$', '/ast'],
           'type', 'Boolean',
         ],

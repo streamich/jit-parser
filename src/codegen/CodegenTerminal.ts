@@ -5,16 +5,16 @@ import {scrub} from '../util';
 import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
 import {operatorsMap} from 'json-joy/lib/json-expression/operators';
 import {Vars} from 'json-joy/lib/json-expression/Vars';
-import type {Parser, Terminal, TerminalShorthand} from '../types';
+import type {Parser, TerminalNode, TerminalNodeShorthand} from '../types';
 
 const DEFAULT_KIND = 'Text';
 
-const isTerminal = (item: Terminal | TerminalShorthand): item is Terminal =>
+const isTerminal = (item: TerminalNode | TerminalNodeShorthand): item is TerminalNode =>
   typeof item === 'object';
 
 export class CodegenTerminal {
-  public static readonly compile = (terminal: Terminal | TerminalShorthand): Parser => {
-    if (!isTerminal(terminal)) return CodegenTerminal.compile({match: terminal});
+  public static readonly compile = (terminal: TerminalNode | TerminalNodeShorthand): Parser => {
+    if (!isTerminal(terminal)) return CodegenTerminal.compile({t: terminal});
     const codegen = new CodegenTerminal(terminal);
     codegen.generate();
     return codegen.compile();
@@ -23,7 +23,7 @@ export class CodegenTerminal {
   public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
-  constructor(public readonly terminal: Terminal) {
+  constructor(public readonly terminal: TerminalNode) {
     this.type = typeof terminal.type === 'string' ? scrub(terminal.type) : DEFAULT_KIND;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],
@@ -33,7 +33,7 @@ export class CodegenTerminal {
 
   public generate() {
     const {codegen, terminal} = this;
-    const match = terminal.match;
+    const match = terminal.t;
     const dType = codegen.linkDependency(this.type);
     const dLeafCsrMatch = codegen.linkDependency(LeafCsrMatch);
     const rResult = codegen.var();
