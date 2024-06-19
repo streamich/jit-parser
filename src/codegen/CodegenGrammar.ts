@@ -1,30 +1,45 @@
-import {Codegen} from '@jsonjoy.com/util/lib/codegen'
-import {lazy} from '@jsonjoy.com/util/lib/lazyFunction'
-// import {emitStringMatch} from '@jsonjoy.com/util/lib/codegen/util/helpers';
-// import {RegExpTerminalMatch, StringTerminalMatch} from '../matches';
-// import {scrub} from '../util';
-import type {Grammar, Rule, MatchParser, RuleParser, Parser, TerminalShorthand, NonTerminal, Production, Terminal, ProductionParser} from '../types';
+import {Codegen} from '@jsonjoy.com/util/lib/codegen';
+import {lazy} from '@jsonjoy.com/util/lib/lazyFunction';
 import {CodegenTerminal} from './CodegenTerminal';
-import {CodegenRule} from './CodegenRule';
 import {CodegenProduction} from './CodegenProduction';
+import {CodegenUnion} from './CodegenUnion';
+import type {
+  Grammar,
+  UnionNode,
+  Parser,
+  TerminalNodeShorthand,
+  RefNode,
+  ProductionNodeShorthand,
+  GrammarNode,
+  TerminalNode,
+  ProductionNode,
+} from '../types';
 
-const isTerminalShorthand = (item: any): item is TerminalShorthand =>
+const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;
 
-const isProduction = (item: any): item is Production =>
-  item instanceof Array;
+const isTerminalNode = (item: any): item is TerminalNode =>
+  typeof item === 'object' && item && isTerminalShorthandNode(item.t);
 
-const isNonTerminal = (item: any): item is NonTerminal =>
-  typeof item === 'object' && item && typeof item.n === 'string';
+const isProductionShorthandNode = (item: any): item is ProductionNodeShorthand => item instanceof Array;
+
+const isProductionNode = (item: any): item is ProductionNode =>
+  typeof item === 'object' && item && isProductionShorthandNode(item.p);
+
+const isUnionNode = (item: any): item is UnionNode =>
+  typeof item === 'object' && item && (item.u instanceof Array);
+
+const isRefNode = (item: any): item is RefNode =>
+  typeof item === 'object' && item && typeof item.r === 'string';
 
 export class CodegenGrammar {
-  public static readonly compile = (grammar: Grammar): MatchParser => {
+  public static readonly compile = (grammar: Grammar): Parser => {
     const codegen = new CodegenGrammar(grammar);
     return codegen.compile();
   };
 
-  public readonly codegen: Codegen<MatchParser>;
-  protected readonly parsers = new Map<string, RuleParser>();
+  public readonly codegen: Codegen<Parser>;
+  protected readonly parsers = new Map<string, Parser>();
 
   constructor(public readonly grammar: Grammar) {
     this.codegen = new Codegen({
@@ -32,63 +47,72 @@ export class CodegenGrammar {
     });
   }
 
-  protected compileItem(item: TerminalShorthand | Production | NonTerminal): Parser {
-    if (isTerminalShorthand(item)) {
-      return CodegenTerminal.compile(item);
-    } else if (isProduction(item)) {
-      return this.compileProduction(item);
-    } else if (isNonTerminal(item)) {
-      return this.compileRuleByName(item.n);
+  protected compileNode(node: GrammarNode): Parser {
+    if (isTerminalShorthandNode(node) || isTerminalNode(node)) {
+      return this.compileTerminal(node);
+    } else if (isProductionShorthandNode(node)) {
+      return this.compileProduction({p: node});
+    } else if (isProductionNode(node)) {
+      return this.compileProduction(node);
+    } else if (isUnionNode(node)) {
+      return this.compileUnion(node);
+    } else if (isRefNode(node)) {
+      return this.compileRule(node.r);
     } else {
-      throw new Error(`Invalid [rule = ${name}] alternative: ${item}`);
+      throw new Error('UNKNOWN_NODE');
     }
   }
 
-  protected compileProduction(prod: Production): ProductionParser {
+  protected compileTerminal(terminal: TerminalNode | TerminalNodeShorthand): Parser {
+    return CodegenTerminal.compile(terminal);
+  }
+
+  protected compileProduction(node: ProductionNode): Parser {
     const parsers: Parser[] = [];
-    for (const item of prod) parsers.push(this.compileItem(item as any));
-    return CodegenProduction.compile(parsers);
+    for (const item of node.p) parsers.push(this.compileNode(item));
+    return CodegenProduction.compile(node, parsers);
   }
 
-  private __compileRule(name: string, rule: Rule): RuleParser {
-    const parser = lazy(() => {
-      const {match} = rule;
-      const parsers: Parser[] = [];
-      for (const item of match) parsers.push(this.compileItem(item as any));
-      const ruleParser = CodegenRule.compile(name, rule, parsers);
-      return ruleParser;
-    });
-    return parser;
+  protected compileUnion(node: UnionNode): Parser {
+    const parsers: Parser[] = [];
+    for (const item of node.u) parsers.push(this.compileNode(item));
+    return CodegenUnion.compile(node, parsers);
   }
 
-  protected compileRuleByName(name: string): RuleParser {
+  private __compileRule(name: string, node: GrammarNode): Parser {
+    if (isTerminalNode(node)) {
+      node.type ??= name;
+      return this.compileTerminal(node);
+    } else if (isTerminalShorthandNode(node)) {
+      return this.compileTerminal({t: node});
+    } else if (isProductionNode(node)) {
+      node.type ??= name;
+      return lazy(() => this.compileProduction(node));
+    } else if (isProductionShorthandNode(node)) {
+      const node2 = {p: node, type: name};
+      return lazy(() => this.compileProduction(node2));
+    } else if (isUnionNode(node)) {
+      node.type ??= name;
+      return lazy(() => this.compileUnion(node));
+    } else if (isRefNode(node)) {
+      return lazy(() => this.compileRule(node.r));
+    } else {
+      throw new Error('UNKNOWN_NODE');
+    }
+  }
+
+  protected compileRule(name: string): Parser {
     if (this.parsers.has(name)) return this.parsers.get(name)!;
     const {grammar} = this;
     const {rules} = grammar;
-    const ruleOrAlt = rules[name];
-    if (!ruleOrAlt) throw new Error(`Unknown rule: ${name}`);
-    const rule: Rule = ruleOrAlt instanceof Array ? {match: ruleOrAlt} : ruleOrAlt;
-    const parser = this.__compileRule(name, rule);
+    const node = rules[name];
+    if (!node) throw new Error(`Unknown [rule = ${name}]`);
+    const parser = this.__compileRule(name, node);
     this.parsers.set(name, parser);
     return parser;
   }
 
-  // public generate() {
-  //   const {codegen, grammar} = this;
-  //   const {start, rules} = grammar;
-  //   const ruleOrAlt = rules[start];
-  //   const rule: Rule = ruleOrAlt instanceof Array ? {match: ruleOrAlt} : ruleOrAlt;
-  //   const a = this.compileRule(start, rule);
-  //   // for (const [name, rule] of Object.entries(rules)) {
-  //   //   const dep = codegen.linkDependency(this.compileRule(name, rule));
-  //   //   this.rules.set(name, dep);
-  //   // }
-  //   // const start = this.rules.get(grammar.start);
-  //   // if (!start) throw new Error('INVALID_START_SYMBOL');
-  //   // codegen.return(`${start}(str, pos)`);
-  // }
-
-  public compile(): RuleParser {
-    return this.compileRuleByName(this.grammar.start);
+  public compile(): Parser {
+    return this.compileRule(this.grammar.start);
   }
 }

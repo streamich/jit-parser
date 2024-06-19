@@ -1,13 +1,12 @@
-import {Rule} from '../../types';
-import {CodegenRule} from '../CodegenRule';
-import {CodegenTerminal} from '../CodegenTerminal';
 import {grammar} from '../../json';
 import {CodegenGrammar} from '../CodegenGrammar';
+import {ParseContext} from '../../ParseContext';
 
 describe('CodegenGrammar', () => {
   test('...', () => {
     const parser = CodegenGrammar.compile(grammar);
-    const ast = parser('123', 0);
-    console.log(JSON.stringify(ast, null, 2));
+    const ctx = new ParseContext('null', false);
+    const cst = parser(ctx, 0);
+    console.log(JSON.stringify(cst, null, 2));
   });
 });
