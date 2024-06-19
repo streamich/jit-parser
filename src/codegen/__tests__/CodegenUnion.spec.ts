@@ -3,7 +3,7 @@ import {CodegenUnion} from '../CodegenUnion';
 import {CodegenTerminal} from '../CodegenTerminal';
 import {ParseContext} from '../../ParseContext';
 
-describe('CodegenRule', () => {
+describe('CodegenUnion', () => {
   test('can parse a simple rule', () => {
     const union: UnionNode = {
       u: ['foo', 'bar'],
@@ -35,6 +35,21 @@ describe('CodegenRule', () => {
         end: 3,
         raw: 'bar',
       }],
+    });
+  });
+
+  describe('AST', () => {
+    test('can create an AST node', () => {
+      const foo = CodegenTerminal.compile('foo');
+      const bar = CodegenTerminal.compile('bar');
+      const node = {
+        u: ['foo', 'bar'],
+        ast: ['.', 'a', 'bc'],
+      };
+      const parse = CodegenUnion.compile(node, [foo, bar]);
+      const ctx = new ParseContext('.foo', true);
+      const cst = parse(ctx, 1)!;
+      expect(cst.ast).toBe('abc');
     });
   });
 });

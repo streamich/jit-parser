@@ -31,7 +31,7 @@ export class CodegenProduction {
     const {codegen, production, parsers} = this;
     const dType = codegen.linkDependency(this.type);
     const results: string[] = [];
-    const dPM = codegen.linkDependency(CsrMatch);
+    const dCsrMatch = codegen.linkDependency(CsrMatch);
     const rStart = codegen.var('pos');
     const rChildren = codegen.var('[]');
     const rNodeAst = codegen.var();
@@ -52,7 +52,7 @@ export class CodegenProduction {
         });  
       });
     }
-    const rResult = codegen.var(`new ${dPM}(${dType}, ${rStart}, pos, ${rChildren})`);
+    const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
     codegen.if('ctx.ast', () => {
       if (production.ast === null) {
       } else if (production.ast) {
@@ -70,7 +70,6 @@ export class CodegenProduction {
         codegen.js(`${rResult}.ast = ${rAst};`);
       }
     });
-    codegen.return(rResult);
     codegen.return(rResult);
   }
 
