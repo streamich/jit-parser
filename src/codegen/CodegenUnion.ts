@@ -1,22 +1,25 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen'
-import {RuleMatch} from '../matches';
+import {CsrMatch} from '../matches';
 import {scrub} from '../util';
-import type {Parser, Rule, RuleParser} from '../types';
+import type {Parser, UnionNode} from '../types';
 
-export class CodegenRule {
-  public static readonly compile = (kind: string, rule: Rule, alternatives: Parser[]): RuleParser => {
-    const codegen = new CodegenRule(kind, rule, alternatives);
+const DEFAULT_TYPE = 'Union';
+
+export class CodegenUnion {
+  public static readonly compile = (rule: UnionNode, parsers: Parser[]): Parser => {
+    const codegen = new CodegenUnion(rule, parsers);
     codegen.generate();
     return codegen.compile();
   };
 
-  public readonly codegen: Codegen<RuleParser>;
+  public readonly type: string;
+  public readonly codegen: Codegen<Parser>;
 
   constructor(
-    public readonly kind: string,
-    public readonly rule: Rule,
+    public readonly node: UnionNode,
     public readonly alternatives: Parser[],
   ) {
+    this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
       args: ['str', 'pos'],
     });
@@ -25,8 +28,8 @@ export class CodegenRule {
   public generate() {
     const {codegen, alternatives} = this;
     const deps: string[] = [];
-    const dRM = codegen.linkDependency(RuleMatch);
-    const kind = scrub(this.kind);
+    const dCsrMatch = codegen.linkDependency(CsrMatch);
+    const kind = scrub(this.type);
     for (const matcher of alternatives)
       deps.push(codegen.linkDependency(matcher));
     const rMatch = codegen.var(`${deps.join('(str, pos) || ')}(str, pos)`);
@@ -42,14 +45,14 @@ export class CodegenRule {
       codegen.js(`${rEnd} = ${rMatch}.end;`);
       codegen.js(`${rChildren} = [${rMatch}];`);
     });
-    const rResult = codegen.var(`new ${dRM}('${kind}', pos, ${rEnd}, ${rChildren})`);
-    if (this.rule.ast !== void 0) {
-      codegen.js(`${rResult}.ast = ${JSON.stringify(this.rule.ast)}`);
+    const rResult = codegen.var(`new ${dCsrMatch}('${kind}', pos, ${rEnd}, ${rChildren})`);
+    if (this.node.ast !== void 0) {
+      codegen.js(`${rResult}.ast = ${JSON.stringify(this.node.ast)}`);
     }
     codegen.return(rResult);
   }
 
-  public compile(): RuleParser {
+  public compile(): Parser {
     return this.codegen.compile();
   }
 }
