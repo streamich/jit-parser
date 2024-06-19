@@ -69,7 +69,7 @@ export class CodegenGrammar {
 
   protected compileProduction(node: ProductionNode): Parser {
     const parsers: Parser[] = [];
-    for (const item of node.p) parsers.push(this.compileNode(item));
+    for (const component of node.p) parsers.push(this.compileNode(component));
     return CodegenProduction.compile(node, parsers);
   }
 
@@ -84,7 +84,7 @@ export class CodegenGrammar {
       node.type ??= name;
       return this.compileTerminal(node);
     } else if (isTerminalShorthandNode(node)) {
-      return this.compileTerminal({t: node});
+      return this.compileTerminal({t: node, type: name});
     } else if (isProductionNode(node)) {
       node.type ??= name;
       return lazy(() => this.compileProduction(node));

@@ -1,7 +1,4 @@
-import type {Grammar, NonTerminal, TerminalShorthand} from './types';
-
-const t = (name: TemplateStringsArray): TerminalShorthand => name[0] as TerminalShorthand;
-const n = <Name extends string>(name: TemplateStringsArray): NonTerminal<Name> => ({n: name[0] as Name});
+import type {Grammar} from './types';
 
 /**
  * JSON grammar.
@@ -10,76 +7,63 @@ export const grammar: Grammar = {
   start: 'Value',
   rules: {
     Value: [
-      [n`Whitespace`, n`TrimmedValue`, n`Whitespace`],
+      [{r: 'Ws'}, {r: 'TrimmedValue'}, {r: 'Ws'}],
     ],
 
-    Whitespace: {
-      match: [
-        /\s*/,
-      ],
+    Ws: { // Whitespace
+      t: /\s*/,
       ast: null,
     },
 
-    TrimmedValue: [
-      n`Null`,
-      n`Boolean`,
-      n`Number`,
-      n`String`,
-      n`Array`,
-      n`Object`,
-    ],
+    TrimmedValue: {
+      u: [
+        {r: 'Null'},
+        {r: 'Boolean'},
+        {r: 'Number'},
+        {r: 'String'},
+        {r: 'Array'},
+        {r: 'Object'},
+      ],
+    },
 
-    Null: [
-      'null',
-    ],
+    Null: 'null',
 
-    Boolean: [
-      'true',
-      'false',
-    ],
+    Boolean: {
+      u: ['true', 'false'],
+    },
 
     Number: {
-      match: [
-        /-?0|(-?[1-9][0-9]*)(\.[0-9]+)?/,
-      ],
-      ast: {
-        type: 'Number',
-        value: ['num', ['$', '/value']],
-      },
+      t: /\-?0|(\-?[1-9][0-9]*)(\.[0-9]+)?/,
+      // ast: {
+      //   type: 'Number',
+      //   // value: ['num', ['$', '/value']],
+      // },
     },
 
-    String: [
-      [t`"`, n`StringValue`, t`"`]
-    ],
-    StringValue: [
-      /[^"]*/
-    ],
+    String: ['"', /[^"]*/, '"'],
 
-    Array: [
-      ['[', n`Elements`, ']']
-    ],
-    Elements: [
-      [n`Value`, ',', n`Elements`],
-      n`Value`,
-    ],
+    Array: ['[', {r: 'Elements'}, ']'],
+    Elements: {
+      u: [
+        [{r: 'Value'}, ',', {r: 'Elements'}],
+        {r: 'Value'},
+        '',
+      ],
+    },
 
     Object: {
-      match: [
-        ['{', n`Members`, '}'],
-      ],
-      ast: {
-        members: {},
-      },
+      p: ['{', {r: 'Members'}, '}'],
+      // ast: {
+      //   members: {},
+      // },
     },
     Members: {
-      match: [
-        [n`Pair`, ',', n`Members`],
-        n`Pair`,
+      u: [
+        [{r: 'Pair'}, ',', {r: 'Members'}],
+        {r: 'Pair'},
+        '',
       ],
-      // onExit: ['=', ['$', '/parent/members'], ['$', '/node']],
     },
-    Pair: [
-      [n`Whitespace`, n`String`, n`Whitespace`, ':', n`Value`],
-    ],
+    Pair: [{r: 'Ws'}, {r: 'String'}, {r: 'Ws'}, ':', {r: 'Value'}],
   }
 };

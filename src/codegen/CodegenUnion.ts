@@ -71,6 +71,7 @@ export class CodegenUnion {
   }
 
   public compile(): Parser {
-    return this.codegen.compile();
+    const fn = this.codegen.compile();
+    return fn;
   }
 }
