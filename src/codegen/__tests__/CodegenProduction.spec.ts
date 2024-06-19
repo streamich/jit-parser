@@ -24,7 +24,7 @@ describe('CodegenProduction', () => {
       const foo = CodegenTerminal.compile('foo');
       const bar = CodegenTerminal.compile('bar');
       const parse = CodegenProduction.compile({
-        items: ['foo', 'bar'],
+        p: ['foo', 'bar'],
         ast: ['.', 'a', 'bc']
       }, [foo, bar]);
       const ctx = new ParseContext('foobar', true);

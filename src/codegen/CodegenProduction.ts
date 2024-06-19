@@ -4,13 +4,13 @@ import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
 import {operatorsMap} from 'json-joy/lib/json-expression/operators';
 import {Vars} from 'json-joy/lib/json-expression/Vars';
 import {scrub} from '../util';
-import type {Parser, Production, ProductionShorthand} from '../types';
+import type {Parser, ProductionNode, ProductionNodeShorthand} from '../types';
 
 const DEFAULT_TYPE = 'Production';
 
 export class CodegenProduction {
-  public static readonly compile = (production: Production | ProductionShorthand, parsers: Parser[]): Parser => {
-    const production2: Production = production instanceof Array ? {items: production} : production;
+  public static readonly compile = (production: ProductionNode | ProductionNodeShorthand, parsers: Parser[]): Parser => {
+    const production2: ProductionNode = production instanceof Array ? {p: production} : production;
     const codegen = new CodegenProduction(production2, parsers);
     codegen.generate();
     return codegen.compile();
@@ -19,7 +19,7 @@ export class CodegenProduction {
   public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
-  constructor(public readonly production: Production, public readonly parsers: Parser[]) {
+  constructor(public readonly production: ProductionNode, public readonly parsers: Parser[]) {
     this.type = typeof production.type === 'string' ? scrub(production.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],
