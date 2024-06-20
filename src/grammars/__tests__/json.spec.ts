@@ -115,6 +115,75 @@ describe('AST', () => {
           ],
         });
       });
+
+      test('can parse an empty array', () => {
+        const ast = toAst('[]');
+        expect(ast).toEqual(    {
+          "type": "Array",
+          "pos": 0,
+          "end": 2,
+          "children": []
+        });
+      });
+
+      test('can parse an empty array with whitespace', () => {
+        const ast = toAst(' [  ] ');
+        expect(ast).toEqual(    {
+          "type": "Array",
+          "pos": 1,
+          "end": 5,
+          "children": []
+        });
+      });
+
+      test('can parse a single element array', () => {
+        const ast = toAst('[true]');
+        expect(ast).toEqual({
+          type: 'Array',
+          pos: 0,
+          end: 6,
+          children: [
+            {
+              type: 'Boolean',
+              pos: 1,
+              end: 5,
+              value: true,
+            },
+          ],
+        });
+      });
+
+      test('can multiple element array array', () => {
+        const ast = toAst('[ 1, 2, 3 ]');
+        expect(ast).toEqual({
+          type: 'Array',
+          pos: 0,
+          end: 11,
+          children: [
+            {
+              type: 'Number',
+              pos: 2,
+              end: 3,
+              raw: '1',
+              value: 1,
+            },
+            {
+              type: 'Number',
+              pos: 5,
+              end: 6,
+              raw: '2',
+              value: 2,
+            },
+            {
+              type: 'Number',
+              pos: 8,
+              end: 9,
+              raw: '3',
+              value: 3,
+            },
+          ],
+        });
+      });
     });
   });
 });

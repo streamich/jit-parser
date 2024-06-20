@@ -57,7 +57,7 @@ export const grammar: Grammar = {
     Array: {
       p: ['[', {r: 'Elements'}, ']'],
       ast: ['o.set', ['$', '/ast'],
-        'elements', ['$', '/cst/children/1/ast'],
+        'children', ['$', '/ast/children/1/children'],
       ],
     },
     Elements: {
@@ -77,10 +77,11 @@ export const grammar: Grammar = {
             ['o.set', {}, 'child', ['$', '/ast/children/1']]
           ]],
         },
-        '',
+        {r: 'Ws'},
       ],
       ast: ['o.set', ['$', '/ast'],
-        'children', ['$', '/ast/children/0']
+        'children', ['?', ['len', ['$', '/ast/children']],
+          ['$', '/ast/children/0'], [[]]]
       ],
     },
 
