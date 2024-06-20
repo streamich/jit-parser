@@ -47,6 +47,7 @@ export class CodegenProduction {
     const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
     if (production.ast !== null) {
       codegen.if('ctx.ast', () => {
+        const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos, children: ${rResult}.children.map(c => c.ast).filter(Boolean)}`);
         if (production.ast) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>production.ast,
@@ -55,10 +56,8 @@ export class CodegenProduction {
           const fn = exprCodegen.run().compile();
           const dExpr = codegen.linkDependency(fn);
           const dVars = codegen.linkDependency(Vars);
-          const rAst = codegen.var(`{type:${dType},pos:${rStart},end:pos}`);
           codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
         } else {
-          const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos, children: ${rResult}.children.map(c => c.ast).filter(Boolean)}`);
           codegen.js(`${rResult}.ast = ${rAst};`);
         }
       });

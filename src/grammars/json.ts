@@ -60,12 +60,25 @@ export const grammar: Grammar = {
     Elements: {
       u: [
         {
-          p: [{l: [{r: 'Value'}, ',']}, {r: 'Value'}],
-          ast: ['concat', ['$', '/cst/children/0/ast/children'], ['$', '/cst/children/1/ast/children']],
+          p: [
+            {
+              l: {
+                p: [{r: 'Value'}, {t: ',', ast: null}],
+                ast: ['$', '/ast/children/0']  
+              },
+              ast: ['$', '/ast/children']
+            },
+            {r: 'Value'}
+          ],
+          ast: ['concat', ['$', '/ast/children/0'], ['values',
+            ['o.set', {}, 'child', ['$', '/ast/children/1']]
+          ]],
         },
         '',
       ],
-      ast: ['$', '/cst/children/0/ast'],
+      ast: ['o.set', ['$', '/ast'],
+        'children', ['$', '/ast/children/0']
+      ],
     },
 
     Object: {

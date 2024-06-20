@@ -116,7 +116,7 @@ export class CodegenGrammar {
     }
   }
 
-  protected compileRule(name: string): Parser {
+  public compileRule(name: string): Parser {
     if (this.parsers.has(name)) return this.parsers.get(name)!;
     const {grammar} = this;
     const {rules} = grammar;

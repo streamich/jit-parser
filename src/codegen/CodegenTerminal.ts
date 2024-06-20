@@ -63,6 +63,7 @@ export class CodegenTerminal {
       throw new Error('INVALID_TERMINAL');
     }
     if (terminal.ast !== null) {
+      const rAst = codegen.var(`{type:${dType}, pos:pos, end:${rResult}.end, raw:${rResult}.raw}`);
       codegen.if('ctx.ast', () => {
         // TODO: generate an external function? `if (ctx.ast) res.ast = dx();`.
         if (terminal.ast) {
@@ -73,7 +74,6 @@ export class CodegenTerminal {
           const fn = exprCodegen.run().compile();
           const dExpr = codegen.linkDependency(fn);
           const dVars = codegen.linkDependency(Vars);
-          const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
           codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
         } else {
           const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);

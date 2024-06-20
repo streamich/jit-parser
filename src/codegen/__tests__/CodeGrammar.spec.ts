@@ -5,9 +5,10 @@ import {ParseContext} from '../../ParseContext';
 describe('CodegenGrammar', () => {
   test('...', () => {
     const parser = CodegenGrammar.compile(grammar);
-    const ctx = new ParseContext(' []  ', true);
+    const ctx = new ParseContext(' [1]  ', true);
     const cst = parser(ctx, 0)!;
     // console.log(JSON.stringify(cst.ast, null, 2));
+    // console.log(JSON.stringify(cst, null, 2));
     console.log(cst.ast);
   });
 });
