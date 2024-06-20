@@ -56,11 +56,22 @@ export type ProductionNodeShorthand = GrammarNode[];
 
 export interface ProductionNode {
   p: ProductionNodeShorthand;
+
   /**
    * Type of the production node, if not provided "Production" will be used.
    */
   type?: string;
+
+  /**
+   * Optional AST transformation.
+   */
   ast?: undefined | null | unknown;
+
+  /**
+   * If the list node is a leaf node. In this case, the AST node `children`
+   * will not be generated automatically.
+   */
+  leaf?: boolean;
 }
 
 /**
@@ -82,6 +93,12 @@ export interface UnionNode {
    * Optional AST transformation.
    */
   ast?: undefined | null | unknown;
+
+  /**
+   * If the list node is a leaf node. In this case, the AST node `children`
+   * will not be generated automatically.
+   */
+  leaf?: boolean;
 }
 
 /**
@@ -102,6 +119,12 @@ export interface ListNode {
    * Optional AST transformation.
    */
   ast?: AstNodeFactory;
+
+  /**
+   * If the list node is a leaf node. In this case, the AST node `children`
+   * will not be generated automatically.
+   */
+  leaf?: boolean;
 }
 
 /**

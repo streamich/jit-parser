@@ -32,6 +32,7 @@ export const grammar: Grammar = {
 
     Boolean: {
       u: ['true', 'false'],
+      leaf: true,
       ast: ['o.set', ['$', '/ast'],
         'value', ['?', ['==', ['$', '/cst/children/0/raw'], 'true'], true, false],
       ],
@@ -39,6 +40,7 @@ export const grammar: Grammar = {
 
     Number: {
       t: /\-?0|(\-?[1-9][0-9]*)(\.[0-9]+)?/,
+      // leaf: true,
       ast: ['o.set', ['$', '/ast'],
         'value', ['num', ['$', '/cst/raw']],
       ],
@@ -46,6 +48,7 @@ export const grammar: Grammar = {
 
     String: {
       p: [{t: '"', ast: null}, /[^"]*/, {t: '"', ast: null}],
+      leaf: true,
       ast: ['o.set', ['$', '/ast'],
         'value', ['$', '/cst/children/1/raw'],
       ],

@@ -19,8 +19,8 @@ export class CodegenProduction {
   public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
-  constructor(public readonly production: ProductionNode, public readonly parsers: Parser[]) {
-    this.type = typeof production.type === 'string' ? scrub(production.type) : DEFAULT_TYPE;
+  constructor(public readonly node: ProductionNode, public readonly parsers: Parser[]) {
+    this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],
       prologue: 'var str = ctx.str;',
@@ -28,7 +28,7 @@ export class CodegenProduction {
   }
 
   public generate() {
-    const {codegen, production, parsers} = this;
+    const {codegen, node, parsers} = this;
     const dType = codegen.linkDependency(this.type);
     const results: string[] = [];
     const dCsrMatch = codegen.linkDependency(CsrMatch);
@@ -45,12 +45,13 @@ export class CodegenProduction {
       codegen.js(`${rChildren}.push(${reg})`);
     }
     const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
-    if (production.ast !== null) {
+    if (node.ast !== null) {
       codegen.if('ctx.ast', () => {
-        const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos, children: ${rResult}.children.map(c => c.ast).filter(Boolean)}`);
-        if (production.ast) {
+        const childrenProp = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
+        const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos${childrenProp}}`);
+        if (node.ast) {
           const exprCodegen = new JsonExpressionCodegen({
-            expression: <any>production.ast,
+            expression: <any>node.ast,
             operators: operatorsMap,
           });
           const fn = exprCodegen.run().compile();

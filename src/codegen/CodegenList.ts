@@ -44,7 +44,8 @@ export class CodegenList {
     const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
     if (node.ast !== null) {
       codegen.if('ctx.ast', () => {
-        const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos, children: ${rResult}.children.map(c => c.ast).filter(Boolean)}`);
+        const childrenProp = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
+        const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos${childrenProp}}`);
         if (node.ast) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>node.ast,
