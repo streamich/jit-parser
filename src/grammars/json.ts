@@ -1,4 +1,4 @@
-import type {Grammar} from './types';
+import type {Grammar} from '../types';
 
 /**
  * JSON grammar.
@@ -53,15 +53,19 @@ export const grammar: Grammar = {
 
     Array: {
       p: ['[', {r: 'Elements'}, ']'],
-      // ast: ['o.set', ['$', '/ast'],
-      //   'elements', [[]],
-      // ],
+      ast: ['o.set', ['$', '/ast'],
+        'elements', ['$', '/cst/children/1/ast'],
+      ],
     },
     Elements: {
       u: [
-        [{l: [{r: 'Value'}, ',']}, {r: 'Value'}],
+        {
+          p: [{l: [{r: 'Value'}, ',']}, {r: 'Value'}],
+          ast: ['concat', ['$', '/cst/children/0/ast/children'], ['$', '/cst/children/1/ast/children']],
+        },
         '',
       ],
+      ast: ['$', '/cst/children/0/ast'],
     },
 
     Object: {
