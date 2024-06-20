@@ -118,21 +118,21 @@ describe('AST', () => {
 
       test('can parse an empty array', () => {
         const ast = toAst('[]');
-        expect(ast).toEqual(    {
-          "type": "Array",
-          "pos": 0,
-          "end": 2,
-          "children": []
+        expect(ast).toEqual({
+          type: 'Array',
+          pos: 0,
+          end: 2,
+          children: [],
         });
       });
 
       test('can parse an empty array with whitespace', () => {
         const ast = toAst(' [  ] ');
-        expect(ast).toEqual(    {
-          "type": "Array",
-          "pos": 1,
-          "end": 5,
-          "children": []
+        expect(ast).toEqual({
+          type: 'Array',
+          pos: 1,
+          end: 5,
+          children: [],
         });
       });
 
@@ -180,6 +180,86 @@ describe('AST', () => {
               end: 9,
               raw: '3',
               value: 3,
+            },
+          ],
+        });
+      });
+
+      test('can parse nested arrays', () => {
+        const ast = toAst('[[true], 1, [1, [2], [[3]]]]');
+        expect(ast).toEqual({
+          type: 'Array',
+          pos: 0,
+          end: 28,
+          children: [
+            {
+              type: 'Array',
+              pos: 1,
+              end: 7,
+              children: [
+                {
+                  type: 'Boolean',
+                  pos: 2,
+                  end: 6,
+                  value: true,
+                },
+              ],
+            },
+            {
+              type: 'Number',
+              pos: 9,
+              end: 10,
+              raw: '1',
+              value: 1,
+            },
+            {
+              type: 'Array',
+              pos: 12,
+              end: 27,
+              children: [
+                {
+                  type: 'Number',
+                  pos: 13,
+                  end: 14,
+                  raw: '1',
+                  value: 1,
+                },
+                {
+                  type: 'Array',
+                  pos: 16,
+                  end: 19,
+                  children: [
+                    {
+                      type: 'Number',
+                      pos: 17,
+                      end: 18,
+                      raw: '2',
+                      value: 2,
+                    },
+                  ],
+                },
+                {
+                  type: 'Array',
+                  pos: 21,
+                  end: 26,
+                  children: [
+                    {
+                      type: 'Array',
+                      pos: 22,
+                      end: 25,
+                      children: [
+                        {
+                          type: 'Number',
+                          pos: 23,
+                          end: 24,
+                          raw: '3',
+                          value: 3,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
             },
           ],
         });
