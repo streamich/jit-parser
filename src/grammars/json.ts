@@ -87,18 +87,41 @@ export const grammar: Grammar = {
 
     Object: {
       p: ['{', {r: 'Members'}, '}'],
-      // ast: {
-      //   members: {},
-      // },
+      ast: ['o.set', ['$', '/ast'],
+        'children', ['$', '/ast/children/1'],
+      ],
     },
     Members: {
       u: [
-        [{l: [{r: 'Pair'}, ',']}, {r: 'Pair'}],
-        // [{r: 'Pair'}, ',', {r: 'Members'}],
-        // {r: 'Pair'},
-        '',
+        {
+          p: [
+            {
+              l: {
+                p: [{r: 'Entry'}, {t: ',', ast: null}],
+                ast: ['$', '/ast/children/0'],
+              },
+              ast: ['$', '/ast/children']
+            },
+            {r: 'Entry'}
+          ],
+          ast: ['concat', ['$', '/ast/children/0'], ['values',
+            ['o.set', {}, 'child', ['$', '/ast/children/1']]
+          ]],
+        },
+        {r: 'Ws'},
+      ],
+      ast: ['?', ['len', ['$', '/ast/children']],
+        ['$', '/ast/children/0'], [[]]]
+    },
+    Entry: {
+      p: [{r: 'Ws'}, {r: 'String'}, {r: 'Ws'}, ':', {r: 'Value'}],
+      ast: ['o.del',
+        ['o.set', ['$', '/ast'],
+          'key', ['$', '/ast/children/0'],
+          'value', ['$', '/ast/children/2'],
+        ],
+        'children',
       ],
     },
-    Pair: [{r: 'Ws'}, {r: 'String'}, {r: 'Ws'}, ':', {r: 'Value'}],
   }
 };
