@@ -103,8 +103,8 @@ describe('CodegenTerminal', () => {
         t: /(true|false)/,
         ast: ['o.set', {},
           'type', 'MyNode',
-          'start', ['$', '/csr/pos'],
-          'length', ['-', ['$', '/csr/end'], ['$', '/csr/pos']],
+          'start', ['$', '/cst/pos'],
+          'length', ['-', ['$', '/cst/end'], ['$', '/cst/pos']],
         ],
       };
       const parser = CodegenTerminal.compile(terminal);
