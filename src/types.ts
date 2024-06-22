@@ -11,7 +11,7 @@ export interface Grammar {
    * A collection of name grammar nodes. The named nodes can be referenced
    * from other nodes in the grammar, using the `RefNode` type.
    */
-  rules: Record<string, GrammarNode>;
+  cst: Record<string, GrammarNode>;
 }
 
 /**

@@ -119,8 +119,8 @@ export class CodegenGrammar {
   public compileRule(name: string): Parser {
     if (this.parsers.has(name)) return this.parsers.get(name)!;
     const {grammar} = this;
-    const {rules} = grammar;
-    const node = rules[name];
+    const {cst} = grammar;
+    const node = cst[name];
     if (!node) throw new Error(`Unknown [rule = ${name}]`);
     const parser = this.__compileRule(name, node);
     this.parsers.set(name, parser);

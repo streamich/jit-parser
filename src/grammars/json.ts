@@ -5,7 +5,7 @@ import type {Grammar} from '../types';
  */
 export const grammar: Grammar = {
   start: 'Value',
-  rules: {
+  cst: {
     Value: {
       p: [{r: 'Ws'}, {r: 'TValue'}, {r: 'Ws'}],
       ast: ['$', '/cst/children/1/ast'],
