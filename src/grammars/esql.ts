@@ -108,12 +108,13 @@ export const grammar: Grammar = {
         {r: 'BooleanLiteral'},
         {r: 'ParamLiteral'},
         {r: 'StringLiteral'},
-        // ['[', {r: 'NumericValue'}, {l: [',', {r: 'NumericValue'}]}, ']'],
-        // ['[', {r: 'BooleanValue'}, {l: [',', {r: 'BooleanValue'}]}, ']'],
+        {r: 'NumericArrayLiteral'},
+        {r: 'BooleanArrayLiteral'},
         // ['[', {r: 'String'}, {l: [',', {r: 'String'}]}, ']'],
       ],
     },
     NullLiteral: /NULL/i,
+    NumericLiteral: {u: [{r: 'DecimalLiteral'}, {r: 'IntegerLiteral'}]},
     DecimalLiteral: /[\-\+]?\d+\.\d+/,
     IntegerLiteral: /[\-\+]?\d+/,
     BooleanLiteral: /TRUE|FALSE/i,
@@ -122,6 +123,8 @@ export const grammar: Grammar = {
     UnnamedParam: '?',
     NamedParam: /\?[a-zA-Z][a-zA-Z0-9_]*/,
     PositionalParam: /\?\d+/,
+    NumericArrayLiteral: ['[', {r: 'Ws'}, {r: 'NumericLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'NumericLiteral'}]}, {r: 'Ws'}, ']'],
+    BooleanArrayLiteral: ['[', {r: 'Ws'}, {r: 'BooleanLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'BooleanLiteral'}]}, {r: 'Ws'}, ']'],
     
     // ------------------------------------------------------------ Expressions
 
