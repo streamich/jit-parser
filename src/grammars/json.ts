@@ -73,9 +73,7 @@ export const grammar: Grammar = {
             },
             {r: 'Value'}
           ],
-          ast: ['concat', ['$', '/ast/children/0'], ['values',
-            ['o.set', {}, 'child', ['$', '/ast/children/1']]
-          ]],
+          ast: ['push', ['$', '/ast/children/0'], ['$', '/ast/children/1']],
         },
         {r: 'Ws'},
       ],
@@ -104,9 +102,7 @@ export const grammar: Grammar = {
             },
             {r: 'Entry'}
           ],
-          ast: ['concat', ['$', '/ast/children/0'], ['values',
-            ['o.set', {}, 'child', ['$', '/ast/children/1']]
-          ]],
+          ast: ['push', ['$', '/ast/children/0'], ['$', '/ast/children/1']],
         },
         {r: 'Ws'},
       ],
