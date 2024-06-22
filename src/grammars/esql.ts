@@ -17,19 +17,18 @@ export const grammar: Grammar = {
         {r: 'RowCommand'},
         // {r: 'MetricsCommand'},
         {r: 'ShowCommand'},
-        // {r: 'MetaCommand'},
+        {r: 'MetaCommand'},
+        {r: 'EvalCommand'},
       ],
     },
 
     // -------------------------------------------------------- Source commands
 
     // EXPLAIN command
-
-    ExplainCommand: [/EXPLAIN/i, ' ', {r: 'SubqueryExpression'}],
+    ExplainCommand: [/EXPLAIN/i, {r: 'W'}, {r: 'SubqueryExpression'}],
 
     // FROM command
-
-    FromCommand: [/FROM/i, ' ', {r: 'IndexIdentifierList'}, {r: 'Metadata'}],
+    FromCommand: [/FROM/i, {r: 'W'}, {r: 'IndexIdentifierList'}, {r: 'Metadata'}],
     IndexIdentifierList: [{r: 'Ws'}, {r: 'IndexIdentifier'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'IndexIdentifier'}]}],
     Metadata: {
       u: [
@@ -39,11 +38,10 @@ export const grammar: Grammar = {
         '',
       ],
     },
-    MetadataOption: [/METADATA/i, ' ', {r: 'IndexIdentifierList'}],
+    MetadataOption: [/METADATA/i, {r: 'W'}, {r: 'IndexIdentifierList'}],
     DeprecatedMetadata: ['[', {r: 'Ws'}, {r: 'MetadataOption'}, {r: 'Ws'}, ']'],
     
     // ROW command
-
     RowCommand: [/ROW/i, ' ', {r: 'Fields'}],
     Fields: [{r: 'Ws'}, {r: 'Field'}, {l: {r: 'NextField'}, ast: ['$', '/ast/children']}],
     NextField: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'Field'}],
@@ -55,8 +53,15 @@ export const grammar: Grammar = {
     },
 
     // SHOW INFO command
-
     ShowCommand: /SHOW INFO/i,
+
+    // META FUNCTIONS command
+    MetaCommand: /META FUNCTIONS/i,
+
+    // ---------------------------------------------------- Processing commands
+
+    // EVAL command
+    EvalCommand: [/EVAL/i, {r: 'W'}, {r: 'Fields'}],
 
     // ------------------------------------------------------------ Expressions
   
@@ -143,6 +148,7 @@ export const grammar: Grammar = {
     Ws: null,
     SourceCommand: ['$', '/ast/children/0'],
     RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/2']], 'children'],
+    EvalCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1']], 'children'],
     Fields: ['o.set', ['$', '/ast'], 'children', ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']]],
     NextField: ['$', '/ast/children/1'],
     Field: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
@@ -150,6 +156,7 @@ export const grammar: Grammar = {
     ValueExpression: ['$', '/ast/children/0'],
     OperatorExpression: ['$', '/ast/children/0'],
     PrimaryExpression: ['$', '/ast/children/0'],
+    AssignmentExpression: ['o.del', ['o.set', ['$', '/ast'], 'left', ['$', '/ast/children/0'], 'right', ['$', '/ast/children/2']], 'children'],
     Constant: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
     QualifiedName: ['o.set', ['$', '/ast'],
       'children', ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
