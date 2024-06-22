@@ -1,4 +1,4 @@
-import {Codegen} from '@jsonjoy.com/util/lib/codegen'
+import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {CsrMatch} from '../matches';
 import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
 import {operatorsMap} from 'json-joy/lib/json-expression/operators';
@@ -9,7 +9,10 @@ import type {Parser, ProductionNode, ProductionNodeShorthand} from '../types';
 const DEFAULT_TYPE = 'Production';
 
 export class CodegenProduction {
-  public static readonly compile = (production: ProductionNode | ProductionNodeShorthand, parsers: Parser[]): Parser => {
+  public static readonly compile = (
+    production: ProductionNode | ProductionNodeShorthand,
+    parsers: Parser[],
+  ): Parser => {
     const production2: ProductionNode = production instanceof Array ? {p: production} : production;
     const codegen = new CodegenProduction(production2, parsers);
     codegen.generate();
@@ -19,7 +22,10 @@ export class CodegenProduction {
   public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
-  constructor(public readonly node: ProductionNode, public readonly parsers: Parser[]) {
+  constructor(
+    public readonly node: ProductionNode,
+    public readonly parsers: Parser[],
+  ) {
     this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],

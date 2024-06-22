@@ -3,7 +3,7 @@ import type {CsrNode} from './types';
 export class LeafCsrMatch<Kind extends string = string> implements CsrNode {
   public readonly ast: unknown = undefined;
 
-  constructor (
+  constructor(
     public readonly type: Kind,
     public readonly pos: number,
     public readonly end: number,
@@ -14,7 +14,7 @@ export class LeafCsrMatch<Kind extends string = string> implements CsrNode {
 export class CsrMatch<Kind extends string = string> implements CsrNode {
   public readonly ast: unknown = undefined;
 
-  constructor (
+  constructor(
     public readonly type: Kind,
     public readonly pos: number,
     public readonly end: number,

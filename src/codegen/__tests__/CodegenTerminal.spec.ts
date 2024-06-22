@@ -97,14 +97,19 @@ describe('CodegenTerminal', () => {
       const ctx = new ParseContext('true', true);
       expect(parser(ctx, 0)!.ast).toBe(4);
     });
-    
+
     test('can use CSR node to extract information for the AST node', () => {
       const terminal: TerminalNode = {
         t: /(true|false)/,
-        ast: ['o.set', {},
-          'type', 'MyNode',
-          'start', ['$', '/cst/pos'],
-          'length', ['-', ['$', '/cst/end'], ['$', '/cst/pos']],
+        ast: [
+          'o.set',
+          {},
+          'type',
+          'MyNode',
+          'start',
+          ['$', '/cst/pos'],
+          'length',
+          ['-', ['$', '/cst/end'], ['$', '/cst/pos']],
         ],
       };
       const parser = CodegenTerminal.compile(terminal);
@@ -115,7 +120,7 @@ describe('CodegenTerminal', () => {
         length: 4,
       });
     });
-    
+
     test('expression can reference the default AST node', () => {
       const terminal: TerminalNode = {
         t: /(true|false)/,
@@ -130,13 +135,11 @@ describe('CodegenTerminal', () => {
         raw: 'true',
       });
     });
-    
+
     test('can overwrite props of default AST node', () => {
       const terminal: TerminalNode = {
         t: /(true|false)/,
-        ast: ['o.set', ['$', '/ast'],
-          'type', 'Boolean',
-        ],
+        ast: ['o.set', ['$', '/ast'], 'type', 'Boolean'],
       };
       const parser = CodegenTerminal.compile(terminal);
       const ctx = new ParseContext('true', true);

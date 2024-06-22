@@ -23,10 +23,13 @@ describe('CodegenProduction', () => {
     test('can create an AST node', () => {
       const foo = CodegenTerminal.compile('foo');
       const bar = CodegenTerminal.compile('bar');
-      const parse = CodegenProduction.compile({
-        p: ['foo', 'bar'],
-        ast: ['.', 'a', 'bc']
-      }, [foo, bar]);
+      const parse = CodegenProduction.compile(
+        {
+          p: ['foo', 'bar'],
+          ast: ['.', 'a', 'bc'],
+        },
+        [foo, bar],
+      );
       const ctx = new ParseContext('foobar', true);
       const cst = parse(ctx, 0)!;
       expect(cst.ast).toBe('abc');

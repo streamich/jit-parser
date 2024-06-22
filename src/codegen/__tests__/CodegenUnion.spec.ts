@@ -17,24 +17,28 @@ describe('CodegenUnion', () => {
       type: 'FooOrBar',
       pos: 1,
       end: 4,
-      children: [{
-        type: 'Text',
-        pos: 1,
-        end: 4,
-        raw: 'foo',
-      }],
+      children: [
+        {
+          type: 'Text',
+          pos: 1,
+          end: 4,
+          raw: 'foo',
+        },
+      ],
     });
     const ctx2 = new ParseContext('bar', false);
     expect(parse(ctx2, 0)).toMatchObject({
       type: 'FooOrBar',
       pos: 0,
       end: 3,
-      children: [{
-        type: 'Text',
-        pos: 0,
-        end: 3,
-        raw: 'bar',
-      }],
+      children: [
+        {
+          type: 'Text',
+          pos: 0,
+          end: 3,
+          raw: 'bar',
+        },
+      ],
     });
   });
 

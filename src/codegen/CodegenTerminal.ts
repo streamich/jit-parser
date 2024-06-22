@@ -1,4 +1,4 @@
-import {Codegen} from '@jsonjoy.com/util/lib/codegen'
+import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {emitStringMatch} from '@jsonjoy.com/util/lib/codegen/util/helpers';
 import {LeafCsrMatch} from '../matches';
 import {scrub} from '../util';
@@ -41,11 +41,15 @@ export class CodegenTerminal {
       const cleanTerminal = scrub(match);
       const dString = codegen.linkDependency(cleanTerminal);
       const condition = cleanTerminal ? emitStringMatch('str', 'pos', cleanTerminal) : 'true';
-      codegen.if(condition, () => {
-        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${cleanTerminal.length}, ${dString});`);
-      }, () => {
-        codegen.return('');
-      });
+      codegen.if(
+        condition,
+        () => {
+          codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${cleanTerminal.length}, ${dString});`);
+        },
+        () => {
+          codegen.return('');
+        },
+      );
     } else if (match instanceof RegExp) {
       let source = match.source;
       if (source[0] !== '^') source = '^(' + source + ')';
@@ -53,12 +57,18 @@ export class CodegenTerminal {
       const dRegExp = codegen.linkDependency(regExp);
       const rSlice = codegen.var(`str.slice(pos)`);
       const rMatch = codegen.var(`${rSlice}.match(${dRegExp})`);
-      codegen.if(rMatch, () => {
-        const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
-        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`);
-      }, () => {
-        codegen.return('');
-      });
+      codegen.if(
+        rMatch,
+        () => {
+          const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
+          codegen.js(
+            `${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`,
+          );
+        },
+        () => {
+          codegen.return('');
+        },
+      );
     } else {
       throw new Error('INVALID_TERMINAL');
     }

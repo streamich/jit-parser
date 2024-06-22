@@ -1,4 +1,4 @@
-import {Codegen} from '@jsonjoy.com/util/lib/codegen'
+import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {CsrMatch} from '../matches';
 import {scrub} from '../util';
 import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';

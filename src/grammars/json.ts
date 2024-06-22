@@ -12,14 +12,7 @@ export const grammar: Grammar = {
     Ws: /\s*/, // Whitespace
 
     TValue: {
-      u: [
-        {r: 'Null'},
-        {r: 'Boolean'},
-        {r: 'Number'},
-        {r: 'String'},
-        {r: 'Array'},
-        {r: 'Object'},
-      ],
+      u: [{r: 'Null'}, {r: 'Boolean'}, {r: 'Number'}, {r: 'String'}, {r: 'Array'}, {r: 'Object'}],
     },
 
     Null: 'null',
@@ -44,11 +37,11 @@ export const grammar: Grammar = {
             {
               l: {
                 p: [{r: 'Value'}, {t: ',', ast: null}],
-                ast: ['$', '/ast/children/0']  
+                ast: ['$', '/ast/children/0'],
               },
-              ast: ['$', '/ast/children']
+              ast: ['$', '/ast/children'],
             },
-            {r: 'Value'}
+            {r: 'Value'},
           ],
           ast: ['push', ['$', '/ast/children/0'], ['$', '/ast/children/1']],
         },
@@ -66,9 +59,9 @@ export const grammar: Grammar = {
                 p: [{r: 'Entry'}, {t: ',', ast: null}],
                 ast: ['$', '/ast/children/0'],
               },
-              ast: ['$', '/ast/children']
+              ast: ['$', '/ast/children'],
             },
-            {r: 'Entry'}
+            {r: 'Entry'},
           ],
           ast: ['push', ['$', '/ast/children/0'], ['$', '/ast/children/1']],
         },
@@ -82,32 +75,21 @@ export const grammar: Grammar = {
     Value: ['$', '/cst/children/1/ast'],
     Ws: null,
     TValue: ['$', '/cst/children/0/ast'],
-    Boolean: ['o.set', ['$', '/ast'],
-      'value', ['?', ['==', ['$', '/cst/children/0/raw'], 'true'], true, false],
+    Boolean: ['o.set', ['$', '/ast'], 'value', ['?', ['==', ['$', '/cst/children/0/raw'], 'true'], true, false]],
+    Number: ['o.set', ['$', '/ast'], 'value', ['num', ['$', '/cst/raw']]],
+    String: ['o.set', ['$', '/ast'], 'value', ['$', '/cst/children/1/raw']],
+    Array: ['o.set', ['$', '/ast'], 'children', ['$', '/ast/children/1/children']],
+    Elements: [
+      'o.set',
+      ['$', '/ast'],
+      'children',
+      ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0'], [[]]],
     ],
-    Number: ['o.set', ['$', '/ast'],
-      'value', ['num', ['$', '/cst/raw']],
-    ],
-    String: ['o.set', ['$', '/ast'],
-      'value', ['$', '/cst/children/1/raw'],
-    ],
-    Array: ['o.set', ['$', '/ast'],
-      'children', ['$', '/ast/children/1/children'],
-    ],
-    Elements: ['o.set', ['$', '/ast'],
-      'children', ['?', ['len', ['$', '/ast/children']],
-        ['$', '/ast/children/0'], [[]]]
-    ],
-    Object: ['o.set', ['$', '/ast'],
-      'children', ['$', '/ast/children/1'],
-    ],
-    Members: ['?', ['len', ['$', '/ast/children']],
-      ['$', '/ast/children/0'], [[]]],
-    Entry: ['o.del',
-      ['o.set', ['$', '/ast'],
-        'key', ['$', '/ast/children/0'],
-        'value', ['$', '/ast/children/2'],
-      ],
+    Object: ['o.set', ['$', '/ast'], 'children', ['$', '/ast/children/1']],
+    Members: ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0'], [[]]],
+    Entry: [
+      'o.del',
+      ['o.set', ['$', '/ast'], 'key', ['$', '/ast/children/0'], 'value', ['$', '/ast/children/2']],
       'children',
     ],
   },

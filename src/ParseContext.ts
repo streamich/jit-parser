@@ -1,5 +1,5 @@
 export class ParseContext {
-  constructor (
+  constructor(
     /**
      * The string to parse.
      */

@@ -28,14 +28,11 @@ const isProductionShorthandNode = (item: any): item is ProductionNodeShorthand =
 const isProductionNode = (item: any): item is ProductionNode =>
   typeof item === 'object' && item && isProductionShorthandNode(item.p);
 
-const isUnionNode = (item: any): item is UnionNode =>
-  typeof item === 'object' && item && (item.u instanceof Array);
+const isUnionNode = (item: any): item is UnionNode => typeof item === 'object' && item && item.u instanceof Array;
 
-const isListNode = (item: any): item is ListNode =>
-  typeof item === 'object' && item && (typeof item.l !== 'undefined');
+const isListNode = (item: any): item is ListNode => typeof item === 'object' && item && typeof item.l !== 'undefined';
 
-const isRefNode = (item: any): item is RefNode =>
-  typeof item === 'object' && item && typeof item.r === 'string';
+const isRefNode = (item: any): item is RefNode => typeof item === 'object' && item && typeof item.r === 'string';
 
 export class CodegenGrammar {
   public static readonly compile = (grammar: Grammar): Parser => {

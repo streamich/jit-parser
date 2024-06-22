@@ -1,4 +1,4 @@
-import {Codegen} from '@jsonjoy.com/util/lib/codegen'
+import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {CsrMatch} from '../matches';
 import {scrub} from '../util';
 import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
@@ -34,8 +34,7 @@ export class CodegenUnion {
     const deps: string[] = [];
     const dCsrMatch = codegen.linkDependency(CsrMatch);
     const dType = codegen.linkDependency(this.type);
-    for (const parser of parsers)
-      deps.push(codegen.linkDependency(parser));
+    for (const parser of parsers) deps.push(codegen.linkDependency(parser));
     const rMatch = codegen.var(`${deps.join('(ctx, pos) || ')}(ctx, pos)`);
     codegen.if(`!${rMatch}`, () => {
       codegen.return('');

@@ -24,7 +24,7 @@ export interface Grammar {
 /**
  * All possible grammar nodes that can be defined in a grammar object.
  */
-export type GrammarNode = 
+export type GrammarNode =
   | RefNode
   | TerminalNodeShorthand
   | TerminalNode
@@ -167,7 +167,7 @@ export type Parser = (ctx: ParseContext, pos: number) => CsrNode | undefined;
  * to its CST tree. The "ast" properties in grammar nodes can specify how the AST
  * tree should be generated. `undefined` means the default AST generation, `null`
  * means that no AST node will be generated
- * 
+ *
  * If not `null` or `undefined` the value will be treated as a JSON Expression,
  * which will be executed and its return value will be used as the AST node. The
  * expression will run with the {@link AstExpressionData} object as its context.

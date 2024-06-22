@@ -17,9 +17,11 @@ describe('CodegenGrammar', () => {
           type: 'TValue',
           pos: 1,
           end: 2,
-          children: [{
-            type: 'Number',
-          }],
+          children: [
+            {
+              type: 'Number',
+            },
+          ],
         },
         {type: 'Ws', pos: 2, end: 4},
       ],
