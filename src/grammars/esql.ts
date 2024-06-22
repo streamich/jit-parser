@@ -7,13 +7,14 @@ export const grammar: Grammar = {
   start: 'Query',
 
   cst: {
-    Query: [{r: 'Ws'}, {r: 'SourceCommand'}, {r: 'Ws'}],
+    Query: [{r: 'Ws'}, {r: 'SourceCommand'}, /\s+|$/],
+    W: /\s+/,
     Ws: /\s*/,
     SourceCommand: {
       u: [
         {r: 'ExplainCommand'},
         {r: 'FromCommand'},
-        // {r: 'RowCommand'},
+        {r: 'RowCommand'},
         // {r: 'MetricsCommand'},
         {r: 'ShowCommand'},
         // {r: 'MetaCommand'},
@@ -22,8 +23,10 @@ export const grammar: Grammar = {
 
     // -------------------------------------------------------- Source commands
 
+    // EXPLAIN command --------------------------------------------------------
     ExplainCommand: [/EXPLAIN/i, ' ', {r: 'SubqueryExpression'}],
-    
+
+    // FROM command -----------------------------------------------------------
     FromCommand: [/FROM/i, ' ', {r: 'IndexIdentifierList'}, {r: 'Metadata'}],
     IndexIdentifierList: [{r: 'Ws'}, {r: 'IndexIdentifier'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'IndexIdentifier'}]}],
     Metadata: {
@@ -37,11 +40,88 @@ export const grammar: Grammar = {
     MetadataOption: [/METADATA/i, ' ', {r: 'IndexIdentifierList'}],
     DeprecatedMetadata: ['[', {r: 'Ws'}, {r: 'MetadataOption'}, {r: 'Ws'}, ']'],
     
+    // ROW command ------------------------------------------------------------
+    RowCommand: [/ROW/i, ' ', {r: 'Fields'}],
+    Fields: [{r: 'Ws'}, {r: 'Field'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'Field'}]}],
+    Field: {
+      u: [
+        {r: 'BooleanExpression'},
+        // [{r: 'QualifiedName'}, {r: 'Ws'}, '=', {r: 'Ws'}, {r: 'BooleanExpression'}],
+      ],
+    },
+
+    // SHOW INFO command ------------------------------------------------------
     ShowCommand: /SHOW INFO/i,
 
-    // ---------------------------------------------------------------- Sources
-    
+    // ------------------------------------------------------------------ Atoms
+  
     IndexIdentifier: /(?!\/)(?!.*\/$)(?!.*\/\/)[a-zA-Z_\.][a-zA-Z0-9_\.\/\-\*]*/,
+    // UNQUOTED_IDENTIFIER
+    // : LETTER UNQUOTED_ID_BODY*
+    // // only allow @ at beginning of identifier to keep the option to allow @ as infix operator in the future
+    // // also, single `_` and `@` characters are not valid identifiers
+    // | (UNDERSCORE | ASPERAND) UNQUOTED_ID_BODY+
+    // ;
+    UnquotedIdentifier: /[a-zA-Z_\@][a-zA-Z0-9_]*/,
+
+    // ------------------------------------------------------------ Expressions
+  
+    BooleanExpression: {
+      u: [
+        {r: 'LogicalNot'},
+        {r: 'ValueExpression'},
+        // {r: 'RegexBooleanExpression'},
+        // {r: 'LogicalBinary'},
+        // {r: 'LogicalIn'},
+        // {r: 'IsNull'},
+      ],
+    },
+    LogicalNot: [{r: 'Ws'}, 'NOT', {r: 'W'}, {r: 'BooleanExpression'}],
+    ValueExpression: {
+      u: [
+        {r: 'OperatorExpression'},
+        // {r: 'Comparison'},
+      ],
+    },
+    OperatorExpression: {
+      u: [
+        {r: 'PrimaryExpression'},
+        // {r: 'ArithmeticUnary'},
+        // {r: 'ArithmeticBinary'},
+      ],
+    },
+    PrimaryExpression: {
+      u: [
+        {r: 'Constant'},
+        // {r: 'QualifiedName'},
+        // {r: 'FunctionExpression'},
+        // [{r: 'Ws'}, '(', {r: 'BooleanExpression'}, ')'],
+        // {r: 'InlineCast'},
+      ],
+    },
+    Constant: {
+      u: [
+        {r: 'NullLiteral'},
+        [{r: 'IntegerLiteral'}, {r: 'Ws'}, {r: 'UnquotedIdentifier'}],
+        {r: 'DecimalLiteral'},
+        {r: 'IntegerLiteral'},
+        {r: 'BooleanLiteral'},
+        {r: 'ParamLiteral'},
+        {r: 'StringLiteral'},
+        // ['[', {r: 'NumericValue'}, {l: [',', {r: 'NumericValue'}]}, ']'],
+        // ['[', {r: 'BooleanValue'}, {l: [',', {r: 'BooleanValue'}]}, ']'],
+        // ['[', {r: 'String'}, {l: [',', {r: 'String'}]}, ']'],
+      ],
+    },
+    NullLiteral: /NULL/i,
+    DecimalLiteral: /[\-\+]?\d+\.\d+/,
+    IntegerLiteral: /[\-\+]?\d+/,
+    BooleanLiteral: /TRUE|FALSE/i,
+    StringLiteral: /"(\\[\t\n\r"]|[^\t\n\r"])*"/,
+    ParamLiteral: {u: [{r: 'NamedParam'}, {r: 'PositionalParam'}, {r: 'UnnamedParam'}]},
+    UnnamedParam: '?',
+    NamedParam: /\?[a-zA-Z][a-zA-Z0-9_]*/,
+    PositionalParam: /\?\d+/,
     
     // ------------------------------------------------------------ Expressions
 
