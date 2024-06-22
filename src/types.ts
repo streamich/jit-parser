@@ -12,6 +12,13 @@ export interface Grammar {
    * from other nodes in the grammar, using the `RefNode` type.
    */
   cst: Record<string, GrammarNode>;
+
+  /**
+   * A collection of AST node factories for named CST nodes. If the AST node
+   * factory is not specified on the CST node itself, the one by name from
+   * this list will be used.
+   */
+  ast?: Record<string, AstNodeFactory>;
 }
 
 /**
@@ -65,7 +72,7 @@ export interface ProductionNode {
   /**
    * Optional AST transformation.
    */
-  ast?: undefined | null | unknown;
+  ast?: AstNodeFactory;
 
   /**
    * If the list node is a leaf node. In this case, the AST node `children`
@@ -92,7 +99,7 @@ export interface UnionNode {
   /**
    * Optional AST transformation.
    */
-  ast?: undefined | null | unknown;
+  ast?: AstNodeFactory;
 
   /**
    * If the list node is a leaf node. In this case, the AST node `children`
