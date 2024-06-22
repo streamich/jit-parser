@@ -7,7 +7,10 @@ export const grammar: Grammar = {
   start: 'Query',
 
   cst: {
-    Query: [{r: 'Ws'}, {r: 'SourceCommand'}, {t: /\s+|$/, ast: null}],
+    Query: [{r: 'Ws'}, {r: 'SourceCommand'}, {r: 'QueryChain'}, {t: /\s+|$/, ast: null}],
+    QueryChain: {l: {r: 'PipedCommand'}},
+    PipedCommand: [{r: 'Ws'}, '|', {r: 'Ws'}, {r: 'Command'}],
+    Command: {u: [{r: 'SourceCommand'}, {r: 'ProcessingCommand'}]},
     W: /\s+/,
     Ws: /\s*/,
     SourceCommand: {
@@ -18,7 +21,24 @@ export const grammar: Grammar = {
         // {r: 'MetricsCommand'},
         {r: 'ShowCommand'},
         {r: 'MetaCommand'},
+      ],
+    },
+    ProcessingCommand: {
+      u: [
         {r: 'EvalCommand'},
+        // {r: 'InlineStatsCommand'},
+        // {r: 'LimitCommand'},
+        // {r: 'LookupCommand'},
+        // {r: 'KeepCommand'},
+        // {r: 'SortCommand'},
+        // {r: 'StatsCommand'},
+        // {r: 'WhereCommand'},
+        // {r: 'DropCommand'},
+        // {r: 'RenameCommand'},
+        // {r: 'DissectCommand'},
+        // {r: 'GrokCommand'},
+        // {r: 'EnrichCommand'},
+        // {r: 'MvExpandCommand'},
       ],
     },
 
@@ -32,24 +52,24 @@ export const grammar: Grammar = {
     IndexIdentifierList: [{r: 'Ws'}, {r: 'IndexIdentifier'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'IndexIdentifier'}]}],
     Metadata: {
       u: [
-        [{r: 'Ws'}, {
-          u: [{r: 'MetadataOption'}, {r: 'DeprecatedMetadata'}]
-        }],
+        [
+          {r: 'Ws'},
+          {
+            u: [{r: 'MetadataOption'}, {r: 'DeprecatedMetadata'}],
+          },
+        ],
         '',
       ],
     },
     MetadataOption: [/METADATA/i, {r: 'W'}, {r: 'IndexIdentifierList'}],
     DeprecatedMetadata: ['[', {r: 'Ws'}, {r: 'MetadataOption'}, {r: 'Ws'}, ']'],
-    
+
     // ROW command
     RowCommand: [/ROW/i, ' ', {r: 'Fields'}],
     Fields: [{r: 'Ws'}, {r: 'Field'}, {l: {r: 'NextField'}, ast: ['$', '/ast/children']}],
     NextField: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'Field'}],
     Field: {
-      u: [
-        {r: 'AssignmentExpression'},
-        {r: 'BooleanExpression'},
-      ],
+      u: [{r: 'AssignmentExpression'}, {r: 'BooleanExpression'}],
     },
 
     // SHOW INFO command
@@ -64,7 +84,7 @@ export const grammar: Grammar = {
     EvalCommand: [/EVAL/i, {r: 'W'}, {r: 'Fields'}],
 
     // ------------------------------------------------------------ Expressions
-  
+
     BooleanExpression: {
       u: [
         {r: 'LogicalNot'},
@@ -129,12 +149,33 @@ export const grammar: Grammar = {
     UnnamedParam: '?',
     NamedParam: /\?[a-zA-Z][a-zA-Z0-9_]*/,
     PositionalParam: /\?\d+/,
-    NumericArrayLiteral: ['[', {r: 'Ws'}, {r: 'NumericLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'NumericLiteral'}]}, {r: 'Ws'}, ']'],
-    BooleanArrayLiteral: ['[', {r: 'Ws'}, {r: 'BooleanLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'BooleanLiteral'}]}, {r: 'Ws'}, ']'],
-    StringArrayLiteral: ['[', {r: 'Ws'}, {r: 'StringLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'StringLiteral'}]}, {r: 'Ws'}, ']'],
+    NumericArrayLiteral: [
+      '[',
+      {r: 'Ws'},
+      {r: 'NumericLiteral'},
+      {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'NumericLiteral'}]},
+      {r: 'Ws'},
+      ']',
+    ],
+    BooleanArrayLiteral: [
+      '[',
+      {r: 'Ws'},
+      {r: 'BooleanLiteral'},
+      {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'BooleanLiteral'}]},
+      {r: 'Ws'},
+      ']',
+    ],
+    StringArrayLiteral: [
+      '[',
+      {r: 'Ws'},
+      {r: 'StringLiteral'},
+      {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'StringLiteral'}]},
+      {r: 'Ws'},
+      ']',
+    ],
 
     // ------------------------------------------------------------ Identifiers
-  
+
     IndexIdentifier: /(?!\/)(?!.*\/$)(?!.*\/\/)[a-zA-Z_\.][a-zA-Z0-9_\.\/\-\*]*/,
     QualifiedName: [{r: 'Identifier'}, {l: {r: 'NextIdentifier'}, ast: ['$', '/ast/children']}],
     Identifier: {u: [{r: 'UnquotedIdentifier'}, {r: 'QuotedIdentifier'}]},
@@ -146,29 +187,61 @@ export const grammar: Grammar = {
   ast: {
     W: null,
     Ws: null,
+    Query: [
+      'o.set',
+      ['$', '/ast'],
+      'children',
+      ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
+    ],
+    QueryChain: ['$', '/ast/children'],
+    PipedCommand: ['$', '/ast/children/1'],
+    Command: ['$', '/ast/children/0'],
     SourceCommand: ['$', '/ast/children/0'],
+    ProcessingCommand: ['$', '/ast/children/0'],
     RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/2']], 'children'],
     EvalCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1']], 'children'],
-    Fields: ['o.set', ['$', '/ast'], 'children', ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']]],
+    Fields: [
+      'o.set',
+      ['$', '/ast'],
+      'children',
+      ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
+    ],
     NextField: ['$', '/ast/children/1'],
     Field: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
     BooleanExpression: ['$', '/ast/children/0'],
     ValueExpression: ['$', '/ast/children/0'],
     OperatorExpression: ['$', '/ast/children/0'],
     PrimaryExpression: ['$', '/ast/children/0'],
-    AssignmentExpression: ['o.del', ['o.set', ['$', '/ast'], 'left', ['$', '/ast/children/0'], 'right', ['$', '/ast/children/2']], 'children'],
+    AssignmentExpression: [
+      'o.del',
+      ['o.set', ['$', '/ast'], 'left', ['$', '/ast/children/0'], 'right', ['$', '/ast/children/2']],
+      'children',
+    ],
     Constant: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
-    QualifiedName: ['o.set', ['$', '/ast'],
-      'children', ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
-      'value', ['substr', ['reduce', ['$', '/ast/children'], '', 'acc', 'x', ['.', ['$', 'acc'], '.', ['$', 'x/value/value']]], 1, 4096],
+    QualifiedName: [
+      'o.set',
+      ['$', '/ast'],
+      'children',
+      ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
+      'value',
+      [
+        'substr',
+        ['reduce', ['$', '/ast/children'], '', 'acc', 'x', ['.', ['$', 'acc'], '.', ['$', 'x/value/value']]],
+        1,
+        4096,
+      ],
     ],
     Identifier: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
     NextIdentifier: ['$', '/ast/children/1'],
     UnquotedIdentifier: ['o.set', ['$', '/ast'], 'value', ['$', '/ast/raw']],
-    QuotedIdentifier: ['o.set', ['$', '/ast'], 'value', ['substr', ['$', '/ast/raw'], 1, ['-', ['len', ['$', '/ast/raw']], 1]]],
+    QuotedIdentifier: [
+      'o.set',
+      ['$', '/ast'],
+      'value',
+      ['substr', ['$', '/ast/raw'], 1, ['-', ['len', ['$', '/ast/raw']], 1]],
+    ],
   },
 };
-
 
 // parser grammar esql_parser;
 
@@ -305,7 +378,6 @@ export const grammar: Grammar = {
 // inlinestatsCommand
 //     : INLINESTATS stats=fields (BY grouping=fields)?
 //     ;
-
 
 // qualifiedName
 //     : identifier (DOT identifier)*
