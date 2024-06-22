@@ -75,7 +75,6 @@ export class CodegenTerminal {
     if (terminal.ast !== null) {
       const rAst = codegen.var(`{type:${dType}, pos:pos, end:${rResult}.end, raw:${rResult}.raw}`);
       codegen.if('ctx.ast', () => {
-        // TODO: generate an external function? `if (ctx.ast) res.ast = dx();`.
         if (terminal.ast) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>terminal.ast,
