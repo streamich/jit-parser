@@ -131,8 +131,9 @@ export const grammar: Grammar = {
     // ------------------------------------------------------------ Identifiers
   
     IndexIdentifier: /(?!\/)(?!.*\/$)(?!.*\/\/)[a-zA-Z_\.][a-zA-Z0-9_\.\/\-\*]*/,
-    QualifiedName: [{r: 'Identifier'}, {l: [{r: 'Ws'}, '.', {r: 'Ws'}, {r: 'Identifier'}]}],
+    QualifiedName: [{r: 'Identifier'}, {l: {r: 'NextIdentifier'}, ast: ['$', '/ast/children']}],
     Identifier: {u: [{r: 'UnquotedIdentifier'}, {r: 'QuotedIdentifier'}]},
+    NextIdentifier: [{r: 'Ws'}, '.', {r: 'Ws'}, {r: 'Identifier'}],
     UnquotedIdentifier: /[a-zA-Z][a-zA-Z0-9_]*|[_\@][a-zA-Z0-9_]+/,
     QuotedIdentifier: /`([^`]|``)+`/,
   },
@@ -140,6 +141,7 @@ export const grammar: Grammar = {
   ast: {
     W: null,
     Ws: null,
+    SourceCommand: ['$', '/ast/children/0'],
     RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/2']], 'children'],
     Fields: ['o.set', ['$', '/ast'], 'children', ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']]],
     NextField: ['$', '/ast/children/1'],
@@ -149,6 +151,14 @@ export const grammar: Grammar = {
     OperatorExpression: ['$', '/ast/children/0'],
     PrimaryExpression: ['$', '/ast/children/0'],
     Constant: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
+    QualifiedName: ['o.set', ['$', '/ast'],
+      'children', ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
+      'value', ['substr', ['reduce', ['$', '/ast/children'], '', 'acc', 'x', ['.', ['$', 'acc'], '.', ['$', 'x/value/value']]], 1, 4096],
+    ],
+    Identifier: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
+    NextIdentifier: ['$', '/ast/children/1'],
+    UnquotedIdentifier: ['o.set', ['$', '/ast'], 'value', ['$', '/ast/raw']],
+    QuotedIdentifier: ['o.set', ['$', '/ast'], 'value', ['substr', ['$', '/ast/raw'], 1, ['-', ['len', ['$', '/ast/raw']], 1]]],
   },
 };
 
