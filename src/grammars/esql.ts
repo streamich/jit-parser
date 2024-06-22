@@ -46,23 +46,12 @@ export const grammar: Grammar = {
     Field: {
       u: [
         {r: 'BooleanExpression'},
-        // [{r: 'QualifiedName'}, {r: 'Ws'}, '=', {r: 'Ws'}, {r: 'BooleanExpression'}],
+        {r: 'AssignmentExpression'},
       ],
     },
 
     // SHOW INFO command ------------------------------------------------------
     ShowCommand: /SHOW INFO/i,
-
-    // ------------------------------------------------------------------ Atoms
-  
-    IndexIdentifier: /(?!\/)(?!.*\/$)(?!.*\/\/)[a-zA-Z_\.][a-zA-Z0-9_\.\/\-\*]*/,
-    // UNQUOTED_IDENTIFIER
-    // : LETTER UNQUOTED_ID_BODY*
-    // // only allow @ at beginning of identifier to keep the option to allow @ as infix operator in the future
-    // // also, single `_` and `@` characters are not valid identifiers
-    // | (UNDERSCORE | ASPERAND) UNQUOTED_ID_BODY+
-    // ;
-    UnquotedIdentifier: /[a-zA-Z_\@][a-zA-Z0-9_]*/,
 
     // ------------------------------------------------------------ Expressions
   
@@ -93,12 +82,19 @@ export const grammar: Grammar = {
     PrimaryExpression: {
       u: [
         {r: 'Constant'},
-        // {r: 'QualifiedName'},
+        {r: 'QualifiedName'},
         // {r: 'FunctionExpression'},
         // [{r: 'Ws'}, '(', {r: 'BooleanExpression'}, ')'],
         // {r: 'InlineCast'},
       ],
     },
+
+    AssignmentExpression: [{r: 'QualifiedName'}, {r: 'Ws'}, '=', {r: 'Ws'}, {r: 'BooleanExpression'}],
+
+    SubqueryExpression: [{r: 'Ws'}, '(', {r: 'Query'}, ')', {r: 'Ws'}],
+
+    // --------------------------------------------------------------- Literals
+
     Constant: {
       u: [
         {r: 'NullLiteral'},
@@ -110,7 +106,7 @@ export const grammar: Grammar = {
         {r: 'StringLiteral'},
         {r: 'NumericArrayLiteral'},
         {r: 'BooleanArrayLiteral'},
-        // ['[', {r: 'String'}, {l: [',', {r: 'String'}]}, ']'],
+        {r: 'StringArrayLiteral'},
       ],
     },
     NullLiteral: /NULL/i,
@@ -125,10 +121,15 @@ export const grammar: Grammar = {
     PositionalParam: /\?\d+/,
     NumericArrayLiteral: ['[', {r: 'Ws'}, {r: 'NumericLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'NumericLiteral'}]}, {r: 'Ws'}, ']'],
     BooleanArrayLiteral: ['[', {r: 'Ws'}, {r: 'BooleanLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'BooleanLiteral'}]}, {r: 'Ws'}, ']'],
-    
-    // ------------------------------------------------------------ Expressions
+    StringArrayLiteral: ['[', {r: 'Ws'}, {r: 'StringLiteral'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'StringLiteral'}]}, {r: 'Ws'}, ']'],
 
-    SubqueryExpression: [{r: 'Ws'}, '(', {r: 'Query'}, ')', {r: 'Ws'}],
+    // ------------------------------------------------------------ Identifiers
+  
+    IndexIdentifier: /(?!\/)(?!.*\/$)(?!.*\/\/)[a-zA-Z_\.][a-zA-Z0-9_\.\/\-\*]*/,
+    QualifiedName: [{r: 'Identifier'}, {l: [{r: 'Ws'}, '.', {r: 'Ws'}, {r: 'Identifier'}]}],
+    Identifier: {u: [{r: 'UnquotedIdentifier'}, {r: 'QuotedIdentifier'}]},
+    UnquotedIdentifier: /[a-zA-Z][a-zA-Z0-9_]*|[_\@][a-zA-Z0-9_]+/,
+    QuotedIdentifier: /`([^`]|``)+`/,
   },
 };
 
