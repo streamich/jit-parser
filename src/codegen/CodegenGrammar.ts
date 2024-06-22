@@ -123,7 +123,7 @@ export class CodegenGrammar {
     const {grammar} = this;
     const {cst} = grammar;
     const node = cst[name];
-    if (!node) throw new Error(`Unknown [rule = ${name}]`);
+    if (node === undefined) throw new Error(`Unknown [rule = ${name}]`);
     const parser = this.__compileRule(name, node);
     this.parsers.set(name, parser);
     return parser;
