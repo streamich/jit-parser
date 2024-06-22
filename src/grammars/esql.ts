@@ -7,7 +7,7 @@ export const grammar: Grammar = {
   start: 'Query',
 
   cst: {
-    Query: [{r: 'Ws'}, {r: 'SourceCommand'}, /\s+|$/],
+    Query: [{r: 'Ws'}, {r: 'SourceCommand'}, {t: /\s+|$/, ast: null}],
     W: /\s+/,
     Ws: /\s*/,
     SourceCommand: {
@@ -23,10 +23,12 @@ export const grammar: Grammar = {
 
     // -------------------------------------------------------- Source commands
 
-    // EXPLAIN command --------------------------------------------------------
+    // EXPLAIN command
+
     ExplainCommand: [/EXPLAIN/i, ' ', {r: 'SubqueryExpression'}],
 
-    // FROM command -----------------------------------------------------------
+    // FROM command
+
     FromCommand: [/FROM/i, ' ', {r: 'IndexIdentifierList'}, {r: 'Metadata'}],
     IndexIdentifierList: [{r: 'Ws'}, {r: 'IndexIdentifier'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'IndexIdentifier'}]}],
     Metadata: {
@@ -40,17 +42,20 @@ export const grammar: Grammar = {
     MetadataOption: [/METADATA/i, ' ', {r: 'IndexIdentifierList'}],
     DeprecatedMetadata: ['[', {r: 'Ws'}, {r: 'MetadataOption'}, {r: 'Ws'}, ']'],
     
-    // ROW command ------------------------------------------------------------
+    // ROW command
+
     RowCommand: [/ROW/i, ' ', {r: 'Fields'}],
-    Fields: [{r: 'Ws'}, {r: 'Field'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'Field'}]}],
+    Fields: [{r: 'Ws'}, {r: 'Field'}, {l: {r: 'NextField'}, ast: ['$', '/ast/children']}],
+    NextField: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'Field'}],
     Field: {
       u: [
-        {r: 'BooleanExpression'},
         {r: 'AssignmentExpression'},
+        {r: 'BooleanExpression'},
       ],
     },
 
-    // SHOW INFO command ------------------------------------------------------
+    // SHOW INFO command
+
     ShowCommand: /SHOW INFO/i,
 
     // ------------------------------------------------------------ Expressions
@@ -130,6 +135,20 @@ export const grammar: Grammar = {
     Identifier: {u: [{r: 'UnquotedIdentifier'}, {r: 'QuotedIdentifier'}]},
     UnquotedIdentifier: /[a-zA-Z][a-zA-Z0-9_]*|[_\@][a-zA-Z0-9_]+/,
     QuotedIdentifier: /`([^`]|``)+`/,
+  },
+
+  ast: {
+    W: null,
+    Ws: null,
+    RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/2']], 'children'],
+    Fields: ['o.set', ['$', '/ast'], 'children', ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']]],
+    NextField: ['$', '/ast/children/1'],
+    Field: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
+    BooleanExpression: ['$', '/ast/children/0'],
+    ValueExpression: ['$', '/ast/children/0'],
+    OperatorExpression: ['$', '/ast/children/0'],
+    PrimaryExpression: ['$', '/ast/children/0'],
+    Constant: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
   },
 };
 
