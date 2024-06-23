@@ -69,27 +69,27 @@ export class CodegenGrammar {
 
   protected compileTerminal(terminal: TerminalNode | TerminalNodeShorthand): Parser {
     const node: TerminalNode = isTerminalShorthandNode(terminal) ? {t: terminal} : terminal;
-    if (node.type) node.ast ??= this.grammar.ast?.[node.type];
+    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
     return CodegenTerminal.compile(node);
   }
 
   protected compileProduction(node: ProductionNode): Parser {
     const parsers: Parser[] = [];
     for (const component of node.p) parsers.push(this.compileNode(component));
-    if (node.type) node.ast ??= this.grammar.ast?.[node.type];
+    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
     return CodegenProduction.compile(node, parsers);
   }
 
   protected compileUnion(node: UnionNode): Parser {
     const parsers: Parser[] = [];
     for (const item of node.u) parsers.push(this.compileNode(item));
-    if (node.type) node.ast ??= this.grammar.ast?.[node.type];
+    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
     return CodegenUnion.compile(node, parsers);
   }
 
   protected compileList(node: ListNode): Parser {
     const parser = this.compileNode(node.l);
-    if (node.type) node.ast ??= this.grammar.ast?.[node.type];
+    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
     return CodegenList.compile(node, parser);
   }
 
