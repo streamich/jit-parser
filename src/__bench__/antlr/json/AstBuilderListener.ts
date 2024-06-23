@@ -141,7 +141,6 @@ export class AstBuilderListener extends JSONListener {
   }
 
   exitNull(ctx: antlr4.ParserRuleContext) {
-    console.log(ctx);
     this.stack.push({type: 'Null', ...this.getPositionFragment(ctx)});
     this.pop();
   }

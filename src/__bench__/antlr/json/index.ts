@@ -4,7 +4,7 @@ import MyGrammarParser from './generated/JSONParser.js';
 import {AstBuilderListener} from './AstBuilderListener';
 
 export const toCst = (json: string) => {
-  const chars = new antlr4.InputStream(input);
+  const chars = new antlr4.InputStream(json);
   const lexer = new MyGrammarLexer(chars);
   const tokens = new antlr4.CommonTokenStream(lexer);
   const parser = new MyGrammarParser(tokens);
@@ -19,8 +19,3 @@ export const toAst = (json: string) => {
   const ast = astBuilder.lastPoppedValue;
   return ast;
 };
-
-const input = '[{"a": "b", "c": [false]}, "foo", "bar", 1, null, true, false]';
-// const input = '{"a": "b"}';
-const ast = toAst(input);
-console.log(JSON.stringify(ast, null, 2));

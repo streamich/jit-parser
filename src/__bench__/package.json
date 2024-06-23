@@ -1,8 +1,10 @@
 {
   "scripts": {
-    "bench:json": "npx ts-node bench.traces.crdt-libs.ts"
+    "bench:json": "npx ts-node bench.json.ts"
   },
   "devDependencies": {
-    "antlr4": "4.13.1-patch-1"
+    "@types/benchmark": "^2.1.5",
+    "antlr4": "4.13.1-patch-1",
+    "benchmark": "^2.1.4"
   }
 }
