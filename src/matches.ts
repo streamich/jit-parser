@@ -1,23 +1,22 @@
-import type {CsrNode} from './types';
+import type {CsrNode, ResolvedGrammarNode} from './types';
 
-export class LeafCsrMatch<Kind extends string = string> implements CsrNode {
+export class LeafCsrMatch implements CsrNode {
   public readonly ast: unknown = undefined;
 
   constructor(
-    public readonly type: Kind,
     public readonly pos: number,
     public readonly end: number,
-    public readonly raw: string,
+    public readonly src: ResolvedGrammarNode,
   ) {}
 }
 
-export class CsrMatch<Kind extends string = string> implements CsrNode {
+export class CsrMatch implements CsrNode {
   public readonly ast: unknown = undefined;
 
   constructor(
-    public readonly type: Kind,
     public readonly pos: number,
     public readonly end: number,
+    public readonly src: ResolvedGrammarNode,
     public readonly children: CsrNode[],
   ) {}
 }
