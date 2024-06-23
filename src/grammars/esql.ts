@@ -4,6 +4,8 @@ const EPSILON = {t: '', ast: null};
 const W = {r: 'W'};
 const OptW = {r: 'Ws'};
 const r = ([name]: TemplateStringsArray) => ({r: name});
+const AstUseChildren = ['$', '/ast/children'];
+const AstUseFirstChild = ['$', '/ast/children/0'];
 
 /**
  * ES|QL grammar.
@@ -54,7 +56,7 @@ export const grammar: Grammar = {
 
     // FROM command
     FromCommand: [/FROM/i, W, r`IndexIdentifierList`, r`Metadata`],
-    IndexIdentifierList: [OptW, r`IndexIdentifier`, {l: r`NextIndexIdentifier`, ast: ['$', '/ast/children']}],
+    IndexIdentifierList: [OptW, r`IndexIdentifier`, {l: r`NextIndexIdentifier`, ast: AstUseChildren}],
     NextIndexIdentifier: [OptW, ',', OptW, r`IndexIdentifier`],
     Metadata: {
       u: [
@@ -62,21 +64,21 @@ export const grammar: Grammar = {
           OptW,
           {
             u: [r`MetadataOption`, r`DeprecatedMetadata`],
-            ast: ['$', '/ast/children/0'],
+            ast: AstUseFirstChild,
           },
         ],
         EPSILON,
       ],
     },
-    MetadataOption: [/METADATA/i, {r: 'W'}, {r: 'IndexIdentifierList'}],
-    DeprecatedMetadata: ['[', {r: 'Ws'}, {r: 'MetadataOption'}, {r: 'Ws'}, ']'],
+    MetadataOption: [/METADATA/i, W, r`IndexIdentifierList`],
+    DeprecatedMetadata: ['[', OptW, r`MetadataOption`, OptW, ']'],
 
     // ROW command
-    RowCommand: [/ROW/i, ' ', {r: 'Fields'}],
-    Fields: [{r: 'Ws'}, {r: 'Field'}, {l: {r: 'NextField'}, ast: ['$', '/ast/children']}],
-    NextField: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'Field'}],
+    RowCommand: [/ROW/i, W, r`Fields`],
+    Fields: [OptW, r`Field`, {l: r`NextField`, ast: AstUseChildren}],
+    NextField: [OptW, ',', OptW, r`Field`],
     Field: {
-      u: [{r: 'AssignmentExpression'}, {r: 'BooleanExpression'}],
+      u: [r`AssignmentExpression`, r`BooleanExpression`],
     },
 
     // SHOW INFO command
@@ -223,7 +225,7 @@ export const grammar: Grammar = {
       ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
     ],
     NextIndexIdentifier: ['$', '/ast/children/1'],
-    RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/2']], 'children'],
+    RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1/children']], 'children'],
     EvalCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1']], 'children'],
     Fields: [
       'o.set',
@@ -233,10 +235,10 @@ export const grammar: Grammar = {
     ],
     NextField: ['$', '/ast/children/1'],
     Field: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
-    BooleanExpression: ['$', '/ast/children/0'],
-    ValueExpression: ['$', '/ast/children/0'],
-    OperatorExpression: ['$', '/ast/children/0'],
-    PrimaryExpression: ['$', '/ast/children/0'],
+    BooleanExpression: AstUseFirstChild,
+    ValueExpression: AstUseFirstChild,
+    OperatorExpression: AstUseFirstChild,
+    PrimaryExpression: AstUseFirstChild,
     AssignmentExpression: [
       'o.del',
       ['o.set', ['$', '/ast'], 'left', ['$', '/ast/children/0'], 'right', ['$', '/ast/children/2']],
@@ -251,12 +253,12 @@ export const grammar: Grammar = {
       'value',
       [
         'substr',
-        ['reduce', ['$', '/ast/children'], '', 'acc', 'x', ['.', ['$', 'acc'], '.', ['$', 'x/value/value']]],
+        ['reduce', ['$', '/ast/children'], '', 'acc', 'x', ['.', ['$', 'acc'], '.', ['$', 'x/value']]],
         1,
         4096,
       ],
     ],
-    Identifier: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
+    Identifier: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0/value']], 'children'],
     NextIdentifier: ['$', '/ast/children/1'],
     UnquotedIdentifier: ['o.set', ['$', '/ast'], 'value', ['$', '/ast/raw']],
     QuotedIdentifier: [
