@@ -1,8 +1,8 @@
 import {CodegenGrammar} from '../../codegen/CodegenGrammar';
-import {ParseContext} from '../../ParseContext';
+import {CodegenContext, ParseContext} from '../../context';
 import {grammar} from '../javascript';
 
-const codegen = new CodegenGrammar(grammar);
+const codegen = new CodegenGrammar(grammar, new CodegenContext(false, true));
 const parser = codegen.compile();
 
 const toAst = (src: string) => {
@@ -22,7 +22,7 @@ const toAstRule = (rule: string, src: string) => {
 describe('AST', () => {
   test('...', () => {
     // const ast = toAst('FROM sample-index-* [METADATA _id]');
-    const ast = toAst('null / true / false');
+    const ast = toAst('1 + 2 * 3 + 4');
     console.log(JSON.stringify(ast, null, 2));
   });
 });
