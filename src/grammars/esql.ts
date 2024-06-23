@@ -1,9 +1,12 @@
-import type {Grammar} from '../types';
+import type {Grammar, GrammarNode, UnionNode} from '../types';
 
 const EPSILON = {t: '', ast: null};
 const W = {r: 'W'};
 const OptW = {r: 'Ws'};
+
 const r = ([name]: TemplateStringsArray) => ({r: name});
+const opt = (node: GrammarNode): UnionNode => ({u: [node, EPSILON], ast: ['?', ['len', ['$', '/ast/children']], AstUseFirstChild, null]});
+
 const AstUseChildren = ['$', '/ast/children'];
 const AstUseFirstChild = ['$', '/ast/children/0'];
 
@@ -90,25 +93,25 @@ export const grammar: Grammar = {
     // ---------------------------------------------------- Processing commands
 
     // EVAL command
-    EvalCommand: [/EVAL/i, {r: 'W'}, {r: 'Fields'}],
+    EvalCommand: [/EVAL/i, W, r`Fields`],
 
     // INLINESTATS command
-    InlineStatsCommand: [/INLINESTATS/i, {r: 'W'}, {r: 'Fields'}, {r: 'OptByGrouping'}],
-    OptByGrouping: [{r: 'Ws'}, /BY/i, {r: 'W'}, {r: 'Fields'}],
+    InlineStatsCommand: [/INLINESTATS/i, W, r`Fields`, opt(r`ByGrouping`)],
+    ByGrouping: [W, /BY/i, W, r`Fields`],
 
     // ------------------------------------------------------------ Expressions
 
     BooleanExpression: {
       u: [
-        {r: 'LogicalNot'},
-        {r: 'ValueExpression'},
-        // {r: 'RegexBooleanExpression'},
-        // {r: 'LogicalBinary'},
-        // {r: 'LogicalIn'},
-        // {r: 'IsNull'},
+        r`LogicalNot`,
+        r`ValueExpression`,
+        // r`RegexBooleanExpression`,
+        // r`LogicalBinary`,
+        // r`LogicalIn`,
+        // r`IsNull`,
       ],
     },
-    LogicalNot: [{r: 'Ws'}, 'NOT', {r: 'W'}, {r: 'BooleanExpression'}],
+    LogicalNot: [OptW, 'NOT', W, {r: 'BooleanExpression'}],
     ValueExpression: {
       u: [
         {r: 'OperatorExpression'},
@@ -206,11 +209,11 @@ export const grammar: Grammar = {
       'children',
       ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
     ],
-    QueryChain: ['$', '/ast/children'],
+    QueryChain: AstUseChildren,
     PipedCommand: ['$', '/ast/children/1'],
-    Command: ['$', '/ast/children/0'],
-    SourceCommand: ['$', '/ast/children/0'],
-    ProcessingCommand: ['$', '/ast/children/0'],
+    Command: AstUseFirstChild,
+    SourceCommand: AstUseFirstChild,
+    ProcessingCommand: AstUseFirstChild,
     FromCommand: ['o.del',
       ['o.set', ['$', '/ast'], 'sources', ['$', '/ast/children/1'], 'metadata', ['$', '/ast/children/2', null]],
       'children'
@@ -227,6 +230,7 @@ export const grammar: Grammar = {
     NextIndexIdentifier: ['$', '/ast/children/1'],
     RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1/children']], 'children'],
     EvalCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1']], 'children'],
+    InlineStatsCommand: ['o.del', ['o.set', ['$', '/ast'], 'aggregates', ['$', '/ast/children/1/children'], 'grouping', ['$', '/ast/children/2/children/1/children', null]], 'children'],
     Fields: [
       'o.set',
       ['$', '/ast'],

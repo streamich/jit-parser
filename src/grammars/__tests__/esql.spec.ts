@@ -22,7 +22,7 @@ const toAstRule = (rule: string, src: string) => {
 describe('AST', () => {
   test('...', () => {
     // const ast = toAst('FROM sample-index-* [METADATA _id]');
-    const ast = toAst('ROW a = 1, 3');
+    const ast = toAst('FROM abc | INLINESTATS g BY 23');
     console.log(JSON.stringify(ast, null, 2));
   });
 });
