@@ -1,5 +1,10 @@
 import type {Grammar} from '../types';
 
+const EPSILON = {t: '', ast: null};
+const W = {r: 'W'};
+const OptW = {r: 'Ws'};
+const r = ([name]: TemplateStringsArray) => ({r: name});
+
 /**
  * ES|QL grammar.
  */
@@ -26,7 +31,7 @@ export const grammar: Grammar = {
     ProcessingCommand: {
       u: [
         {r: 'EvalCommand'},
-        // {r: 'InlineStatsCommand'},
+        {r: 'InlineStatsCommand'},
         // {r: 'LimitCommand'},
         // {r: 'LookupCommand'},
         // {r: 'KeepCommand'},
@@ -45,20 +50,22 @@ export const grammar: Grammar = {
     // -------------------------------------------------------- Source commands
 
     // EXPLAIN command
-    ExplainCommand: [/EXPLAIN/i, {r: 'W'}, {r: 'SubqueryExpression'}],
+    ExplainCommand: [/EXPLAIN/i, W, r`SubqueryExpression`],
 
     // FROM command
-    FromCommand: [/FROM/i, {r: 'W'}, {r: 'IndexIdentifierList'}, {r: 'Metadata'}],
-    IndexIdentifierList: [{r: 'Ws'}, {r: 'IndexIdentifier'}, {l: [{r: 'Ws'}, ',', {r: 'Ws'}, {r: 'IndexIdentifier'}]}],
+    FromCommand: [/FROM/i, W, r`IndexIdentifierList`, r`Metadata`],
+    IndexIdentifierList: [OptW, r`IndexIdentifier`, {l: r`NextIndexIdentifier`, ast: ['$', '/ast/children']}],
+    NextIndexIdentifier: [OptW, ',', OptW, r`IndexIdentifier`],
     Metadata: {
       u: [
         [
-          {r: 'Ws'},
+          OptW,
           {
-            u: [{r: 'MetadataOption'}, {r: 'DeprecatedMetadata'}],
+            u: [r`MetadataOption`, r`DeprecatedMetadata`],
+            ast: ['$', '/ast/children/0'],
           },
         ],
-        '',
+        EPSILON,
       ],
     },
     MetadataOption: [/METADATA/i, {r: 'W'}, {r: 'IndexIdentifierList'}],
@@ -82,6 +89,10 @@ export const grammar: Grammar = {
 
     // EVAL command
     EvalCommand: [/EVAL/i, {r: 'W'}, {r: 'Fields'}],
+
+    // INLINESTATS command
+    InlineStatsCommand: [/INLINESTATS/i, {r: 'W'}, {r: 'Fields'}, {r: 'OptByGrouping'}],
+    OptByGrouping: [{r: 'Ws'}, /BY/i, {r: 'W'}, {r: 'Fields'}],
 
     // ------------------------------------------------------------ Expressions
 
@@ -198,6 +209,20 @@ export const grammar: Grammar = {
     Command: ['$', '/ast/children/0'],
     SourceCommand: ['$', '/ast/children/0'],
     ProcessingCommand: ['$', '/ast/children/0'],
+    FromCommand: ['o.del',
+      ['o.set', ['$', '/ast'], 'sources', ['$', '/ast/children/1'], 'metadata', ['$', '/ast/children/2', null]],
+      'children'
+    ],
+    Metadata: ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0/children/0'], null],a: ['len', [[]]],
+    MetadataOption: ['$', '/ast/children/1'],
+    DeprecatedMetadata: ['$', '/ast/children/1'],
+    IndexIdentifierList: [
+      'o.set',
+      ['$', '/ast'],
+      'children',
+      ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
+    ],
+    NextIndexIdentifier: ['$', '/ast/children/1'],
     RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/2']], 'children'],
     EvalCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1']], 'children'],
     Fields: [
