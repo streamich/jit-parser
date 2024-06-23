@@ -12,7 +12,7 @@ export const grammar: Grammar = {
     Ws: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null},
 
     TValue: {
-      u: [{r: 'Null'}, {r: 'Boolean'}, {r: 'Number'}, {r: 'String'}, {r: 'Array'}, {r: 'Object'}],
+      u: [{r: 'Null'}, {r: 'Boolean'}, {r: 'String'}, {r: 'Object'}, {r: 'Array'}, {r: 'Number'}],
     },
 
     Null: 'null',
