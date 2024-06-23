@@ -16,6 +16,7 @@ import type {
   ListNode,
 } from '../types';
 import {CodegenList} from './CodegenList';
+import {CodegenContext} from '../context';
 
 const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;
@@ -43,7 +44,7 @@ export class CodegenGrammar {
   public readonly codegen: Codegen<Parser>;
   protected readonly parsers = new Map<string, Parser>();
 
-  constructor(public readonly grammar: Grammar) {
+  constructor(public readonly grammar: Grammar, protected readonly ctx: CodegenContext = new CodegenContext()) {
     this.codegen = new Codegen({
       args: ['str', 'pos'],
     });
@@ -69,28 +70,40 @@ export class CodegenGrammar {
 
   protected compileTerminal(terminal: TerminalNode | TerminalNodeShorthand): Parser {
     const node: TerminalNode = isTerminalShorthandNode(terminal) ? {t: terminal} : terminal;
-    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
-    return CodegenTerminal.compile(node);
+    if (node.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[node.type];
+      if (ast !== void 0) node.ast = ast;
+    }
+    return CodegenTerminal.compile(node, this.ctx);
   }
 
   protected compileProduction(node: ProductionNode): Parser {
     const parsers: Parser[] = [];
     for (const component of node.p) parsers.push(this.compileNode(component));
-    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
-    return CodegenProduction.compile(node, parsers);
+    if (node.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[node.type];
+      if (ast !== void 0) node.ast = ast;
+    }
+    return CodegenProduction.compile(node, parsers, this.ctx);
   }
 
   protected compileUnion(node: UnionNode): Parser {
     const parsers: Parser[] = [];
     for (const item of node.u) parsers.push(this.compileNode(item));
-    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
-    return CodegenUnion.compile(node, parsers);
+    if (node.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[node.type];
+      if (ast !== void 0) node.ast = ast;
+    }
+    return CodegenUnion.compile(node, parsers, this.ctx);
   }
 
   protected compileList(node: ListNode): Parser {
     const parser = this.compileNode(node.l);
-    if (node.type && node.ast === undefined) node.ast ??= this.grammar.ast?.[node.type];
-    return CodegenList.compile(node, parser);
+    if (node.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[node.type];
+      if (ast !== void 0) node.ast = ast;
+    }
+    return CodegenList.compile(node, parser, this.ctx);
   }
 
   private __compileRule(name: string, node: GrammarNode): Parser {

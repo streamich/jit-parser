@@ -5,6 +5,7 @@ import {scrub} from '../util';
 import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
 import {operatorsMap} from 'json-joy/lib/json-expression/operators';
 import {Vars} from 'json-joy/lib/json-expression/Vars';
+import {CodegenContext} from '../context';
 import type {Parser, TerminalNode, TerminalNodeShorthand} from '../types';
 
 const DEFAULT_KIND = 'Text';
@@ -13,9 +14,9 @@ const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;
 
 export class CodegenTerminal {
-  public static readonly compile = (terminal: TerminalNode | TerminalNodeShorthand): Parser => {
-    if (isTerminalShorthandNode(terminal)) return CodegenTerminal.compile({t: terminal});
-    const codegen = new CodegenTerminal(terminal);
+  public static readonly compile = (terminal: TerminalNode | TerminalNodeShorthand, ctx: CodegenContext = new CodegenContext()): Parser => {
+    if (isTerminalShorthandNode(terminal)) return CodegenTerminal.compile({t: terminal}, ctx);
+    const codegen = new CodegenTerminal(terminal, ctx);
     codegen.generate();
     return codegen.compile();
   };
@@ -23,7 +24,10 @@ export class CodegenTerminal {
   public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
-  constructor(public readonly node: TerminalNode) {
+  constructor(
+    public readonly node: TerminalNode,
+    protected readonly ctx: CodegenContext,
+  ) {
     this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_KIND;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],
@@ -73,7 +77,8 @@ export class CodegenTerminal {
       throw new Error('INVALID_TERMINAL');
     }
     if (terminal.ast !== null) {
-      const rAst = codegen.var(`{type:${dType}, pos:pos, end:${rResult}.end, raw:${rResult}.raw}`);
+      const positionFragment = this.ctx.positions ? `, pos:pos, end:${rResult}.end` : '';
+      const rAst = codegen.var(`{type:${dType}${positionFragment}, raw:${rResult}.raw}`);
       codegen.if('ctx.ast', () => {
         if (terminal.ast) {
           const exprCodegen = new JsonExpressionCodegen({
@@ -85,7 +90,6 @@ export class CodegenTerminal {
           const dVars = codegen.linkDependency(Vars);
           codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
         } else {
-          const rAst = codegen.var(`{type:${dType},pos:pos,end:${rResult}.end,raw:${rResult}.raw}`);
           codegen.js(`${rResult}.ast = ${rAst};`);
         }
       });

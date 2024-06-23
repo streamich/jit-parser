@@ -4,13 +4,18 @@ import {scrub} from '../util';
 import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
 import {operatorsMap} from 'json-joy/lib/json-expression/operators';
 import {Vars} from 'json-joy/lib/json-expression/Vars';
+import {CodegenContext} from '../context';
 import type {ListNode, Parser} from '../types';
 
 const DEFAULT_TYPE = 'List';
 
 export class CodegenList {
-  public static readonly compile = (rule: ListNode, parser: Parser): Parser => {
-    const codegen = new CodegenList(rule, parser);
+  public static readonly compile = (
+    rule: ListNode,
+    parser: Parser,
+    ctx: CodegenContext = new CodegenContext(),
+  ): Parser => {
+    const codegen = new CodegenList(rule, parser, ctx);
     codegen.generate();
     return codegen.compile();
   };
@@ -21,6 +26,7 @@ export class CodegenList {
   constructor(
     public readonly node: ListNode,
     public readonly parser: Parser,
+    protected readonly ctx: CodegenContext,
   ) {
     this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
@@ -44,8 +50,9 @@ export class CodegenList {
     const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
     if (node.ast !== null) {
       codegen.if('ctx.ast', () => {
-        const childrenProp = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
-        const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos${childrenProp}}`);
+        const childrenFragment = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
+        const positionFragment = this.ctx.positions ? `, pos:${rStart}, end:pos` : '';
+        const rAst = codegen.var(`{type:${dType}${positionFragment}${childrenFragment}}`);
         if (node.ast) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>node.ast,

@@ -5,6 +5,7 @@ import {operatorsMap} from 'json-joy/lib/json-expression/operators';
 import {Vars} from 'json-joy/lib/json-expression/Vars';
 import {scrub} from '../util';
 import type {Parser, ProductionNode, ProductionNodeShorthand} from '../types';
+import {CodegenContext} from '../context';
 
 const DEFAULT_TYPE = 'Production';
 
@@ -12,9 +13,10 @@ export class CodegenProduction {
   public static readonly compile = (
     production: ProductionNode | ProductionNodeShorthand,
     parsers: Parser[],
+    ctx: CodegenContext = new CodegenContext(),
   ): Parser => {
     const production2: ProductionNode = production instanceof Array ? {p: production} : production;
-    const codegen = new CodegenProduction(production2, parsers);
+    const codegen = new CodegenProduction(production2, parsers, ctx);
     codegen.generate();
     return codegen.compile();
   };
@@ -25,6 +27,7 @@ export class CodegenProduction {
   constructor(
     public readonly node: ProductionNode,
     public readonly parsers: Parser[],
+    protected readonly ctx: CodegenContext,
   ) {
     this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
@@ -53,8 +56,9 @@ export class CodegenProduction {
     const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
     if (node.ast !== null) {
       codegen.if('ctx.ast', () => {
-        const childrenProp = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
-        const rAst = codegen.var(`{type:${dType}, pos:${rStart}, end:pos${childrenProp}}`);
+        const childrenFragment = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
+        const positionFragment = this.ctx.positions ? `, pos:${rStart}, end:pos` : '';
+        const rAst = codegen.var(`{type:${dType}${positionFragment}${childrenFragment}}`);
         if (node.ast) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>node.ast,
