@@ -4,6 +4,9 @@ import {CodegenGrammar} from '../codegen/CodegenGrammar';
 import {ParseContext} from '../context';
 import {json0, json1} from './data/jsons';
 import * as antlr from './antlr/json';
+import * as prism from 'prismjs';
+
+require('prismjs/components/prism-json');
 
 const parser = CodegenGrammar.compile(grammar);
 
@@ -17,11 +20,10 @@ const toAst = (json: string) => {
   return parser(ctx, 0)?.ast;
 };
 
-const json = JSON.stringify(json0);
+const json = JSON.stringify(json0, null, 4);
 const suite = new Benchmark.Suite();
 
-// console.log(JSON.stringify(toAst(json), null, 2));
-// console.log(JSON.stringify(antlr.toAst(json), null, 2));
+const prismGrammar = prism.languages['json'];
 
 suite.add('jit-parser', () => {
   toCst(json);
@@ -31,6 +33,10 @@ suite.add('jit-parser', () => {
 suite.add('ANTLR4', () => {
   antlr.toCst(json);
   // antlr.toAst(json);
+});
+
+suite.add('Prism.js', () => {
+  prism.tokenize(json, prismGrammar);
 });
 
 suite.on('cycle', (event: Benchmark.Event) => {

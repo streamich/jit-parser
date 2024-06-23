@@ -4,7 +4,9 @@
   },
   "devDependencies": {
     "@types/benchmark": "^2.1.5",
+    "@types/prismjs": "^1.26.4",
     "antlr4": "4.13.1-patch-1",
-    "benchmark": "^2.1.4"
+    "benchmark": "^2.1.4",
+    "prismjs": "^1.29.0"
   }
 }
