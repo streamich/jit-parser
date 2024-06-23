@@ -5,8 +5,6 @@ import {scrub} from '../util';
 import {CodegenContext} from '../context';
 import type {Parser, TerminalNode, TerminalNodeShorthand} from '../types';
 
-const DEFAULT_KIND = 'Text';
-
 const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;
 
@@ -18,14 +16,12 @@ export class CodegenTerminal {
     return codegen.compile();
   };
 
-  public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
   constructor(
     public readonly node: TerminalNode,
     protected readonly ctx: CodegenContext,
   ) {
-    this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_KIND;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],
       prologue: 'var str = ctx.str;',
@@ -39,7 +35,6 @@ export class CodegenTerminal {
     const dLeafCsrMatch = codegen.linkDependency(LeafCsrMatch);
     if (typeof match === 'string') {
       const cleanTerminal = scrub(match);
-      const dString = codegen.linkDependency(cleanTerminal);
       const condition = cleanTerminal ? emitStringMatch('str', 'pos', cleanTerminal) : 'true';
       codegen.if(`!(${condition})`,
         () => {
