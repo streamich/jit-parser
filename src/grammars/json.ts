@@ -9,7 +9,7 @@ export const grammar: Grammar = {
   cst: {
     Value: [{r: 'Ws'}, {r: 'TValue'}, {r: 'Ws'}],
 
-    Ws: {t: [' '], repeat: '*', ast: null},
+    Ws: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null},
 
     TValue: {
       u: [{r: 'Null'}, {r: 'Boolean'}, {r: 'Number'}, {r: 'String'}, {r: 'Array'}, {r: 'Object'}],
