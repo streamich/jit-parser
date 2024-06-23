@@ -2,9 +2,6 @@ import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {emitStringMatch} from '@jsonjoy.com/util/lib/codegen/util/helpers';
 import {LeafCsrMatch} from '../matches';
 import {scrub} from '../util';
-import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
-import {operatorsMap} from 'json-joy/lib/json-expression/operators';
-import {Vars} from 'json-joy/lib/json-expression/Vars';
 import {CodegenContext} from '../context';
 import type {Parser, TerminalNode, TerminalNodeShorthand} from '../types';
 
@@ -36,11 +33,10 @@ export class CodegenTerminal {
   }
 
   public generate() {
-    const {codegen, node: terminal} = this;
-    const match = terminal.t;
-    const dType = codegen.linkDependency(this.type);
+    const {codegen, node} = this;
+    const match = node.t;
+    const dNode = codegen.linkDependency(node);
     const dLeafCsrMatch = codegen.linkDependency(LeafCsrMatch);
-    const rResult = codegen.var();
     if (typeof match === 'string') {
       const cleanTerminal = scrub(match);
       const dString = codegen.linkDependency(cleanTerminal);
@@ -50,7 +46,7 @@ export class CodegenTerminal {
           codegen.return('');
         },
       );
-      codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${cleanTerminal.length}, ${dString});`);
+      codegen.return(`new ${dLeafCsrMatch}(pos, pos + ${cleanTerminal.length}, ${dNode});`);
     } else if (match instanceof RegExp) {
       let source = match.source;
       if (source[0] !== '^') source = '^(' + source + ')';
@@ -64,11 +60,9 @@ export class CodegenTerminal {
         },
       );
       const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
-      codegen.js(
-        `${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`,
-      );
+      codegen.return(`new ${dLeafCsrMatch}(pos, pos + ${rLength}, ${dNode});`);
     } else if (match instanceof Array) {
-      if (terminal.repeat) {
+      if (node.repeat) {
         const rEnd = codegen.var('pos');
         codegen.while('1', () => {
           for (const match0 of match) {
@@ -84,12 +78,12 @@ export class CodegenTerminal {
           }
           codegen.js('break;');
         });
-        if (terminal.repeat === '+') {
+        if (node.repeat === '+') {
           codegen.if(`${rEnd} === pos`, () => {
             codegen.return('');
           });
         }
-        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, ${rEnd}, str.slice(pos, ${rEnd}));`);
+        codegen.return(`new ${dLeafCsrMatch}(pos, ${rEnd}, ${dNode});`);
       } else {
         const rEnd = codegen.var('pos');
         for (const match0 of match) {
@@ -105,30 +99,11 @@ export class CodegenTerminal {
         codegen.if(`${rEnd} === pos`, () => {
           codegen.return('');
         });
-        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, ${rEnd}, str.slice(pos, ${rEnd}));`);
+        codegen.return(`new ${dLeafCsrMatch}(pos, ${rEnd}, ${dNode});`);
       }
     } else {
       throw new Error('INVALID_TERMINAL');
     }
-    if (terminal.ast !== null) {
-      const positionFragment = this.ctx.positions ? `, pos:pos, end:${rResult}.end` : '';
-      const rAst = codegen.var(`{type:${dType}${positionFragment}, raw:${rResult}.raw}`);
-      codegen.if('ctx.ast', () => {
-        if (terminal.ast && this.ctx.astExpressions) {
-          const exprCodegen = new JsonExpressionCodegen({
-            expression: <any>terminal.ast,
-            operators: operatorsMap,
-          });
-          const fn = exprCodegen.run().compile();
-          const dExpr = codegen.linkDependency(fn);
-          const dVars = codegen.linkDependency(Vars);
-          codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
-        } else {
-          codegen.js(`${rResult}.ast = ${rAst};`);
-        }
-      });
-    }
-    codegen.return(rResult);
   }
 
   public compile(): Parser {
