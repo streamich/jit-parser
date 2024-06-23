@@ -3,48 +3,48 @@ import JSONListener from './generated/JSONListener.js';
 
 export type JsonAstNode = ObjectKind | ObjectEntry | ArrayKind | StringKind | NumberKind | BooleanKind | NullKind;
 
-interface NullKind {
+export interface NullKind {
   type: 'Null';
   pos: number;
   end: number;
 }
 
-interface BooleanKind {
+export interface BooleanKind {
   type: 'Boolean';
   pos: number;
   end: number;
   value: true | false;
 }
 
-interface NumberKind {
+export interface NumberKind {
   type: 'Number';
   pos: number;
   end: number;
   value: number;
 }
 
-interface StringKind {
+export interface StringKind {
   type: 'String';
   pos: number;
   end: number;
   value: string;
 }
 
-interface ArrayKind {
+export interface ArrayKind {
   type: 'Array';
   pos: number;
   end: number;
   elements: JsonAstNode[];
 }
 
-interface ObjectKind {
+export interface ObjectKind {
   type: 'Object';
   pos: number;
   end: number;
   entries: ObjectEntry[];
 }
 
-interface ObjectEntry {
+export interface ObjectEntry {
   type: 'ObjectEntry';
   pos: number;
   end: number;
@@ -52,7 +52,7 @@ interface ObjectEntry {
   value: JsonAstNode;
 }
 
-interface ObjectEntryPartial extends Omit<ObjectEntry, 'key' | 'value'> {
+export interface ObjectEntryPartial extends Omit<ObjectEntry, 'key' | 'value'> {
   key?: StringKind;
   value?: JsonAstNode;
 }
