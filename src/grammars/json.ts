@@ -34,16 +34,16 @@ export const grammar: Grammar = {
       u: [
         {
           p: [
+            {r: 'Value'},
             {
               l: {
-                p: [{r: 'Value'}, {t: ',', ast: null}],
+                p: [{t: ',', ast: null}, {r: 'Value'}],
                 ast: ['$', '/ast/children/0'],
               },
               ast: ['$', '/ast/children'],
             },
-            {r: 'Value'},
           ],
-          ast: ['push', ['$', '/ast/children/0'], ['$', '/ast/children/1']],
+          ast: ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
         },
         {r: 'Ws'},
       ],
@@ -54,16 +54,16 @@ export const grammar: Grammar = {
       u: [
         {
           p: [
+            {r: 'Entry'},
             {
               l: {
-                p: [{r: 'Entry'}, {t: ',', ast: null}],
+                p: [{t: ',', ast: null}, {r: 'Entry'}],
                 ast: ['$', '/ast/children/0'],
               },
               ast: ['$', '/ast/children'],
             },
-            {r: 'Entry'},
           ],
-          ast: ['push', ['$', '/ast/children/0'], ['$', '/ast/children/1']],
+          ast: ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
         },
         {r: 'Ws'},
       ],
