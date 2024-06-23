@@ -1,13 +1,7 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {CsrMatch} from '../matches';
-import {scrub} from '../util';
-import {JsonExpressionCodegen} from 'json-joy/lib/json-expression';
-import {operatorsMap} from 'json-joy/lib/json-expression/operators';
-import {Vars} from 'json-joy/lib/json-expression/Vars';
 import {CodegenContext} from '../context';
 import type {ListNode, Parser} from '../types';
-
-const DEFAULT_TYPE = 'List';
 
 export class CodegenList {
   public static readonly compile = (
@@ -20,7 +14,6 @@ export class CodegenList {
     return codegen.compile();
   };
 
-  public readonly type: string;
   public readonly codegen: Codegen<Parser>;
 
   constructor(
@@ -28,7 +21,6 @@ export class CodegenList {
     public readonly parser: Parser,
     protected readonly ctx: CodegenContext,
   ) {
-    this.type = typeof node.type === 'string' ? scrub(node.type) : DEFAULT_TYPE;
     this.codegen = new Codegen({
       args: ['ctx', 'pos'],
       prologue: 'var str = ctx.str;',
@@ -38,7 +30,7 @@ export class CodegenList {
   public generate() {
     const {node, codegen, parser} = this;
     const dCsrMatch = codegen.linkDependency(CsrMatch);
-    const dType = codegen.linkDependency(this.type);
+    const dNode = codegen.linkDependency(node);
     const dParser = codegen.linkDependency(parser);
     const rStart = codegen.var('pos');
     const rChild = codegen.var();
@@ -47,27 +39,7 @@ export class CodegenList {
       codegen.js(`${rChildren}.push(${rChild})`);
       codegen.js(`pos = ${rChild}.end`);
     });
-    const rResult = codegen.var(`new ${dCsrMatch}(${dType}, ${rStart}, pos, ${rChildren})`);
-    if (node.ast !== null) {
-      codegen.if('ctx.ast', () => {
-        const childrenFragment = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
-        const positionFragment = this.ctx.positions ? `, pos:${rStart}, end:pos` : '';
-        const rAst = codegen.var(`{type:${dType}${positionFragment}${childrenFragment}}`);
-        if (node.ast && this.ctx.astExpressions) {
-          const exprCodegen = new JsonExpressionCodegen({
-            expression: <any>node.ast,
-            operators: operatorsMap,
-          });
-          const fn = exprCodegen.run().compile();
-          const dExpr = codegen.linkDependency(fn);
-          const dVars = codegen.linkDependency(Vars);
-          codegen.js(`${rResult}.ast = ${dExpr}({vars: new ${dVars}({cst: ${rResult}, ast: ${rAst}})})`);
-        } else {
-          codegen.js(`${rResult}.ast = ${rAst};`);
-        }
-      });
-    }
-    codegen.return(rResult);
+    return codegen.return(`new ${dCsrMatch}(${rStart}, pos, ${dNode}, ${rChildren})`);
   }
 
   public compile(): Parser {
