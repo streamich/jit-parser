@@ -22,7 +22,7 @@ export const grammar: Grammar = {
       leaf: true,
     },
 
-    Number: /\-?0|(\-?[1-9][0-9]*)(\.[0-9]+)?/,
+    Number: /\-?(0|([1-9][0-9]{0,25}))(\.[0-9]{1,25})?([eE][\+\-]?[0-9]{1,25})?/,
 
     String: {
       p: [{t: '"', ast: null}, /[^"]*/, {t: '"', ast: null}],
