@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "bench:json": "npx ts-node bench.traces.crdt-libs.ts"
+  },
+  "devDependencies": {
+    "antlr4": "4.13.1-patch-1"
+  }
+}
