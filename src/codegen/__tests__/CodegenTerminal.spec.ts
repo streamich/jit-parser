@@ -1,21 +1,28 @@
-import {LeafCsrMatch} from '../../matches';
+import {LeafCstMatch} from '../../matches';
 import {CodegenContext, ParseContext} from '../../context';
 import {TerminalNode} from '../../types';
 import {CodegenTerminal} from '../CodegenTerminal';
+import {Pattern} from '../Pattern';
 
-const ctx = new CodegenContext(true, false);
+const createPattern = (node: TerminalNode) => {
+  const pattern = new Pattern('Text');
+  const parser = CodegenTerminal.compile(node, pattern);
+  pattern.parser = parser;
+  return pattern;
+};
 
 describe('CodegenTerminal', () => {
   describe('string', () => {
     test('can match a simple string', () => {
       const terminal = {t: 'foo'};
-      const parser = CodegenTerminal.compile(terminal);
+      const pattern = createPattern(terminal);
+      const parser = pattern.parser;
       expect(parser(new ParseContext('bar', false), 0)).toBe(undefined);
-      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
+      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
       expect(parser(new ParseContext('foo', false), 0)).toEqual({
         pos: 0,
         end: 3,
-        src: terminal,
+        ptr: pattern,
       });
     });
 
@@ -25,14 +32,15 @@ describe('CodegenTerminal', () => {
         type: 'LeftParen',
         t: '(',
       };
-      const parser = CodegenTerminal.compile(node);
+      const pattern = createPattern(node);
       const ctx = new ParseContext(str, false);
+      const parser = pattern.parser;
       expect(parser(ctx, 0)).toBe(undefined);
-      expect(parser(ctx, 8)).toStrictEqual(new LeafCsrMatch(8, 9, node));
+      expect(parser(ctx, 8)).toStrictEqual(new LeafCstMatch(8, 9, pattern));
       expect(parser(ctx, 8)).toEqual({
         pos: 8,
         end: 9,
-        src: node,
+        ptr: pattern,
       });
     });
   });
@@ -43,14 +51,15 @@ describe('CodegenTerminal', () => {
         type: 'Boolean',
         t: /(true|false)/,
       };
-      const parser = CodegenTerminal.compile(node);
+      const pattern = createPattern(node);
+      const parser = pattern.parser;
       expect(parser(new ParseContext('foo', false), 0)).toBe(undefined);
-      expect(parser(new ParseContext('true', false), 0)).toStrictEqual(new LeafCsrMatch(0, 4, node));
-      expect(parser(new ParseContext('a = false', false), 4)).toStrictEqual(new LeafCsrMatch(4, 9, node));
+      expect(parser(new ParseContext('true', false), 0)).toStrictEqual(new LeafCstMatch(0, 4, pattern));
+      expect(parser(new ParseContext('a = false', false), 4)).toStrictEqual(new LeafCstMatch(4, 9, pattern));
       expect(parser(new ParseContext('a = false', false), 4)).toEqual({
         pos: 4,
         end: 9,
-        src: node,
+        ptr: pattern,
       });
     });
   });
@@ -60,9 +69,10 @@ describe('CodegenTerminal', () => {
       const terminal = {
         t: ['foo', 'bar']
       }
-      const parser = CodegenTerminal.compile(terminal);
-      expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
-      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
+      const pattern = createPattern(terminal);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
+      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
       expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
     });
 
@@ -71,12 +81,12 @@ describe('CodegenTerminal', () => {
         t: ['foo', 'bar'],
         repeat: '+',
       }
-      const parser = CodegenTerminal.compile(terminal);
-      // console.log(parser.toString());
-      expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
-      expect(parser(new ParseContext('barbar', false), 0)).toStrictEqual(new LeafCsrMatch(0, 6, terminal));
-      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
-      expect(parser(new ParseContext('foobarfoofoobarbar', false), 0)).toStrictEqual(new LeafCsrMatch(0, 18, terminal));
+      const pattern = createPattern(terminal);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
+      expect(parser(new ParseContext('barbar', false), 0)).toStrictEqual(new LeafCstMatch(0, 6, pattern));
+      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
+      expect(parser(new ParseContext('foobarfoofoobarbar', false), 0)).toStrictEqual(new LeafCstMatch(0, 18, pattern));
       expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
     });
 
@@ -85,11 +95,11 @@ describe('CodegenTerminal', () => {
         t: [' '],
         repeat: '+',
       }
-      const parser = CodegenTerminal.compile(terminal);
-      // console.log(parser.toString());
-      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCsrMatch(0, 1, terminal));
-      expect(parser(new ParseContext('  ', false), 0)).toStrictEqual(new LeafCsrMatch(0, 2, terminal));
-      expect(parser(new ParseContext('   ', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
+      const pattern = createPattern(terminal);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+      expect(parser(new ParseContext('  ', false), 0)).toStrictEqual(new LeafCstMatch(0, 2, pattern));
+      expect(parser(new ParseContext('   ', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
       expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
     });
 
@@ -98,13 +108,13 @@ describe('CodegenTerminal', () => {
         t: [' ', '\t', '\n'],
         repeat: '+',
       }
-      const parser = CodegenTerminal.compile(terminal);
-      // console.log(parser.toString());
-      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCsrMatch(0, 1, terminal));
-      expect(parser(new ParseContext('\n', false), 0)).toStrictEqual(new LeafCsrMatch(0, 1, terminal));
-      expect(parser(new ParseContext('\t', false), 0)).toStrictEqual(new LeafCsrMatch(0, 1, terminal));
-      expect(parser(new ParseContext('\t\t', false), 0)).toStrictEqual(new LeafCsrMatch(0, 2, terminal));
-      expect(parser(new ParseContext(' \n\t', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
+      const pattern = createPattern(terminal);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+      expect(parser(new ParseContext('\n', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+      expect(parser(new ParseContext('\t', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+      expect(parser(new ParseContext('\t\t', false), 0)).toStrictEqual(new LeafCstMatch(0, 2, pattern));
+      expect(parser(new ParseContext(' \n\t', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
       expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
     });
 
@@ -113,13 +123,14 @@ describe('CodegenTerminal', () => {
         t: [' ', '\t', '\n'],
         repeat: '*',
       }
-      const parser = CodegenTerminal.compile(terminal);
-      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCsrMatch(0, 1, terminal));
-      expect(parser(new ParseContext('\n', false), 0)).toStrictEqual(new LeafCsrMatch(0, 1, terminal));
-      expect(parser(new ParseContext('\t', false), 0)).toStrictEqual(new LeafCsrMatch(0, 1, terminal));
-      expect(parser(new ParseContext('\t\t', false), 0)).toStrictEqual(new LeafCsrMatch(0, 2, terminal));
-      expect(parser(new ParseContext(' \n\t', false), 0)).toStrictEqual(new LeafCsrMatch(0, 3, terminal));
-      expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(new LeafCsrMatch(0, 0, terminal));
+      const pattern = createPattern(terminal);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+      expect(parser(new ParseContext('\n', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+      expect(parser(new ParseContext('\t', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+      expect(parser(new ParseContext('\t\t', false), 0)).toStrictEqual(new LeafCstMatch(0, 2, pattern));
+      expect(parser(new ParseContext(' \n\t', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
+      expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(new LeafCstMatch(0, 0, pattern));
     });
   });
 

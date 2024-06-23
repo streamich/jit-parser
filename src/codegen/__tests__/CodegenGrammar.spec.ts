@@ -8,22 +8,24 @@ describe('CodegenGrammar', () => {
     const ctx = new ParseContext(' 1  ', false);
     const cst = parser(ctx, 0)!;
     expect(cst).toMatchObject({
-      type: 'Value',
       pos: 0,
       end: 4,
       children: [
-        {type: 'Ws', pos: 0, end: 1},
+        {pos: 0, end: 1},
         {
-          type: 'TValue',
           pos: 1,
           end: 2,
           children: [
             {
-              type: 'Number',
+              ptr: {
+                type: 'Number',
+              },
+              pos: 1,
+              end: 2,
             },
           ],
         },
-        {type: 'Ws', pos: 2, end: 4},
+        {pos: 2, end: 4},
       ],
     });
   });

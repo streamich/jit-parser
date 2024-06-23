@@ -2,6 +2,7 @@ import {UnionNode} from '../../types';
 import {CodegenUnion} from '../CodegenUnion';
 import {CodegenTerminal} from '../CodegenTerminal';
 import {ParseContext} from '../../context';
+import {Pattern} from '../Pattern';
 
 describe('CodegenUnion', () => {
   test('can parse a simple rule', () => {
@@ -9,19 +10,22 @@ describe('CodegenUnion', () => {
       u: ['foo', 'bar'],
       type: 'FooOrBar',
     };
-    const foo = CodegenTerminal.compile('foo');
-    const bar = CodegenTerminal.compile('bar');
-    const parse = CodegenUnion.compile(union, [foo, bar]);
+    const fooPattern = new Pattern('FooText');
+    const foo = CodegenTerminal.compile('foo', fooPattern);
+    const barPattern = new Pattern('BarText');
+    const bar = CodegenTerminal.compile('bar', barPattern);
+    const pattern = new Pattern('U');
+    const parse = CodegenUnion.compile(union, pattern, [foo, bar]);
     const ctx = new ParseContext('.foo', false);
     expect(parse(ctx, 1)).toMatchObject({
       pos: 1,
       end: 4,
-      src: union,
+      ptr: {type: 'U'},
       children: [
         {
           pos: 1,
           end: 4,
-          src: {t: 'foo'},
+          ptr: {type: 'FooText'},
         },
       ],
     });
@@ -29,12 +33,12 @@ describe('CodegenUnion', () => {
     expect(parse(ctx2, 0)).toMatchObject({
       pos: 0,
       end: 3,
-      src: union,
+      ptr: {type: 'U'},
       children: [
         {
           pos: 0,
           end: 3,
-          src: {t: 'bar'},
+          ptr: {type: 'BarText'},
         },
       ],
     });

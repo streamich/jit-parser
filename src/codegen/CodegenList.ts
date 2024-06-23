@@ -1,15 +1,17 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen';
-import {CsrMatch} from '../matches';
+import {CstMatch} from '../matches';
 import {CodegenContext} from '../context';
 import type {ListNode, Parser} from '../types';
+import type {Pattern} from './Pattern';
 
 export class CodegenList {
   public static readonly compile = (
     rule: ListNode,
+    pattern: Pattern,
     parser: Parser,
     ctx: CodegenContext = new CodegenContext(),
   ): Parser => {
-    const codegen = new CodegenList(rule, parser, ctx);
+    const codegen = new CodegenList(rule, pattern, parser, ctx);
     codegen.generate();
     return codegen.compile();
   };
@@ -17,8 +19,9 @@ export class CodegenList {
   public readonly codegen: Codegen<Parser>;
 
   constructor(
-    public readonly node: ListNode,
-    public readonly parser: Parser,
+    protected readonly node: ListNode,
+    protected readonly pattern: Pattern,
+    protected readonly parser: Parser,
     protected readonly ctx: CodegenContext,
   ) {
     this.codegen = new Codegen({
@@ -28,9 +31,9 @@ export class CodegenList {
   }
 
   public generate() {
-    const {node, codegen, parser} = this;
-    const dCsrMatch = codegen.linkDependency(CsrMatch);
-    const dNode = codegen.linkDependency(node);
+    const {pattern, codegen, parser} = this;
+    const dCstMatch = codegen.linkDependency(CstMatch);
+    const dPattern = codegen.linkDependency(pattern);
     const dParser = codegen.linkDependency(parser);
     const rStart = codegen.var('pos');
     const rChild = codegen.var();
@@ -39,7 +42,7 @@ export class CodegenList {
       codegen.js(`${rChildren}.push(${rChild})`);
       codegen.js(`pos = ${rChild}.end`);
     });
-    return codegen.return(`new ${dCsrMatch}(${rStart}, pos, ${dNode}, ${rChildren})`);
+    return codegen.return(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
   }
 
   public compile(): Parser {

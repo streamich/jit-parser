@@ -1,22 +1,19 @@
-import type {CsrNode, ResolvedGrammarNode} from './types';
+import {Pattern} from './codegen/Pattern';
+import type {CstNode, ResolvedGrammarNode} from './types';
 
-export class LeafCsrMatch implements CsrNode {
-  public readonly ast: unknown = undefined;
-
+export class LeafCstMatch implements CstNode {
   constructor(
     public readonly pos: number,
     public readonly end: number,
-    public readonly src: ResolvedGrammarNode,
+    public readonly ptr: Pattern,
   ) {}
 }
 
-export class CsrMatch implements CsrNode {
-  public readonly ast: unknown = undefined;
-
+export class CstMatch implements CstNode {
   constructor(
     public readonly pos: number,
     public readonly end: number,
-    public readonly src: ResolvedGrammarNode,
-    public readonly children: CsrNode[],
+    public readonly ptr: Pattern,
+    public readonly children: CstNode[],
   ) {}
 }
