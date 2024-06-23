@@ -73,13 +73,30 @@ export class CodegenTerminal {
           codegen.return('');
         },
       );
+    } else if (match instanceof Array) {
+      const rEnd = codegen.var('pos');
+      for (const match0 of match) {
+        const cleanTerminal = scrub(match0);
+        const condition = emitStringMatch('str', 'pos', cleanTerminal);
+        codegen.if(
+          condition,
+          () => {
+            codegen.js(`${rEnd} += ${cleanTerminal.length};`)
+          },
+        );
+      }
+      codegen.if(`${rEnd} > pos`, () => {
+        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, ${rEnd}, str.slice(pos, ${rEnd}));`);
+      }, () => {
+        codegen.return('');
+      });
     } else {
       throw new Error('INVALID_TERMINAL');
     }
     if (terminal.ast !== null) {
       const positionFragment = this.ctx.positions ? `, pos:pos, end:${rResult}.end` : '';
-      const rAst = codegen.var(`{type:${dType}${positionFragment}, raw:${rResult}.raw}`);
       codegen.if('ctx.ast', () => {
+        const rAst = codegen.var(`{type:${dType}${positionFragment}, raw:${rResult}.raw}`);
         if (terminal.ast && this.ctx.astExpressions) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>terminal.ast,

@@ -1,7 +1,9 @@
 import {LeafCsrMatch} from '../../matches';
-import {ParseContext} from '../../ParseContext';
+import {CodegenContext, ParseContext} from '../../context';
 import {TerminalNode} from '../../types';
 import {CodegenTerminal} from '../CodegenTerminal';
+
+const ctx = new CodegenContext(true, false);
 
 describe('CodegenTerminal', () => {
   describe('string', () => {
@@ -60,6 +62,18 @@ describe('CodegenTerminal', () => {
         raw: 'false',
       });
       // console.log(parser.toString());
+    });
+  });
+
+  describe('string[]', () => {
+    test('can match one of the strings', () => {
+      const terminal = {
+        t: ['foo', 'bar']
+      }
+      const parser = CodegenTerminal.compile(terminal);
+      expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, 'bar'));
+      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, 'foo'));
+      expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
     });
   });
 

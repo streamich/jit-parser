@@ -36,8 +36,8 @@ const isListNode = (item: any): item is ListNode => typeof item === 'object' && 
 const isRefNode = (item: any): item is RefNode => typeof item === 'object' && item && typeof item.r === 'string';
 
 export class CodegenGrammar {
-  public static readonly compile = (grammar: Grammar): Parser => {
-    const codegen = new CodegenGrammar(grammar);
+  public static readonly compile = (grammar: Grammar, ctx?: CodegenContext): Parser => {
+    const codegen = new CodegenGrammar(grammar, ctx);
     return codegen.compile();
   };
 
