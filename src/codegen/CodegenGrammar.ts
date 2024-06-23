@@ -64,6 +64,14 @@ export class CodegenGrammar {
     }
   }
 
+  private getNodeParser(node: GrammarNode): Parser {
+    if (isRefNode(node)) {
+      const pattern = this.patterns.get(node.r);
+      if (pattern) return pattern.parser;
+    }
+    return lazy(() => this.compileNode(node).parser);
+  }
+
   protected compileTerminal(terminal: TerminalNode | TerminalNodeShorthand, pattern?: Pattern): Pattern {
     const node: TerminalNode = isTerminalShorthandNode(terminal) ? {t: terminal} : terminal;
     if (node.type && node.ast === undefined) {
@@ -71,33 +79,33 @@ export class CodegenGrammar {
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Text');
-    pattern.parser = lazy(() => CodegenTerminal.compile(node, pattern, this.ctx));
+    pattern.parser = CodegenTerminal.compile(node, pattern, this.ctx);
     pattern.toAst = () => {};
     return pattern;
   }
 
   protected compileProduction(node: ProductionNode, pattern?: Pattern): Pattern {
     const parsers: Parser[] = [];
-    for (const component of node.p) parsers.push(this.compileNode(component).parser);
+    for (const component of node.p) parsers.push(this.getNodeParser(component));
     if (node.type && node.ast === undefined) {
       const ast = this.grammar.ast?.[node.type];
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Production');
-    pattern.parser = lazy(() => CodegenProduction.compile(node, pattern, parsers, this.ctx));
+    pattern.parser = CodegenProduction.compile(node, pattern, parsers, this.ctx);
     pattern.toAst = () => undefined;
     return pattern;
   }
 
   protected compileUnion(node: UnionNode, pattern?: Pattern): Pattern {
     const parsers: Parser[] = [];
-    for (const item of node.u) parsers.push(this.compileNode(item).parser);
+    for (const item of node.u) parsers.push(this.getNodeParser(item));
     if (node.type && node.ast === undefined) {
       const ast = this.grammar.ast?.[node.type];
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Union');
-    pattern.parser = lazy(() => CodegenUnion.compile(node, pattern, parsers, this.ctx));
+    pattern.parser = CodegenUnion.compile(node, pattern, parsers, this.ctx);
     pattern.toAst = () => undefined;
     return pattern;
   }
@@ -108,7 +116,8 @@ export class CodegenGrammar {
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'List');
-    pattern.parser = lazy(() => CodegenList.compile(node, pattern, this.compileNode(node.l).parser, this.ctx));
+    const childParser = this.getNodeParser(node.l);
+    pattern.parser = CodegenList.compile(node, pattern, childParser, this.ctx);
     pattern.toAst = () => undefined;
     return pattern;
   }
@@ -125,9 +134,9 @@ export class CodegenGrammar {
   }
 
   public compile(): Parser {
-    const parser = this.compileRule(this.grammar.start).parser;
+    const pattern = this.compileRule(this.grammar.start);
     // TODO: Maybe compile all rules here? And throw away grammar for GC?
-    return parser;
+    return pattern.parser;
   }
 
   // public walk(node: CstMatch, visitor: (node: CstMatch) => void) {

@@ -1,5 +1,5 @@
 import {LeafCstMatch} from '../../matches';
-import {CodegenContext, ParseContext} from '../../context';
+import {ParseContext} from '../../context';
 import {TerminalNode} from '../../types';
 import {CodegenTerminal} from '../CodegenTerminal';
 import {Pattern} from '../Pattern';

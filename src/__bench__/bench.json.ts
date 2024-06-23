@@ -17,11 +17,13 @@ const toCst = (json: string) => {
 
 const toAst = (json: string) => {
   const ctx = new ParseContext(json, true);
-  return parser(ctx, 0)?.ast;
+  // return parser(ctx, 0)?.ast;
 };
 
-const json = JSON.stringify(json0, null, 4);
+const json = JSON.stringify(json1, null, 4);
 const suite = new Benchmark.Suite();
+
+console.log(toCst(json));
 
 const prismGrammar = prism.languages['json'];
 
