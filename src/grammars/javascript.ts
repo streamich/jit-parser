@@ -1,7 +1,10 @@
-import type {Grammar} from '../types';
+import type {Grammar, RefNode} from '../types';
 
 let r = 0;
-const ref = () => ({r: 'R' + r++});
+const ref = () => {
+  const label = 'R' + r++;
+  return {r: label, toString: () => label} as RefNode & string;
+};
 
 const EPSILON = {t: '', ast: null};
 const W = ref();
@@ -14,13 +17,24 @@ const MulExpression = ref();
 const MulOperator = {t: /[\*\/]/, ast: ['$', '/ast/raw']};
 const MulExpressionCont = ref();
 
-const AstBinaryExpression = ['?', ['$', '/ast/children/1/children/0', ''],
-  ['o.del', ['o.set', ['$', '/ast'],
-    'left', ['$', '/ast/children/0'],
-    'operator', ['$', '/ast/children/1/children/0', ''],
-    'right', ['$', '/ast/children/1/children/1', null],
-  ], 'children'],
-  ['$', '/ast/children/0']
+const AstBinaryExpression = [
+  '?',
+  ['$', '/ast/children/1/children/0', ''],
+  [
+    'o.del',
+    [
+      'o.set',
+      ['$', '/ast'],
+      'left',
+      ['$', '/ast/children/0'],
+      'operator',
+      ['$', '/ast/children/1/children/0', ''],
+      'right',
+      ['$', '/ast/children/1/children/1', null],
+    ],
+    'children',
+  ],
+  ['$', '/ast/children/0'],
 ];
 const AstBinaryExpressionCont = ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0'], null];
 
@@ -36,22 +50,16 @@ export const grammar: Grammar = {
 
     [Expression.r]: {
       type: 'Expression',
-      u: [
-        AddExpression,
-        Literal,
-      ]
+      u: [AddExpression, Literal],
     },
 
-    [AddExpression.r]: {
+    [AddExpression]: {
       type: 'AdditiveExpression',
       p: [MulExpression, AddExpressionCont],
       ast: AstBinaryExpression,
     },
     [AddExpressionCont.r]: {
-      u: [
-        [W, AddOperator, W, AddExpression, AddExpressionCont],
-        EPSILON,
-      ],
+      u: [[W, AddOperator, W, AddExpression, AddExpressionCont], EPSILON],
       ast: AstBinaryExpressionCont,
     },
 
@@ -61,10 +69,7 @@ export const grammar: Grammar = {
       ast: AstBinaryExpression,
     },
     [MulExpressionCont.r]: {
-      u: [
-        [W, MulOperator, W, MulExpression, MulExpressionCont],
-        EPSILON,
-      ],
+      u: [[W, MulOperator, W, MulExpression, MulExpressionCont], EPSILON],
       ast: AstBinaryExpressionCont,
     },
 
