@@ -19,5 +19,10 @@ export class CodegenContext {
      * Whether to generate positions (`pos` and `end` properties) in the AST nodes.
      */
     public readonly positions: boolean = true,
+
+    /**
+     * Whether to run JSON Expression for generating AST nodes.
+     */
+    public readonly astExpressions: boolean = true,
   ) {}
 }

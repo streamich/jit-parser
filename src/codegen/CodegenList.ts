@@ -53,7 +53,7 @@ export class CodegenList {
         const childrenFragment = node.leaf ? '' : `, children: ${rResult}.children.map(c => c.ast).filter(Boolean)`;
         const positionFragment = this.ctx.positions ? `, pos:${rStart}, end:pos` : '';
         const rAst = codegen.var(`{type:${dType}${positionFragment}${childrenFragment}}`);
-        if (node.ast) {
+        if (node.ast && this.ctx.astExpressions) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>node.ast,
             operators: operatorsMap,

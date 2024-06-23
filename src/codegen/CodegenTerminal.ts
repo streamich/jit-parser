@@ -80,7 +80,7 @@ export class CodegenTerminal {
       const positionFragment = this.ctx.positions ? `, pos:pos, end:${rResult}.end` : '';
       const rAst = codegen.var(`{type:${dType}${positionFragment}, raw:${rResult}.raw}`);
       codegen.if('ctx.ast', () => {
-        if (terminal.ast) {
+        if (terminal.ast && this.ctx.astExpressions) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>terminal.ast,
             operators: operatorsMap,
