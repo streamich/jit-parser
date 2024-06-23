@@ -22,7 +22,7 @@ const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;
 
 const isTerminalNode = (item: any): item is TerminalNode =>
-  typeof item === 'object' && item && isTerminalShorthandNode(item.t);
+  typeof item === 'object' && item && (typeof item.t !== 'undefined') && !isTerminalShorthandNode(item);
 
 const isProductionShorthandNode = (item: any): item is ProductionNodeShorthand => item instanceof Array;
 

@@ -1,6 +1,6 @@
 import {grammar} from '../../grammars/json';
 import {CodegenGrammar} from '../CodegenGrammar';
-import {ParseContext} from '../../ParseContext';
+import {ParseContext} from '../../context';
 
 describe('CodegenGrammar', () => {
   test('can parse JSON grammar to basic CST', () => {

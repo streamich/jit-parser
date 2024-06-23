@@ -45,15 +45,12 @@ export class CodegenTerminal {
       const cleanTerminal = scrub(match);
       const dString = codegen.linkDependency(cleanTerminal);
       const condition = cleanTerminal ? emitStringMatch('str', 'pos', cleanTerminal) : 'true';
-      codegen.if(
-        condition,
-        () => {
-          codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${cleanTerminal.length}, ${dString});`);
-        },
+      codegen.if(`!(${condition})`,
         () => {
           codegen.return('');
         },
       );
+      codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${cleanTerminal.length}, ${dString});`);
     } else if (match instanceof RegExp) {
       let source = match.source;
       if (source[0] !== '^') source = '^(' + source + ')';
@@ -61,42 +58,62 @@ export class CodegenTerminal {
       const dRegExp = codegen.linkDependency(regExp);
       const rSlice = codegen.var(`str.slice(pos)`);
       const rMatch = codegen.var(`${rSlice}.match(${dRegExp})`);
-      codegen.if(
-        rMatch,
-        () => {
-          const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
-          codegen.js(
-            `${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`,
-          );
-        },
+      codegen.if(`!${rMatch}`,
         () => {
           codegen.return('');
         },
       );
+      const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
+      codegen.js(
+        `${rResult} = new ${dLeafCsrMatch}(${dType}, pos, pos + ${rLength}, ${rSlice}.slice(0, ${rLength}));`,
+      );
     } else if (match instanceof Array) {
-      const rEnd = codegen.var('pos');
-      for (const match0 of match) {
-        const cleanTerminal = scrub(match0);
-        const condition = emitStringMatch('str', 'pos', cleanTerminal);
-        codegen.if(
-          condition,
-          () => {
-            codegen.js(`${rEnd} += ${cleanTerminal.length};`)
-          },
-        );
-      }
-      codegen.if(`${rEnd} > pos`, () => {
+      if (terminal.repeat) {
+        const rEnd = codegen.var('pos');
+        codegen.while('1', () => {
+          for (const match0 of match) {
+            const cleanTerminal = scrub(match0);
+            const condition = emitStringMatch('str', rEnd, cleanTerminal);
+            codegen.if(
+              condition,
+              () => {
+                codegen.js(`${rEnd} += ${cleanTerminal.length};`)
+                codegen.js('continue;');
+              },
+            );
+          }
+          codegen.js('break;');
+        });
+        if (terminal.repeat === '+') {
+          codegen.if(`${rEnd} === pos`, () => {
+            codegen.return('');
+          });
+        }
         codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, ${rEnd}, str.slice(pos, ${rEnd}));`);
-      }, () => {
-        codegen.return('');
-      });
+      } else {
+        const rEnd = codegen.var('pos');
+        for (const match0 of match) {
+          const cleanTerminal = scrub(match0);
+          const condition = emitStringMatch('str', 'pos', cleanTerminal);
+          codegen.if(
+            condition,
+            () => {
+              codegen.js(`${rEnd} += ${cleanTerminal.length};`)
+            },
+          );
+        }
+        codegen.if(`${rEnd} === pos`, () => {
+          codegen.return('');
+        });
+        codegen.js(`${rResult} = new ${dLeafCsrMatch}(${dType}, pos, ${rEnd}, str.slice(pos, ${rEnd}));`);
+      }
     } else {
       throw new Error('INVALID_TERMINAL');
     }
     if (terminal.ast !== null) {
       const positionFragment = this.ctx.positions ? `, pos:pos, end:${rResult}.end` : '';
+      const rAst = codegen.var(`{type:${dType}${positionFragment}, raw:${rResult}.raw}`);
       codegen.if('ctx.ast', () => {
-        const rAst = codegen.var(`{type:${dType}${positionFragment}, raw:${rResult}.raw}`);
         if (terminal.ast && this.ctx.astExpressions) {
           const exprCodegen = new JsonExpressionCodegen({
             expression: <any>terminal.ast,

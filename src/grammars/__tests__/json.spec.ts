@@ -1,5 +1,5 @@
 import {CodegenGrammar} from '../../codegen/CodegenGrammar';
-import {ParseContext} from '../../ParseContext';
+import {ParseContext} from '../../context';
 import {grammar} from '../json';
 
 const codegen = new CodegenGrammar(grammar);

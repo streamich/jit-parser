@@ -1,5 +1,6 @@
 import type {Expr} from 'json-joy/lib/json-expression';
-import type {ParseContext} from './ParseContext';
+import type {ParseContext} from './context';
+
 
 export interface Grammar {
   /**
@@ -51,11 +52,27 @@ export type TerminalNodeShorthand = RegExp | string | '';
  * expression.
  */
 export interface TerminalNode {
-  t: TerminalNodeShorthand;
   /**
    * Type of the terminal node, if not provided "Text" will be used.
    */
   type?: string;
+
+  /**
+   * The terminal node pattern. It can be a regular expression or a string.
+   * When an array of strings is specified, it will match any of the strings.
+   */
+  t: TerminalNodeShorthand | string[];
+
+  /**
+   * When true, the terminal node will be repeated until no more matches are
+   * found. The default is false. Only applicable when the terminal node is
+   * an array of strings.
+   */
+  repeat?: '*' | '+';
+  
+  /**
+   * Optional AST transformation.
+   */
   ast?: AstNodeFactory;
 }
 

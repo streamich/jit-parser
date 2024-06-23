@@ -75,6 +75,62 @@ describe('CodegenTerminal', () => {
       expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, 'foo'));
       expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
     });
+
+    test('can match terminals with repeat', () => {
+      const terminal: TerminalNode = {
+        t: ['foo', 'bar'],
+        repeat: '+',
+      }
+      const parser = CodegenTerminal.compile(terminal);
+      // console.log(parser.toString());
+      expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, 'bar'));
+      expect(parser(new ParseContext('barbar', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 6, 'barbar'));
+      expect(parser(new ParseContext('foo', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, 'foo'));
+      expect(parser(new ParseContext('foobarfoofoobarbar', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 18, 'foobarfoofoobarbar'));
+      expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
+    });
+
+    test('can match repeating whitespace', () => {
+      const terminal: TerminalNode = {
+        t: [' '],
+        repeat: '+',
+      }
+      const parser = CodegenTerminal.compile(terminal);
+      // console.log(parser.toString());
+      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 1, ' '));
+      expect(parser(new ParseContext('  ', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 2, '  '));
+      expect(parser(new ParseContext('   ', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, '   '));
+      expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
+    });
+
+    test('can match repeating union of whitespace chars', () => {
+      const terminal: TerminalNode = {
+        t: [' ', '\t', '\n'],
+        repeat: '+',
+      }
+      const parser = CodegenTerminal.compile(terminal);
+      // console.log(parser.toString());
+      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 1, ' '));
+      expect(parser(new ParseContext('\n', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 1, '\n'));
+      expect(parser(new ParseContext('\t', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 1, '\t'));
+      expect(parser(new ParseContext('\t\t', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 2, '\t\t'));
+      expect(parser(new ParseContext(' \n\t', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, ' \n\t'));
+      expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(undefined);
+    });
+
+    test('can match repeating union of whitespace chars (allows empty match "*")', () => {
+      const terminal: TerminalNode = {
+        t: [' ', '\t', '\n'],
+        repeat: '*',
+      }
+      const parser = CodegenTerminal.compile(terminal);
+      expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 1, ' '));
+      expect(parser(new ParseContext('\n', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 1, '\n'));
+      expect(parser(new ParseContext('\t', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 1, '\t'));
+      expect(parser(new ParseContext('\t\t', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 2, '\t\t'));
+      expect(parser(new ParseContext(' \n\t', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 3, ' \n\t'));
+      expect(parser(new ParseContext('baz', false), 0)).toStrictEqual(new LeafCsrMatch('Text', 0, 0, ''));
+    });
   });
 
   describe('AST', () => {
