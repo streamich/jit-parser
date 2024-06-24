@@ -2,7 +2,7 @@ import * as Benchmark from 'benchmark';
 import {grammar} from '../grammars/json';
 import {CodegenGrammar} from '../codegen/CodegenGrammar';
 import {ParseContext} from '../context';
-import {json0, json1} from './data/jsons';
+import {json0, json1, json2} from './data/jsons';
 import * as antlr from './antlr/json';
 import * as prism from 'prismjs';
 

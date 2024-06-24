@@ -13,6 +13,8 @@ import type {
   TerminalNode,
   ProductionNode,
   ListNode,
+  CstNode,
+  CanonicalAstNode,
 } from '../types';
 import {CodegenList} from './CodegenList';
 import {CodegenContext} from '../context';
@@ -80,7 +82,7 @@ export class CodegenGrammar {
     }
     pattern ??= new Pattern(node.type ?? 'Text');
     pattern.parser = CodegenTerminal.compile(node, pattern, this.ctx);
-    pattern.toAst = () => {};
+    // pattern.toAst = () => {};
     return pattern;
   }
 
@@ -93,7 +95,7 @@ export class CodegenGrammar {
     }
     pattern ??= new Pattern(node.type ?? 'Production');
     pattern.parser = CodegenProduction.compile(node, pattern, parsers, this.ctx);
-    pattern.toAst = () => undefined;
+    // pattern.toAst = () => undefined;
     return pattern;
   }
 
@@ -106,7 +108,7 @@ export class CodegenGrammar {
     }
     pattern ??= new Pattern(node.type ?? 'Union');
     pattern.parser = CodegenUnion.compile(node, pattern, parsers, this.ctx);
-    pattern.toAst = () => undefined;
+    // pattern.toAst = () => undefined;
     return pattern;
   }
 
@@ -118,7 +120,7 @@ export class CodegenGrammar {
     pattern ??= new Pattern(node.type ?? 'List');
     const childParser = this.getNodeParser(node.l);
     pattern.parser = CodegenList.compile(node, pattern, childParser, this.ctx);
-    pattern.toAst = () => undefined;
+    // pattern.toAst = () => undefined;
     return pattern;
   }
 
@@ -135,32 +137,26 @@ export class CodegenGrammar {
 
   public compile(): Parser {
     const pattern = this.compileRule(this.grammar.start);
-    // TODO: Maybe compile all rules here? And throw away grammar for GC?
     return pattern.parser;
   }
 
-  // public walk(node: CstMatch, visitor: (node: CstMatch) => void) {
-  //   visitor(node);
-  //   // for (const child of node.children) this.walk(child, visitor);
-  // }
+  public walk(node: CstNode, visitor: (node: CstNode) => void) {
+    const stack: CstNode[] = [node];
+    while (stack.length > 0) {
+      const node = stack.pop()!;
+      const children = node.children;
+      if (children) {
+        const length = children.length;
+        for (let i = length - 1; i >= 0; i--) {
+          const child = children[i];
+          stack.push(child);
+        }
+      }
+      visitor(node);
+    }
+  }
 
-  // public createAst(cst: CstMatch): unknown {
-  //   if (cst.src.ast === null) return undefined;
-  //   if (cst.src.ast === undefined) return cst.children.map((child) => this.createAst(child));
-  //   const {ast} = cst.src;
-  //   if (typeof ast === 'string') return ast;
-  //   if (ast instanceof Array) {
-  //     const args = ast.map((arg) => {
-  //       if (typeof arg === 'string') return arg;
-  //       if (arg === '.') return cst.children.map((child) => this.createAst(child)).join('');
-  //       if (arg === '+') return cst.children.map((child) => this.createAst(child));
-  //       if (arg === '$') return cst;
-  //       if (arg === '/cst/pos') return cst.pos;
-  //       if (arg === '/cst/end') return cst.end;
-  //       return arg;
-  //     });
-  //     return args[0](...args.slice(1));
-  //   }
-  //   return ast;
-  // }
+  public createAst(cst: CstNode): unknown {
+    return cst.ptr.toAst(cst);
+  }
 }

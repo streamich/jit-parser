@@ -4,9 +4,12 @@ import {ParseContext} from '../../context';
 
 describe('CodegenGrammar', () => {
   test('can parse JSON grammar to basic CST', () => {
-    const parser = CodegenGrammar.compile(grammar);
+    const codegen = new CodegenGrammar(grammar);
+    const parser = codegen.compile();
     const ctx = new ParseContext(' 1  ', false);
     const cst = parser(ctx, 0)!;
+    const ast = cst.ptr.toAst(cst);
+    console.log(JSON.stringify(ast, null, 2));
     expect(cst).toMatchObject({
       pos: 0,
       end: 4,

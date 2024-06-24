@@ -20,7 +20,7 @@ export interface Grammar {
    * factory is not specified on the CST node itself, the one by name from
    * this list will be used.
    */
-  ast?: Record<string, AstNodeFactory>;
+  ast?: Record<string, AstNodeExpression>;
 }
 
 /**
@@ -83,7 +83,7 @@ export interface TerminalNode {
   /**
    * Optional AST transformation.
    */
-  ast?: AstNodeFactory;
+  ast?: AstNodeExpression;
 }
 
 export type ProductionNodeShorthand = GrammarNode[];
@@ -99,7 +99,7 @@ export interface ProductionNode {
   /**
    * Optional AST transformation.
    */
-  ast?: AstNodeFactory;
+  ast?: AstNodeExpression;
 
   /**
    * If the list node is a leaf node. In this case, the AST node `children`
@@ -126,7 +126,7 @@ export interface UnionNode {
   /**
    * Optional AST transformation.
    */
-  ast?: AstNodeFactory;
+  ast?: AstNodeExpression;
 
   /**
    * If the list node is a leaf node. In this case, the AST node `children`
@@ -152,7 +152,7 @@ export interface ListNode {
   /**
    * Optional AST transformation.
    */
-  ast?: AstNodeFactory;
+  ast?: AstNodeExpression;
 
   /**
    * If the list node is a leaf node. In this case, the AST node `children`
@@ -181,6 +181,7 @@ export interface CanonicalAstNode {
   type: string;
   pos: number;
   end: number;
+  raw?: string;
   children?: (CanonicalAstNode | unknown)[];
 }
 
@@ -200,13 +201,15 @@ export type Parser = (ctx: ParseContext, pos: number) => CstNode | undefined;
  * which will be executed and its return value will be used as the AST node. The
  * expression will run with the {@link AstExpressionData} object as its context.
  */
-export type AstNodeFactory = undefined | null | unknown | Expr;
+export type AstNodeExpression = undefined | null | unknown | Expr;
 
 /**
  * The context object passed to the AST expression function. The expressions
  * can retrieve data from this object using the `['$', '/path']` syntax.
  */
 export interface AstExpressionData {
-  csr: CstNode;
+  cst: CstNode;
   ast: CanonicalAstNode | unknown;
 }
+
+export type AstNodeFactory = (cst: CstNode) => unknown;

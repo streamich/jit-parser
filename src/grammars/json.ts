@@ -16,18 +16,9 @@ export const grammar: Grammar = {
     },
 
     Null: 'null',
-
-    Boolean: {
-      u: ['true', 'false'],
-      leaf: true,
-    },
-
+    Boolean: {t: ['true', 'false']},
     Number: /\-?(0|([1-9][0-9]{0,25}))(\.[0-9]{1,25})?([eE][\+\-]?[0-9]{1,25})?/,
-
-    String: {
-      p: [{t: '"', ast: null}, /[^"]*/, {t: '"', ast: null}],
-      leaf: true,
-    },
+    String: /"(\\["\\/bfnrt]|\\u[0-9a-fA-F]{4}|[^"\\])*"/,
 
     Array: ['[', {r: 'Elements'}, ']'],
     Elements: {
