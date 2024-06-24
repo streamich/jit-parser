@@ -1,5 +1,5 @@
 import {CodegenGrammar} from '../../codegen/CodegenGrammar';
-import {ParseContext} from '../../ParseContext';
+import {ParseContext} from '../../context';
 import {grammar} from '../esql';
 
 const codegen = new CodegenGrammar(grammar);
@@ -8,21 +8,13 @@ const parser = codegen.compile();
 const toAst = (src: string) => {
   const ctx = new ParseContext(src, true);
   const cst = parser(ctx, 0)!;
-  console.log(cst);
-  return cst?.ast;
-};
-
-const toAstRule = (rule: string, src: string) => {
-  const parser = codegen.compileRule(rule);
-  const ctx = new ParseContext(src, true);
-  const cst = parser(ctx, 0)!;
-  return cst.ast;
+  return cst?.ptr.toAst(cst, src);
 };
 
 describe('AST', () => {
   test('...', () => {
     // const ast = toAst('FROM sample-index-* [METADATA _id]');
-    const ast = toAst('FROM abc | INLINESTATS g BY 23');
+    const ast = toAst('FROM a | ROW a.b.c = 1 | eval a | INLINESTATS a BY b');
     console.log(JSON.stringify(ast, null, 2));
   });
 });
