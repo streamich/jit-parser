@@ -7,35 +7,25 @@ import type {
   UnionNode,
   Parser,
   TerminalNodeShorthand,
-  RefNode,
-  ProductionNodeShorthand,
   GrammarNode,
   TerminalNode,
   ProductionNode,
   ListNode,
   CstNode,
-  CanonicalAstNode,
 } from '../types';
 import {CodegenList} from './CodegenList';
 import {CodegenContext} from '../context';
 import {Pattern} from './Pattern';
-
-const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
-  typeof item === 'string' || item instanceof RegExp;
-
-const isTerminalNode = (item: any): item is TerminalNode =>
-  typeof item === 'object' && item && (typeof item.t !== 'undefined') && !isTerminalShorthandNode(item);
-
-const isProductionShorthandNode = (item: any): item is ProductionNodeShorthand => item instanceof Array;
-
-const isProductionNode = (item: any): item is ProductionNode =>
-  typeof item === 'object' && item && isProductionShorthandNode(item.p);
-
-const isUnionNode = (item: any): item is UnionNode => typeof item === 'object' && item && item.u instanceof Array;
-
-const isListNode = (item: any): item is ListNode => typeof item === 'object' && item && typeof item.l !== 'undefined';
-
-const isRefNode = (item: any): item is RefNode => typeof item === 'object' && item && typeof item.r === 'string';
+import {CodegenAstFactory} from './CodegenAstFactory';
+import {
+  isListNode,
+  isProductionNode,
+  isProductionShorthandNode,
+  isRefNode,
+  isTerminalNode,
+  isTerminalShorthandNode,
+  isUnionNode,
+} from '../util';
 
 export class CodegenGrammar {
   public static readonly compile = (grammar: Grammar, ctx?: CodegenContext): Parser => {
@@ -46,7 +36,10 @@ export class CodegenGrammar {
   protected readonly parsers = new Map<string, Pattern>();
   protected readonly patterns = new Map<string, Pattern>();
 
-  constructor(public readonly grammar: Grammar, protected readonly ctx: CodegenContext = new CodegenContext()) {}
+  constructor(
+    public readonly grammar: Grammar,
+    protected readonly ctx: CodegenContext = new CodegenContext(),
+  ) {}
 
   protected compileNode(node: GrammarNode, pattern?: Pattern): Pattern {
     if (isTerminalShorthandNode(node) || isTerminalNode(node)) {
@@ -76,51 +69,51 @@ export class CodegenGrammar {
 
   protected compileTerminal(terminal: TerminalNode | TerminalNodeShorthand, pattern?: Pattern): Pattern {
     const node: TerminalNode = isTerminalShorthandNode(terminal) ? {t: terminal} : terminal;
-    if (node.type && node.ast === undefined) {
-      const ast = this.grammar.ast?.[node.type];
+    if (pattern && pattern.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[pattern.type];
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Text');
     pattern.parser = CodegenTerminal.compile(node, pattern, this.ctx);
-    // pattern.toAst = () => {};
+    pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
     return pattern;
   }
 
   protected compileProduction(node: ProductionNode, pattern?: Pattern): Pattern {
     const parsers: Parser[] = [];
     for (const component of node.p) parsers.push(this.getNodeParser(component));
-    if (node.type && node.ast === undefined) {
-      const ast = this.grammar.ast?.[node.type];
+    if (pattern && pattern.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[pattern.type];
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Production');
     pattern.parser = CodegenProduction.compile(node, pattern, parsers, this.ctx);
-    // pattern.toAst = () => undefined;
+    pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
     return pattern;
   }
 
   protected compileUnion(node: UnionNode, pattern?: Pattern): Pattern {
     const parsers: Parser[] = [];
     for (const item of node.u) parsers.push(this.getNodeParser(item));
-    if (node.type && node.ast === undefined) {
-      const ast = this.grammar.ast?.[node.type];
+    if (pattern && pattern.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[pattern.type];
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Union');
     pattern.parser = CodegenUnion.compile(node, pattern, parsers, this.ctx);
-    // pattern.toAst = () => undefined;
+    pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
     return pattern;
   }
 
   protected compileList(node: ListNode, pattern?: Pattern): Pattern {
-    if (node.type && node.ast === undefined) {
-      const ast = this.grammar.ast?.[node.type];
+    if (pattern && pattern.type && node.ast === undefined) {
+      const ast = this.grammar.ast?.[pattern.type];
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'List');
     const childParser = this.getNodeParser(node.l);
     pattern.parser = CodegenList.compile(node, pattern, childParser, this.ctx);
-    // pattern.toAst = () => undefined;
+    pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
     return pattern;
   }
 
@@ -156,7 +149,7 @@ export class CodegenGrammar {
     }
   }
 
-  public createAst(cst: CstNode): unknown {
-    return cst.ptr.toAst(cst);
+  public createAst(cst: CstNode, src: string): unknown {
+    return cst.ptr.toAst(cst, src);
   }
 }

@@ -1,5 +1,5 @@
 import {Pattern} from './codegen/Pattern';
-import type {CstNode, ResolvedGrammarNode} from './types';
+import type {CstNode} from './types';
 
 export class LeafCstMatch implements CstNode {
   constructor(

@@ -61,7 +61,7 @@ export type TerminalNodeShorthand = RegExp | string | '';
  * tree. It specifies a single match pattern either as a string or a regular
  * expression.
  */
-export interface TerminalNode {
+export interface TerminalNode extends AstCodegenOpts {
   /**
    * Type of the terminal node, if not provided "Text" will be used.
    */
@@ -79,40 +79,24 @@ export interface TerminalNode {
    * an array of strings.
    */
   repeat?: '*' | '+';
-  
-  /**
-   * Optional AST transformation.
-   */
-  ast?: AstNodeExpression;
 }
 
 export type ProductionNodeShorthand = GrammarNode[];
 
-export interface ProductionNode {
+export interface ProductionNode extends AstCodegenOpts {
   p: ProductionNodeShorthand;
 
   /**
    * Type of the production node, if not provided "Production" will be used.
    */
   type?: string;
-
-  /**
-   * Optional AST transformation.
-   */
-  ast?: AstNodeExpression;
-
-  /**
-   * If the list node is a leaf node. In this case, the AST node `children`
-   * will not be generated automatically.
-   */
-  leaf?: boolean;
 }
 
 /**
  * A union node is a node that can match one of the alternatives. The first
  * matching alternative is selected.
  */
-export interface UnionNode {
+export interface UnionNode extends AstCodegenOpts {
   /**
    * A collection of alternatives to match. Picks the first matching alternative.
    */
@@ -122,23 +106,12 @@ export interface UnionNode {
    * Type of the union node, if not provided "Union" will be used.
    */
   type?: string;
-
-  /**
-   * Optional AST transformation.
-   */
-  ast?: AstNodeExpression;
-
-  /**
-   * If the list node is a leaf node. In this case, the AST node `children`
-   * will not be generated automatically.
-   */
-  leaf?: boolean;
 }
 
 /**
  * A list node is a node that can match a list of elements - zero or more.
  */
-export interface ListNode {
+export interface ListNode extends AstCodegenOpts {
   /**
    * The node to use for repeating elements.
    */
@@ -148,7 +121,9 @@ export interface ListNode {
    * Type of the list node, if not provided "List" will be used.
    */
   type?: string;
+}
 
+export interface AstCodegenOpts {
   /**
    * Optional AST transformation.
    */
@@ -212,4 +187,4 @@ export interface AstExpressionData {
   ast: CanonicalAstNode | unknown;
 }
 
-export type AstNodeFactory = (cst: CstNode) => unknown;
+export type AstNodeFactory = (cst: CstNode, src: string) => unknown;
