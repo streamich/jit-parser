@@ -9,21 +9,11 @@ import type {AstNodeFactory, ResolvedGrammarNode} from '../types';
 const noAstFactory: AstNodeFactory = () => null;
 
 const isSelectFirstChildExpression = (expr: unknown) => {
-  return (
-    expr instanceof Array &&
-    expr.length === 2 &&
-    expr[0] === '$' &&
-    expr[1] === '/children/0'
-  );
+  return expr instanceof Array && expr.length === 2 && expr[0] === '$' && expr[1] === '/children/0';
 };
 
 const isSelectChildrenExpression = (expr: unknown) => {
-  return (
-    expr instanceof Array &&
-    expr.length === 2 &&
-    expr[0] === '$' &&
-    expr[1] === '/children'
-  );
+  return expr instanceof Array && expr.length === 2 && expr[0] === '$' && expr[1] === '/children';
 };
 
 const compileExpression = (expression: Expr) => {

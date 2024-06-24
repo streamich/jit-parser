@@ -72,10 +72,6 @@ export const grammar: Grammar = {
     Array: ['o.set', ['$', ''], 'children', ['$', '/children/0/children/0', [[]]]],
     Object: ['o.set', ['$', ''], 'children', ['$', '/children/0', [[]]]],
     Members: ['?', ['len', ['$', '/children']], ['$', '/children/0'], [[]]],
-    Entry: [
-      'o.del',
-      ['o.set', ['$', ''], 'key', ['$', '/children/0'], 'value', ['$', '/children/1']],
-      'children',
-    ],
+    Entry: ['o.del', ['o.set', ['$', ''], 'key', ['$', '/children/0'], 'value', ['$', '/children/1']], 'children'],
   },
 };

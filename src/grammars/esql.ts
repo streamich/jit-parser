@@ -5,7 +5,10 @@ const W = {r: 'W'};
 const OptW = {r: 'Ws'};
 
 const r = ([name]: TemplateStringsArray) => ({r: name});
-const opt = (node: GrammarNode): UnionNode => ({u: [node, EPSILON], ast: ['?', ['len', ['$', '/ast/children']], AstUseFirstChild, null]});
+const opt = (node: GrammarNode): UnionNode => ({
+  u: [node, EPSILON],
+  ast: ['?', ['len', ['$', '/ast/children']], AstUseFirstChild, null],
+});
 
 const AstUseChildren = ['$', '/ast/children'];
 const AstUseFirstChild = ['$', '/ast/children/0'];
@@ -214,11 +217,13 @@ export const grammar: Grammar = {
     Command: AstUseFirstChild,
     SourceCommand: AstUseFirstChild,
     ProcessingCommand: AstUseFirstChild,
-    FromCommand: ['o.del',
+    FromCommand: [
+      'o.del',
       ['o.set', ['$', '/ast'], 'sources', ['$', '/ast/children/1'], 'metadata', ['$', '/ast/children/2', null]],
-      'children'
+      'children',
     ],
-    Metadata: ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0/children/0'], null],a: ['len', [[]]],
+    Metadata: ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0/children/0'], null],
+    a: ['len', [[]]],
     MetadataOption: ['$', '/ast/children/1'],
     DeprecatedMetadata: ['$', '/ast/children/1'],
     IndexIdentifierList: [
@@ -230,7 +235,18 @@ export const grammar: Grammar = {
     NextIndexIdentifier: ['$', '/ast/children/1'],
     RowCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1/children']], 'children'],
     EvalCommand: ['o.del', ['o.set', ['$', '/ast'], 'fields', ['$', '/ast/children/1']], 'children'],
-    InlineStatsCommand: ['o.del', ['o.set', ['$', '/ast'], 'aggregates', ['$', '/ast/children/1/children'], 'grouping', ['$', '/ast/children/2/children/1/children', null]], 'children'],
+    InlineStatsCommand: [
+      'o.del',
+      [
+        'o.set',
+        ['$', '/ast'],
+        'aggregates',
+        ['$', '/ast/children/1/children'],
+        'grouping',
+        ['$', '/ast/children/2/children/1/children', null],
+      ],
+      'children',
+    ],
     Fields: [
       'o.set',
       ['$', '/ast'],

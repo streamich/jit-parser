@@ -5,7 +5,12 @@ import type {Parser, UnionNode} from '../types';
 import type {Pattern} from './Pattern';
 
 export class CodegenUnion {
-  public static readonly compile = (rule: UnionNode, pattern: Pattern, parsers: Parser[], ctx: CodegenContext = new CodegenContext()): Parser => {
+  public static readonly compile = (
+    rule: UnionNode,
+    pattern: Pattern,
+    parsers: Parser[],
+    ctx: CodegenContext = new CodegenContext(),
+  ): Parser => {
     const codegen = new CodegenUnion(rule, pattern, parsers, ctx);
     codegen.generate();
     return codegen.compile();

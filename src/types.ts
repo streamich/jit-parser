@@ -2,7 +2,6 @@ import type {Expr} from 'json-joy/lib/json-expression';
 import type {ParseContext} from './context';
 import type {Pattern} from './codegen/Pattern';
 
-
 export interface Grammar {
   /**
    * Grammar start symbol.
@@ -34,15 +33,11 @@ export type GrammarNode =
   | ProductionNode
   | UnionNode
   | ListNode;
-  
+
 /**
  * Grammar without references and shorthand definitions.
  */
-export type ResolvedGrammarNode =
-  | TerminalNode
-  | ProductionNode
-  | UnionNode
-  | ListNode;
+export type ResolvedGrammarNode = TerminalNode | ProductionNode | UnionNode | ListNode;
 
 /**
  * A named node reference is a reference to a named node in the top-level grammar

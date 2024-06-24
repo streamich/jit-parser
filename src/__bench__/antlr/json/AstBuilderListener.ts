@@ -146,6 +146,6 @@ export class AstBuilderListener extends JSONListener {
   }
 
   protected getPositionFragment(ctx: antlr4.ParserRuleContext) {
-    return {pos: ctx.start.start, end: ctx.stop?.stop ?? (ctx.start.start + ctx.getText().length)};
+    return {pos: ctx.start.start, end: ctx.stop?.stop ?? ctx.start.start + ctx.getText().length};
   }
 }

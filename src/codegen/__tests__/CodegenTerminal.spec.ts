@@ -67,8 +67,8 @@ describe('CodegenTerminal', () => {
   describe('string[]', () => {
     test('can match one of the strings', () => {
       const terminal = {
-        t: ['foo', 'bar']
-      }
+        t: ['foo', 'bar'],
+      };
       const pattern = createPattern(terminal);
       const parser = pattern.parser;
       expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
@@ -80,7 +80,7 @@ describe('CodegenTerminal', () => {
       const terminal: TerminalNode = {
         t: ['foo', 'bar'],
         repeat: '+',
-      }
+      };
       const pattern = createPattern(terminal);
       const parser = pattern.parser;
       expect(parser(new ParseContext('bar', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
@@ -94,7 +94,7 @@ describe('CodegenTerminal', () => {
       const terminal: TerminalNode = {
         t: [' '],
         repeat: '+',
-      }
+      };
       const pattern = createPattern(terminal);
       const parser = pattern.parser;
       expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
@@ -107,7 +107,7 @@ describe('CodegenTerminal', () => {
       const terminal: TerminalNode = {
         t: [' ', '\t', '\n'],
         repeat: '+',
-      }
+      };
       const pattern = createPattern(terminal);
       const parser = pattern.parser;
       expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
@@ -122,7 +122,7 @@ describe('CodegenTerminal', () => {
       const terminal: TerminalNode = {
         t: [' ', '\t', '\n'],
         repeat: '*',
-      }
+      };
       const pattern = createPattern(terminal);
       const parser = pattern.parser;
       expect(parser(new ParseContext(' ', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));

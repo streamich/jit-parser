@@ -11,7 +11,6 @@ export class ParseContext {
      */
     public readonly ast: boolean,
   ) {}
-
 }
 export class CodegenContext {
   constructor(

@@ -10,7 +10,11 @@ const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;
 
 export class CodegenTerminal {
-  public static readonly compile = (terminal: TerminalNode | TerminalNodeShorthand, pattern: Pattern, ctx: CodegenContext = new CodegenContext()): Parser => {
+  public static readonly compile = (
+    terminal: TerminalNode | TerminalNodeShorthand,
+    pattern: Pattern,
+    ctx: CodegenContext = new CodegenContext(),
+  ): Parser => {
     if (isTerminalShorthandNode(terminal)) return CodegenTerminal.compile({t: terminal}, pattern, ctx);
     const codegen = new CodegenTerminal(terminal, pattern, ctx);
     codegen.generate();
@@ -38,11 +42,9 @@ export class CodegenTerminal {
     if (typeof match === 'string') {
       const cleanTerminal = scrub(match);
       const condition = cleanTerminal ? emitStringMatch('str', 'pos', cleanTerminal) : 'true';
-      codegen.if(`!(${condition})`,
-        () => {
-          codegen.return('');
-        },
-      );
+      codegen.if(`!(${condition})`, () => {
+        codegen.return('');
+      });
       codegen.return(`new ${dLeafCstMatch}(pos, pos + ${cleanTerminal.length}, ${dPattern});`);
     } else if (match instanceof RegExp) {
       let source = match.source;
@@ -51,11 +53,9 @@ export class CodegenTerminal {
       const dRegExp = codegen.linkDependency(regExp);
       const rSlice = codegen.var(`str.slice(pos)`);
       const rMatch = codegen.var(`${rSlice}.match(${dRegExp})`);
-      codegen.if(`!${rMatch}`,
-        () => {
-          codegen.return('');
-        },
-      );
+      codegen.if(`!${rMatch}`, () => {
+        codegen.return('');
+      });
       const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
       codegen.return(`new ${dLeafCstMatch}(pos, pos + ${rLength}, ${dPattern});`);
     } else if (match instanceof Array) {
@@ -65,13 +65,10 @@ export class CodegenTerminal {
           for (const match0 of match) {
             const cleanTerminal = scrub(match0);
             const condition = emitStringMatch('str', rEnd, cleanTerminal);
-            codegen.if(
-              condition,
-              () => {
-                codegen.js(`${rEnd} += ${cleanTerminal.length};`)
-                codegen.js('continue;');
-              },
-            );
+            codegen.if(condition, () => {
+              codegen.js(`${rEnd} += ${cleanTerminal.length};`);
+              codegen.js('continue;');
+            });
           }
           codegen.js('break;');
         });
@@ -86,12 +83,9 @@ export class CodegenTerminal {
         for (const match0 of match) {
           const cleanTerminal = scrub(match0);
           const condition = emitStringMatch('str', 'pos', cleanTerminal);
-          codegen.if(
-            condition,
-            () => {
-              codegen.js(`${rEnd} += ${cleanTerminal.length};`)
-            },
-          );
+          codegen.if(condition, () => {
+            codegen.js(`${rEnd} += ${cleanTerminal.length};`);
+          });
         }
         codegen.if(`${rEnd} === pos`, () => {
           codegen.return('');
