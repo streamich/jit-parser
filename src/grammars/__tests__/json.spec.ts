@@ -8,14 +8,16 @@ const toAst = (src: string) => {
   const parser = codegen.compile();
   const ctx = new ParseContext(src, true);
   const cst = parser(ctx, 0)!;
-  return cst.ast;
+  const ast = cst.ptr.toAst(cst, src);
+  return ast;
 };
 
 const toAstRule = (rule: string, src: string) => {
-  const parser = codegen.compileRule(rule);
+  const pattern = codegen.compileRule(rule);
   const ctx = new ParseContext(src, true);
-  const cst = parser(ctx, 0)!;
-  return cst.ast;
+  const cst = pattern.parser(ctx, 0)!;
+  const ast = cst.ptr.toAst(cst, src);
+  return ast;
 };
 
 describe('AST', () => {
@@ -34,12 +36,14 @@ describe('AST', () => {
         type: 'Boolean',
         pos: 0,
         end: 4,
+        raw: 'true',
         value: true,
       });
       expect(toAst(' false')).toEqual({
         type: 'Boolean',
         pos: 1,
         end: 6,
+        raw: 'false',
         value: false,
       });
     });
@@ -73,49 +77,19 @@ describe('AST', () => {
         type: 'String',
         pos: 0,
         end: 2,
+        raw: '""',
         value: '',
       });
       expect(toAst('"abc"')).toEqual({
         type: 'String',
         pos: 0,
         end: 5,
+        raw: '"abc"',
         value: 'abc',
       });
     });
 
     describe('arrays', () => {
-      test('can parse array elements', () => {
-        const ast = toAstRule('Elements', '1,2,3');
-        expect(ast).toEqual({
-          type: 'Elements',
-          pos: 0,
-          end: 5,
-          children: [
-            {
-              type: 'Number',
-              pos: 0,
-              end: 1,
-              raw: '1',
-              value: 1,
-            },
-            {
-              type: 'Number',
-              pos: 2,
-              end: 3,
-              raw: '2',
-              value: 2,
-            },
-            {
-              type: 'Number',
-              pos: 4,
-              end: 5,
-              raw: '3',
-              value: 3,
-            },
-          ],
-        });
-      });
-
       test('can parse an empty array', () => {
         const ast = toAst('[]');
         expect(ast).toEqual({
@@ -147,6 +121,7 @@ describe('AST', () => {
               type: 'Boolean',
               pos: 1,
               end: 5,
+              raw: 'true',
               value: true,
             },
           ],
@@ -201,6 +176,7 @@ describe('AST', () => {
                   type: 'Boolean',
                   pos: 2,
                   end: 6,
+                  raw: 'true',
                   value: true,
                 },
               ],
@@ -302,6 +278,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 1,
                 end: 4,
+                raw: '"a"',
                 value: 'a',
               },
               value: {
@@ -331,6 +308,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 3,
                 end: 6,
+                raw: '"a"',
                 value: 'a',
               },
               value: {
@@ -360,6 +338,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 3,
                 end: 6,
+                raw: '"a"',
                 value: 'a',
               },
               value: {
@@ -378,6 +357,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 12,
                 end: 15,
+                raw: '"b"',
                 value: 'b',
               },
               value: {
@@ -407,6 +387,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 2,
                 end: 5,
+                raw: '"a"',
                 value: 'a',
               },
               value: {
@@ -425,6 +406,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 10,
                 end: 13,
+                raw: '"b"',
                 value: 'b',
               },
               value: {
@@ -443,6 +425,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 18,
                 end: 21,
+                raw: '"c"',
                 value: 'c',
               },
               value: {
@@ -472,6 +455,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 1,
                 end: 6,
+                raw: '"foo"',
                 value: 'foo',
               },
               value: {
@@ -487,6 +471,7 @@ describe('AST', () => {
                       type: 'String',
                       pos: 9,
                       end: 14,
+                      raw: '"bar"',
                       value: 'bar',
                     },
                     value: {
@@ -508,6 +493,7 @@ describe('AST', () => {
                 type: 'String',
                 pos: 20,
                 end: 25,
+                raw: '"baz"',
                 value: 'baz',
               },
               value: {

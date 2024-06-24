@@ -70,6 +70,7 @@ export const grammar: Grammar = {
     Number: ['o.set', ['$', ''], 'value', ['num', ['$', '/raw']]],
     String: ['o.set', ['$', ''], 'value', ['substr', ['$', '/raw'], 1, ['-', ['len', ['$', '/raw']], 1]]],
     Array: ['o.set', ['$', ''], 'children', ['$', '/children/0/children/0', [[]]]],
+    Object: ['o.set', ['$', ''], 'children', ['$', '/children/0', [[]]]],
     Members: ['?', ['len', ['$', '/children']], ['$', '/children/0'], [[]]],
     Entry: [
       'o.del',

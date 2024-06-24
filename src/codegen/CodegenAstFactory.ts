@@ -68,7 +68,7 @@ export class CodegenAstFactory {
       });
       childFragment = `, children: ${rChildrenAst}`;
     }
-    const positionFragment = ctx.positions ? `, pos: 11, end: cst.end` : '';
+    const positionFragment = ctx.positions ? `, pos: cst.pos, end: cst.end` : '';
     const rDefaultAst = codegen.var(`{type: ${JSON.stringify(ptr.type)}${positionFragment}${childFragment}}`);
     const rData = codegen.var(`{vars: new ${dVars}(${rDefaultAst})}`);
     codegen.return(`${dExpr}(${rData})`);
