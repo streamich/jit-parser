@@ -21,7 +21,7 @@ const compileExpression = (expression: Expr) => {
     expression,
     operators: operatorsMap,
   });
-  return exprCodegen.run().compile();
+  return exprCodegen.run().compileRaw();
 };
 
 export class CodegenAstFactory {
@@ -103,7 +103,7 @@ export class CodegenAstFactory {
     }
     const positionFragment = ctx.positions ? `, pos: cst.pos, end: cst.end` : '';
     const rDefaultAst = codegen.var(`{type: ${JSON.stringify(ptr.type)}${positionFragment}${childFragment}}`);
-    const rData = codegen.var(`{vars: new ${dVars}(${rDefaultAst})}`);
+    const rData = codegen.var(`new ${dVars}(${rDefaultAst})`);
     codegen.return(`${dExpr}(${rData})`);
   }
 
