@@ -8,6 +8,24 @@ import type {AstNodeFactory, ResolvedGrammarNode} from '../types';
 
 const noAstFactory: AstNodeFactory = () => null;
 
+const isSelectFirstChildExpression = (expr: unknown) => {
+  return (
+    expr instanceof Array &&
+    expr.length === 2 &&
+    expr[0] === '$' &&
+    expr[1] === '/children/0'
+  );
+};
+
+const isSelectChildrenExpression = (expr: unknown) => {
+  return (
+    expr instanceof Array &&
+    expr.length === 2 &&
+    expr[0] === '$' &&
+    expr[1] === '/children'
+  );
+};
+
 const compileExpression = (expression: Expr) => {
   const exprCodegen = new JsonExpressionCodegen({
     expression,
@@ -44,16 +62,22 @@ export class CodegenAstFactory {
 
   public generate() {
     const {codegen, node, ptr, ctx} = this;
-    const expr = compileExpression(node.ast as any);
-    const dExpr = codegen.linkDependency(expr);
-    const dVars = codegen.linkDependency(Vars);
-    let childFragment = '';
-    if (isTerminalNode(node)) {
-      childFragment = `, raw: src.slice(cst.pos, cst.end)`;
-    } else if (isUnionNode(node)) {
-      const rChild = codegen.var(`cst.children[0]`);
-      childFragment = `, children: [${rChild}.ptr.toAst(${rChild}, src)]`;
-    } else if (isProductionNode(node) || isListNode(node)) {
+    if (isSelectFirstChildExpression(node.ast)) {
+      /**
+       * Select first non-null child and non-undefined child ['$', '/children/0'].
+       */
+      const rIndex = codegen.var(`0`);
+      codegen.while('1', () => {
+        const rChild = codegen.var(`cst.children[${rIndex}]`);
+        const rChildAst = codegen.var(`${rChild}.ptr.toAst(${rChild}, src)`);
+        codegen.if(`${rChildAst} != null`, () => {
+          codegen.return(rChildAst);
+        });
+        codegen.js(`${rIndex}++;`);
+      });
+      return;
+    }
+    const createChildrenArr = () => {
       const rIndex = codegen.var(`0`);
       const rChildren = codegen.var(`cst.children`);
       const rChildrenAst = codegen.var(`[]`);
@@ -66,7 +90,26 @@ export class CodegenAstFactory {
         });
         codegen.js(`${rIndex}++;`);
       });
-      childFragment = `, children: ${rChildrenAst}`;
+      return rChildrenAst;
+    };
+    if (isSelectChildrenExpression(node.ast)) {
+      /**
+       * Replace AST node by its children ['$', '/children'].
+       */
+      codegen.return(createChildrenArr());
+      return;
+    }
+    const expr = compileExpression(node.ast as any);
+    const dExpr = codegen.linkDependency(expr);
+    const dVars = codegen.linkDependency(Vars);
+    let childFragment = '';
+    if (isTerminalNode(node)) {
+      childFragment = `, raw: src.slice(cst.pos, cst.end)`;
+    } else if (isUnionNode(node)) {
+      const rChild = codegen.var(`cst.children[0]`);
+      childFragment = `, children: [${rChild}.ptr.toAst(${rChild}, src)]`;
+    } else if (isProductionNode(node) || isListNode(node)) {
+      childFragment = `, children: ${createChildrenArr()}`;
     }
     const positionFragment = ctx.positions ? `, pos: cst.pos, end: cst.end` : '';
     const rDefaultAst = codegen.var(`{type: ${JSON.stringify(ptr.type)}${positionFragment}${childFragment}}`);

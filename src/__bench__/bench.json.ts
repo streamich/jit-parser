@@ -16,25 +16,27 @@ const toCst = (json: string) => {
 };
 
 const toAst = (json: string) => {
-  const ctx = new ParseContext(json, true);
-  // return parser(ctx, 0)?.ast;
+  const cst = toCst(json);
+  const ast = cst?.ptr.toAst(cst, json);
+  return ast;
 };
 
 const json = JSON.stringify(json0, null, 4);
 const suite = new Benchmark.Suite();
 
-console.log(toCst(json));
+// console.log(toCst(json));
+// console.log(toAst(json));
 
 const prismGrammar = prism.languages['json'];
 
 suite.add('jit-parser', () => {
-  toCst(json);
-  // toAst(json);
+  // toCst(json);
+  toAst(json);
 });
 
 suite.add('ANTLR4', () => {
-  antlr.toCst(json);
-  // antlr.toAst(json);
+  // antlr.toCst(json);
+  antlr.toAst(json);
 });
 
 suite.add('Prism.js', () => {
