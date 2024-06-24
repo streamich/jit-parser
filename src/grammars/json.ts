@@ -50,9 +50,9 @@ export const grammar: Grammar = {
             {
               l: {
                 p: [{t: ',', ast: null}, {r: 'Entry'}],
-                ast: ['$', '/children/0'], // TODO: Hardcode this in AST factory generator
+                ast: ['$', '/children/0'],
               },
-              ast: ['$', '/children'], // TODO: Hardcode this in AST factory generator
+              ast: ['$', '/children'],
             },
           ],
           ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
