@@ -68,7 +68,7 @@ export class CodegenGrammar {
   }
 
   protected compileTerminal(terminal: TerminalNode | TerminalNodeShorthand, pattern?: Pattern): Pattern {
-    const node: TerminalNode = isTerminalShorthandNode(terminal) ? {t: terminal} : terminal;
+    const node: TerminalNode = isTerminalShorthandNode(terminal) ? {t: terminal, ast: pattern ? undefined : null} : terminal;
     if (pattern && pattern.type && node.ast === undefined) {
       const ast = this.grammar.ast?.[pattern.type];
       if (ast !== void 0) node.ast = ast;
