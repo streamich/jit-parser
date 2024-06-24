@@ -1,15 +1,15 @@
 import {grammar} from '../../grammars/json';
 import {CodegenGrammar} from '../CodegenGrammar';
-import {ParseContext} from '../../context';
+import {CodegenContext, ParseContext} from '../../context';
 
 describe('CodegenGrammar', () => {
   test('can parse JSON grammar to basic CST', () => {
-    const codegen = new CodegenGrammar(grammar);
+    const codegenCtx = new CodegenContext(false, true);
+    const codegen = new CodegenGrammar(grammar, codegenCtx);
     const parser = codegen.compile();
-    const ctx = new ParseContext(' 1  ', false);
+    const src = ' 1  ';
+    const ctx = new ParseContext(src, false);
     const cst = parser(ctx, 0)!;
-    const ast = cst.ptr.toAst(cst);
-    console.log(JSON.stringify(ast, null, 2));
     expect(cst).toMatchObject({
       pos: 0,
       end: 4,

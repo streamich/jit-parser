@@ -18,7 +18,8 @@ export const grammar: Grammar = {
     Null: 'null',
     Boolean: {t: ['true', 'false']},
     Number: /\-?(0|([1-9][0-9]{0,25}))(\.[0-9]{1,25})?([eE][\+\-]?[0-9]{1,25})?/,
-    String: /"(\\["\\/bfnrt]|\\u[0-9a-fA-F]{4}|[^"\\])*"/,
+    // String: /"((\\["\\/bfnrt])|(\\u[0-9a-fA-F]{4})|[^"\\])*"/,
+    String: /"[^"\\]*(?:\\.|[^"\\]*)*"/,
 
     Array: ['[', {r: 'Elements'}, ']'],
     Elements: {
@@ -28,13 +29,13 @@ export const grammar: Grammar = {
             {r: 'Value'},
             {
               l: {
-                p: [{t: ',', ast: null}, {r: 'Value'}],
-                ast: ['$', '/ast/children/0'],
+                p: [',', {r: 'Value'}],
+                ast: ['$', '/children/0'],
               },
-              ast: ['$', '/ast/children'],
+              ast: ['$', '/children'],
             },
           ],
-          ast: ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
+          ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
         },
         {r: 'Ws'},
       ],
@@ -49,12 +50,12 @@ export const grammar: Grammar = {
             {
               l: {
                 p: [{t: ',', ast: null}, {r: 'Entry'}],
-                ast: ['$', '/ast/children/0'],
+                ast: ['$', '/children/0'], // TODO: Hardcode this in AST factory generator
               },
-              ast: ['$', '/ast/children'],
+              ast: ['$', '/children'], // TODO: Hardcode this in AST factory generator
             },
           ],
-          ast: ['concat', ['push', [[]], ['$', '/ast/children/0']], ['$', '/ast/children/1']],
+          ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
         },
         {r: 'Ws'},
       ],
@@ -63,23 +64,16 @@ export const grammar: Grammar = {
   },
 
   ast: {
-    Value: ['$', '/cst/children/1/ast'],
-    TValue: ['$', '/cst/children/0/ast'],
-    Boolean: ['o.set', ['$', '/ast'], 'value', ['?', ['==', ['$', '/cst/children/0/raw'], 'true'], true, false]],
-    Number: ['o.set', ['$', '/ast'], 'value', ['num', ['$', '/cst/raw']]],
-    String: ['o.set', ['$', '/ast'], 'value', ['$', '/cst/children/1/raw']],
-    Array: ['o.set', ['$', '/ast'], 'children', ['$', '/ast/children/1/children']],
-    Elements: [
-      'o.set',
-      ['$', '/ast'],
-      'children',
-      ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0'], [[]]],
-    ],
-    Object: ['o.set', ['$', '/ast'], 'children', ['$', '/ast/children/1']],
-    Members: ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0'], [[]]],
+    Value: ['$', '/children/0'],
+    TValue: ['$', '/children/0'],
+    Boolean: ['o.set', ['$', ''], 'value', ['?', ['==', ['$', '/raw'], 'true'], true, false]],
+    Number: ['o.set', ['$', ''], 'value', ['num', ['$', '/raw']]],
+    String: ['o.set', ['$', ''], 'value', ['substr', ['$', '/raw'], 1, ['-', ['len', ['$', '/raw']], 1]]],
+    Array: ['o.set', ['$', ''], 'children', ['$', '/children/0/children/0', [[]]]],
+    Members: ['?', ['len', ['$', '/children']], ['$', '/children/0'], [[]]],
     Entry: [
       'o.del',
-      ['o.set', ['$', '/ast'], 'key', ['$', '/ast/children/0'], 'value', ['$', '/ast/children/2']],
+      ['o.set', ['$', ''], 'key', ['$', '/children/0'], 'value', ['$', '/children/1']],
       'children',
     ],
   },
