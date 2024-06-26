@@ -6,7 +6,7 @@ const codegen = new CodegenGrammar(grammar);
 const parser = codegen.compile();
 
 const toAst = (src: string) => {
-  const ctx = new ParseContext(src, true);
+  const ctx = new ParseContext(src, false);
   const cst = parser(ctx, 0)!;
   return cst?.ptr.toAst(cst, src);
 };
@@ -14,7 +14,7 @@ const toAst = (src: string) => {
 describe('AST', () => {
   test('...', () => {
     // const ast = toAst('FROM sample-index-* [METADATA _id]');
-    const ast = toAst('FROM a | ROW a.b.c = 1 | eval a | INLINESTATS a BY b');
+    const ast = toAst('ROW abc(');
     console.log(JSON.stringify(ast, null, 2));
   });
 });

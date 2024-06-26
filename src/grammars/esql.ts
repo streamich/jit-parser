@@ -130,17 +130,37 @@ export const grammar: Grammar = {
     },
     PrimaryExpression: {
       u: [
-        {r: 'Constant'},
-        {r: 'QualifiedName'},
-        // {r: 'FunctionExpression'},
-        // [{r: 'Ws'}, '(', {r: 'BooleanExpression'}, ')'],
-        // {r: 'InlineCast'},
+        r`Constant`,
+        r`QualifiedName`,
+        r`FunctionExpression`,
+        [OptW, '(', r`BooleanExpression`, ')'],
+        // r`InlineCast`,
       ],
     },
 
     AssignmentExpression: [{r: 'QualifiedName'}, {r: 'Ws'}, '=', {r: 'Ws'}, {r: 'BooleanExpression'}],
 
     SubqueryExpression: [{r: 'Ws'}, '(', {r: 'Query'}, ')', {r: 'Ws'}],
+
+    // -------------------------------------------------------------- Functions
+    // functionExpression
+    //     : identifier LP (ASTERISK | (booleanExpression (COMMA booleanExpression)*))? RP
+    //     ;
+    FunctionExpression: [
+      r`Identifier`,
+      // OptW,
+      '(',
+      // OptW,
+      // {u: [
+      //   '*',
+      //   [
+      //     r`BooleanExpression`,
+      //     {l: [OptW, ',', OptW, r`BooleanExpression`]},
+      //   ]
+      // ]},
+      // OptW,
+      // ')',
+    ],
 
     // --------------------------------------------------------------- Literals
 
