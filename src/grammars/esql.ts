@@ -20,7 +20,7 @@ export const grammar: Grammar = {
   start: 'Query',
 
   cst: {
-    Query: [{r: 'Ws'}, r`SourceCommand`, r`QueryChain`, /\s+|$/],
+    Query: [{r: 'Ws'}, r`SourceCommand`, r`QueryChain`, /\s|$/],
     QueryChain: {l: r`PipedCommand`},
     PipedCommand: [OptW, '|', OptW, r`Command`],
     Command: {u: [r`SourceCommand`, r`ProcessingCommand`]},
@@ -104,6 +104,14 @@ export const grammar: Grammar = {
 
     // ------------------------------------------------------------ Expressions
 
+    BooleanExpressionList: {
+      p: [
+        r`BooleanExpression`,
+        {l: r`NextBooleanExpression`, ast: AstUseChildren},
+      ],
+      ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
+    },
+    NextBooleanExpression: {p: [OptW, ',', OptW, r`BooleanExpression`], ast: AstUseFirstChild},
     BooleanExpression: {
       u: [
         r`LogicalNot`,
@@ -131,8 +139,8 @@ export const grammar: Grammar = {
     PrimaryExpression: {
       u: [
         r`Constant`,
-        r`QualifiedName`,
         r`FunctionExpression`,
+        r`QualifiedName`,
         [OptW, '(', r`BooleanExpression`, ')'],
         // r`InlineCast`,
       ],
@@ -148,18 +156,18 @@ export const grammar: Grammar = {
     //     ;
     FunctionExpression: [
       r`Identifier`,
-      // OptW,
+      OptW,
       '(',
-      // OptW,
-      // {u: [
-      //   '*',
-      //   [
-      //     r`BooleanExpression`,
-      //     {l: [OptW, ',', OptW, r`BooleanExpression`]},
-      //   ]
-      // ]},
-      // OptW,
-      // ')',
+      OptW,
+      {
+        u: [
+          {type: 'StarArgument', t: '*'},
+          r`BooleanExpressionList`,
+        ],
+        ast: AstUseFirstChild,
+      },
+      OptW,
+      ')',
     ],
 
     // --------------------------------------------------------------- Literals
@@ -283,6 +291,7 @@ export const grammar: Grammar = {
       ['o.set', ['$', ''], 'left', ['$', '/children/0'], 'right', ['$', '/children/1']],
       'children',
     ],
+    FunctionExpression: ['o.del', ['o.set', ['$', ''], 'name', ['$', '/children/0'], 'arguments', ['$', '/children/1']], 'children'],
     Constant: ['o.del', ['o.set', ['$', ''], 'value', ['$', '/children/0']], 'children'],
     QualifiedName: [
       'o.set',
