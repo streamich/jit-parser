@@ -1,42 +1,46 @@
 import type {Grammar, RefNode} from '../types';
 
 let r = 0;
-const ref = () => {
-  const label = 'R' + r++;
+const ref = (label: string = 'R' + r++) => {
   return {r: label, toString: () => label} as RefNode & string;
 };
 
-const EPSILON = {t: '', ast: null};
+const EPSILON = '';
 const W = ref();
+const WOpt = ref();
+const Identifier = ref('Identifier');
 const Literal = ref();
 const Expression = ref();
 const AddExpression = ref();
-const AddOperator = {t: /[\+\-]/, ast: ['$', '/ast/raw']};
+const AddOperator = {t: /[\+\-]/, ast: ['$', '/raw']};
 const AddExpressionCont = ref();
 const MulExpression = ref();
-const MulOperator = {t: /[\*\/]/, ast: ['$', '/ast/raw']};
+const MulOperator = {t: /[\*\/]/, ast: ['$', '/raw']};
 const MulExpressionCont = ref();
+const Statement = ref();
+const VariableStatement = ref('VariableStatement');
+const VariableStatementKind = ref();
 
 const AstBinaryExpression = [
   '?',
-  ['$', '/ast/children/1/children/0', ''],
+  ['$', '/children/1/children/0', ''],
   [
     'o.del',
     [
       'o.set',
-      ['$', '/ast'],
+      ['$', ''],
       'left',
-      ['$', '/ast/children/0'],
+      ['$', '/children/0'],
       'operator',
-      ['$', '/ast/children/1/children/0', ''],
+      ['$', '/children/1/children/0', ''],
       'right',
-      ['$', '/ast/children/1/children/1', null],
+      ['$', '/children/1/children/1', null],
     ],
     'children',
   ],
-  ['$', '/ast/children/0'],
+  ['$', '/children/0'],
 ];
-const AstBinaryExpressionCont = ['?', ['len', ['$', '/ast/children']], ['$', '/ast/children/0'], null];
+const AstBinaryExpressionCont = ['?', ['len', ['$', '/children']], ['$', '/children/0'], null];
 
 /**
  * JavaScript grammar.
@@ -45,10 +49,34 @@ export const grammar: Grammar = {
   start: 'Program',
 
   cst: {
-    [W.r]: {t: /\s*/, ast: null},
-    Program: Expression,
+    [W]: {t: /\s+/, ast: null},
+    [WOpt]: {t: /\s*/, ast: null},
+    Program: {
+      u: [
+          Statement,
+      ],
+    },
 
-    [Expression.r]: {
+    [Statement]: {
+      u: [
+        VariableStatement,
+      ],
+    },
+
+    [VariableStatement]: {
+      p: [VariableStatementKind, W, Identifier, WOpt, '=', WOpt, Expression, /;|\n|$/],
+      ast: ['o.del', ['o.set', ['$', ''],
+        'kind', ['$', '/children/0'],
+        'id', ['$', '/children/1'],
+        'declarations', ['$', '/children/2'],
+      ], 'children'],
+    },
+    [VariableStatementKind]: {
+      t: /var|let|const/,
+      ast: ['$', '/raw'],
+    },
+
+    [Expression]: {
       type: 'Expression',
       u: [AddExpression, Literal],
     },
@@ -58,22 +86,26 @@ export const grammar: Grammar = {
       p: [MulExpression, AddExpressionCont],
       ast: AstBinaryExpression,
     },
-    [AddExpressionCont.r]: {
-      u: [[W, AddOperator, W, AddExpression, AddExpressionCont], EPSILON],
+    [AddExpressionCont]: {
+      u: [[WOpt, AddOperator, WOpt, AddExpression, AddExpressionCont], EPSILON],
       ast: AstBinaryExpressionCont,
     },
 
-    [MulExpression.r]: {
+    [MulExpression]: {
       type: 'MultiplicativeExpression',
       p: [Literal, MulExpressionCont],
       ast: AstBinaryExpression,
     },
-    [MulExpressionCont.r]: {
-      u: [[W, MulOperator, W, MulExpression, MulExpressionCont], EPSILON],
+    [MulExpressionCont]: {
+      u: [[WOpt, MulOperator, WOpt, MulExpression, MulExpressionCont], EPSILON],
       ast: AstBinaryExpressionCont,
     },
 
-    [Literal.r]: {
+    [Identifier]: {
+      t: /[a-zA-Z_]+/
+    },
+
+    [Literal]: {
       type: 'Literal',
       u: [
         {r: 'NullLiteral'},
@@ -82,11 +114,14 @@ export const grammar: Grammar = {
         // {r: 'StringLiteral'},
       ],
       // ast: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
-      ast: ['$', '/ast/children/0'],
+      // ast: ['$', '/ast/children/0'],
     },
 
     NullLiteral: 'null',
     BooleanLiteral: /true|false/,
-    NumericLiteral: /\d+/,
+    NumericLiteral: {
+      t: /\d+/,
+      ast: ['o.set', ['$', ''], 'value', ['num', ['$', '/raw']]],
+    },
   },
 };
