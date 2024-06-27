@@ -60,7 +60,13 @@ export const grammar: Grammar = {
         {r: 'Ws'},
       ],
     },
-    Entry: [{r: 'Ws'}, {r: 'String'}, {r: 'Ws'}, ':', {r: 'Value'}],
+    Entry: {
+      p: [{r: 'Ws'}, {r: 'String'}, {r: 'Ws'}, ':', {r: 'Value'}],
+      children: {
+        0: 'key',
+        1: 'value',
+      },
+    },
   },
 
   ast: {
@@ -72,6 +78,5 @@ export const grammar: Grammar = {
     Array: ['o.set', ['$', ''], 'children', ['$', '/children/0/children/0', [[]]]],
     Object: ['o.set', ['$', ''], 'children', ['$', '/children/0', [[]]]],
     Members: ['?', ['len', ['$', '/children']], ['$', '/children/0'], [[]]],
-    Entry: ['o.del', ['o.set', ['$', ''], 'key', ['$', '/children/0'], 'value', ['$', '/children/1']], 'children'],
   },
 };

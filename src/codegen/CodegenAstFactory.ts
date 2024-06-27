@@ -91,24 +91,31 @@ export class CodegenAstFactory {
     }
     const dVars = codegen.linkDependency(Vars);
     let childFragment = '';
+    const rChildrenAst = codegen.var();
     if (isTerminalNode(node)) {
       childFragment = `, raw: src.slice(cst.pos, cst.end)`;
     } else if (isUnionNode(node)) {
       const rChild = codegen.var(`cst.children[0]`);
-      const rChildrenAst = codegen.var(`[${rChild}.ptr.toAst(${rChild}, src)]`);
-      childFragment = `, children: ${rChildrenAst}`;
+      codegen.js(`${rChildrenAst} = [${rChild}.ptr.toAst(${rChild}, src)];`);
+      if (!node.children && !node.leaf) {
+        childFragment = `, children: ${rChildrenAst}`;
+      }
     } else if (isProductionNode(node) || isListNode(node)) {
-      childFragment = `, children: ${createChildrenArr()}`;
+      codegen.js(`${rChildrenAst} = ${createChildrenArr()};`);
+      if (!node.children && !node.leaf) {
+        childFragment = `, children: ${rChildrenAst}`;
+      }
     }
     const positionFragment = ctx.positions ? `, pos: cst.pos, end: cst.end` : '';
     const rDefaultAst = codegen.var(`{type: ${JSON.stringify(ptr.type)}${positionFragment}${childFragment}}`);
     if (node.children) {
-      const childrenReferences: string[] = [];
+      // const childrenReferences: string[] = [];
       for (const [pos, prop] of Object.entries(node.children)) {
-        childrenReferences.push(prop);
-        codegen.js(`${rDefaultAst}.${prop} = ${rDefaultAst}.children[${pos}] ?? null;`);
+        // childrenReferences.push(prop);
+        codegen.js(`${rDefaultAst}.${prop} = ${rChildrenAst}[${pos}] ?? null;`);
       }
-      codegen.js(`${rDefaultAst}.children = ${JSON.stringify(childrenReferences)};`);
+      // codegen.js(`${rDefaultAst}.children = ${JSON.stringify(childrenReferences)};`);
+      // codegen.js(`delete ${rDefaultAst}.children;`);
     }
     if (node.ast !== undefined) {
       const expr = compileExpression(node.ast as any);
