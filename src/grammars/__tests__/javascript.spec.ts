@@ -24,7 +24,11 @@ describe('AST', () => {
     // const ast = toAst('FROM sample-index-* [METADATA _id]');
     const ast = toAst(`
       continue asf;
-      continue;
+      return 123;
+    {
+      continue asdf;
+      // var a = 123;
+    }
 `);
     console.log(JSON.stringify(ast, null, 2));
   });

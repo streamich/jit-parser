@@ -16,7 +16,7 @@ const Separator = ref();
 const SeparatorOpt = ref();
 
 const Identifier = ref('Identifier');
-const Literal = ref();
+const Literal = ref('Literal');
 const Expression = ref();
 const AddExpression = ref();
 const AddOperator = {t: /[\+\-]/, ast: ['$', '/raw']};
@@ -31,6 +31,8 @@ const ReservedWord = ref('ReservedWord');
 const ReturnStatement = ref('ReturnStatement');
 const ContinueStatement = ref('ContinueStatement');
 const BreakStatement = ref('BreakStatement');
+const BlockStatement = ref('BlockStatement');
+const StatementList = ref('StatementList');
 
 const AstBinaryExpression = [
   '?',
@@ -101,6 +103,15 @@ export const grammar: Grammar = {
   start: 'Program',
 
   cst: {
+    Program: {
+      p: [
+        StatementList,
+        SeparatorOpt,
+        /$/,
+      ],
+      ast: ['o.del', ['o.set', ['$', ''], 'body', ['$', '/children/0/children', [[]]]], 'children']
+    },
+
     [Whitespace]: /\s+/,
     [WhitespaceOpt]: /\s*/,
     [ASI]: {
@@ -121,27 +132,32 @@ export const grammar: Grammar = {
       ast: null,
     },
 
-    Program: {
+    [BlockStatement]: {
       p: [
-        {
-          l: {
-            p: [
-              SeparatorOpt,
-              {
-                u: [Statement],
-                ast: ['$', '/children/0'],
-              },
-            ],
+        '{',
+        StatementList,
+        SeparatorOpt,
+        '}',
+      ],
+      ast: ['o.del', ['o.set', ['$', ''], 'body', ['$', '/children/0/children', [[]]]], 'children'],
+    },
+
+    [StatementList]: {
+      l: {
+        p: [
+          SeparatorOpt,
+          {
+            u: [Statement],
             ast: ['$', '/children/0'],
           },
-        },
-        SeparatorOpt,
-      ],
-      ast: ['o.del', ['o.set', ['$', ''], 'body', ['$', '/children/0/children', [[]]]], 'children']
+        ],
+        ast: ['$', '/children/0'],
+      },
     },
 
     [Statement]: {
       u: [
+        BlockStatement,
         ReturnStatement,
         ContinueStatement,
         BreakStatement,
@@ -183,7 +199,25 @@ export const grammar: Grammar = {
     },
 
     [ReturnStatement]: {
-      p: ['return', Separator, Expression, SeparatorOpt, ASI],
+      p: [
+        'return',
+        {
+          u: [
+            {
+              p: [
+                Separator,
+                Expression,
+              ],
+              ast: ['$', '/children/0'],
+            },
+            EPSILON,
+          ],
+          ast: ['$', '/children/0', null],
+        },
+        SeparatorOpt,
+        ASI
+      ],
+      ast: ['o.del', ['o.set', ['$', ''], 'argument', ['$', '/children/0', null]], 'children'],
     },
 
     [ContinueStatement]: {
@@ -215,6 +249,7 @@ export const grammar: Grammar = {
     [Expression]: {
       type: 'Expression',
       u: [AddExpression, Literal],
+      ast: ['$', '/children/0'],
     },
 
     [AddExpression]: {
@@ -242,15 +277,13 @@ export const grammar: Grammar = {
     },
 
     [Literal]: {
-      type: 'Literal',
       u: [
         {r: 'NullLiteral'},
         {r: 'BooleanLiteral'},
         {r: 'NumericLiteral'},
         // {r: 'StringLiteral'},
       ],
-      // ast: ['o.del', ['o.set', ['$', '/ast'], 'value', ['$', '/ast/children/0']], 'children'],
-      // ast: ['$', '/ast/children/0'],
+      ast: ['o.del', ['o.set', ['$', ''], 'value', ['$', '/children/0/value']], 'children'],
     },
 
     NullLiteral: 'null',
