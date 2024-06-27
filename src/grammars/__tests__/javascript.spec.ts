@@ -66,4 +66,39 @@ describe('AST', () => {
       });
     });
   });
+
+  describe('ReturnStatement', () => {
+    test('short form', () => {
+      const ast = toAstStatement(`return;`);
+      expect(ast).toMatchObject({
+        type: 'ReturnStatement',
+        argument: null,
+      });
+    });
+
+    test('with literal expression return', () => {
+      const ast = toAstStatement(`return 123;`);
+      expect(ast).toMatchObject({
+        type: 'ReturnStatement',
+        argument: {
+          type: 'Literal',
+          value: 123,
+        },
+      });
+    });
+
+    test('with separators', () => {
+      const ast = toAstStatement(`
+        // Best return statement evah  
+        return /* the number: 8 */ 7 /* the number: 8 */ ; // the number: 8
+      `);
+      expect(ast).toMatchObject({
+        type: 'ReturnStatement',
+        argument: {
+          type: 'Literal',
+          value: 7,
+        },
+      });
+    });
+  });
 });
