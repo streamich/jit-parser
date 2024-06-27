@@ -31,7 +31,7 @@ export class CodegenAstFactory {
     ctx: CodegenContext = new CodegenContext(),
   ): AstNodeFactory => {
     if (!ctx.astExpressions) return defaultAstFactory;
-    if (node.ast === undefined) return defaultAstFactory;
+    if (node.ast === undefined && node.children === undefined) return defaultAstFactory;
     if (node.ast === null) return noAstFactory;
     const codegen = new CodegenAstFactory(node, ptr, ctx);
     codegen.generate();
@@ -89,22 +89,35 @@ export class CodegenAstFactory {
       codegen.return(createChildrenArr());
       return;
     }
-    const expr = compileExpression(node.ast as any);
-    const dExpr = codegen.linkDependency(expr);
     const dVars = codegen.linkDependency(Vars);
     let childFragment = '';
     if (isTerminalNode(node)) {
       childFragment = `, raw: src.slice(cst.pos, cst.end)`;
     } else if (isUnionNode(node)) {
       const rChild = codegen.var(`cst.children[0]`);
-      childFragment = `, children: [${rChild}.ptr.toAst(${rChild}, src)]`;
+      const rChildrenAst = codegen.var(`[${rChild}.ptr.toAst(${rChild}, src)]`);
+      childFragment = `, children: ${rChildrenAst}`;
     } else if (isProductionNode(node) || isListNode(node)) {
       childFragment = `, children: ${createChildrenArr()}`;
     }
     const positionFragment = ctx.positions ? `, pos: cst.pos, end: cst.end` : '';
     const rDefaultAst = codegen.var(`{type: ${JSON.stringify(ptr.type)}${positionFragment}${childFragment}}`);
-    const rData = codegen.var(`new ${dVars}(${rDefaultAst})`);
-    codegen.return(`${dExpr}(${rData})`);
+    if (node.children) {
+      const childrenReferences: string[] = [];
+      for (const [pos, prop] of Object.entries(node.children)) {
+        childrenReferences.push(prop);
+        codegen.js(`${rDefaultAst}.${prop} = ${rDefaultAst}.children[${pos}] ?? null;`);
+      }
+      codegen.js(`${rDefaultAst}.children = ${JSON.stringify(childrenReferences)};`);
+    }
+    if (node.ast !== undefined) {
+      const expr = compileExpression(node.ast as any);
+      const dExpr = codegen.linkDependency(expr);
+      const rData = codegen.var(`new ${dVars}(${rDefaultAst})`);
+      codegen.return(`${dExpr}(${rData})`);
+    } else {
+      codegen.return(`${rDefaultAst}`);
+    }
   }
 
   public compile(): AstNodeFactory {

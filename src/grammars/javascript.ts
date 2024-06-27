@@ -217,12 +217,14 @@ export const grammar: Grammar = {
         SeparatorOpt,
         ASI
       ],
-      ast: ['o.del', ['o.set', ['$', ''], 'argument', ['$', '/children/0', null]], 'children'],
+      children: {
+        0: 'argument',
+      },
     },
 
     [ContinueStatement]: {
       p: [
-        'continue',
+        {t: 'continue', ast: null, /* tags: ['keyword'] */},
         {
           u: [
             {
@@ -239,7 +241,9 @@ export const grammar: Grammar = {
         SeparatorOpt,
         ASI
       ],
-      ast: ['o.del', ['o.set', ['$', ''], 'label', ['$', '/children/0', null]], 'children'],
+      children: {
+        0: 'label',
+      },
     },
 
     [BreakStatement]: {

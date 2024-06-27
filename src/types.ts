@@ -125,6 +125,12 @@ export interface AstCodegenOpts {
   ast?: AstNodeExpression;
 
   /**
+   * Children mapping to AST node properties. When specified the `.children`
+   * of a CST node will be used to generate the AST node properties.
+   */
+  children?: Record<number, string>;
+
+  /**
    * If the list node is a leaf node. In this case, the AST node `children`
    * will not be generated automatically.
    */
