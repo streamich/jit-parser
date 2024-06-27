@@ -274,6 +274,7 @@ export const grammar: Grammar = {
 
     [Identifier]: {
       t: /[a-zA-Z_]+/,
+      ast: ['o.del', ['o.set', ['$', ''], 'name', ['$', '/raw']], 'raw'],
     },
 
     [Literal]: {

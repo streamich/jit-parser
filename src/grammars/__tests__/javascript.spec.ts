@@ -12,6 +12,13 @@ const toAst = (src: string) => {
   return cst?.ptr.toAst(cst, src);
 };
 
+const toAstStatement = (src: string) => {
+  const ctx = new ParseContext(src, true);
+  const cst = parser(ctx, 0)!;
+  const ast = cst?.ptr.toAst(cst, src);
+  return (ast as any)?.body[0];
+};
+
 const toAstRule = (rule: string, src: string) => {
   const pattern = codegen.compileRule(rule);
   const ctx = new ParseContext(src, true);
@@ -20,16 +27,43 @@ const toAstRule = (rule: string, src: string) => {
 };
 
 describe('AST', () => {
-  test('...', () => {
-    // const ast = toAst('FROM sample-index-* [METADATA _id]');
-    const ast = toAst(`
-      continue asf;
-      return 123;
-    {
-      continue asdf;
-      // var a = 123;
-    }
-`);
-    console.log(JSON.stringify(ast, null, 2));
+  describe('ContinueStatement', () => {
+    test('short form', () => {
+      const ast = toAstStatement(`continue;`);
+      expect(ast).toMatchObject({
+        type: 'ContinueStatement',
+        label: null,
+      });
+    });
+
+    test('with separators', () => {
+      const ast = toAstStatement(` continue /* foo */ ; // bar`);
+      expect(ast).toMatchObject({
+        type: 'ContinueStatement',
+        label: null,
+      });
+    });
+
+    test('with identifier', () => {
+      const ast = toAstStatement(` continue /* foo */ abc /* asdf */ ; // bar`);
+      expect(ast).toMatchObject({
+        type: 'ContinueStatement',
+        label: {
+          type: 'Identifier',
+          name: 'abc',
+        },
+      });
+    });
+
+    test('no ending semicolon', () => {
+      const ast = toAstStatement(` /**/ continue /* foo */ _gg_wp /* asdf */ // bar`);
+      expect(ast).toMatchObject({
+        type: 'ContinueStatement',
+        label: {
+          type: 'Identifier',
+          name: '_gg_wp',
+        },
+      });
+    });
   });
 });
