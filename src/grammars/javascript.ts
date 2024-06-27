@@ -6,8 +6,15 @@ const ref = (label: string = 'R' + r++) => {
 };
 
 const EPSILON = '';
-const W = ref();
-const WOpt = ref();
+const Whitespace = ref();
+const WhitespaceOpt = ref();
+const ASI = ref();
+const LineComment = ref('LineComment');
+const BlockComment = ref('BlockComment');
+const ShebangComment = ref('ShebangComment');
+const Separator = ref();
+const SeparatorOpt = ref();
+
 const Identifier = ref('Identifier');
 const Literal = ref();
 const Expression = ref();
@@ -20,6 +27,10 @@ const MulExpressionCont = ref();
 const Statement = ref();
 const VariableStatement = ref('VariableStatement');
 const VariableStatementKind = ref();
+const ReservedWord = ref('ReservedWord');
+const ReturnStatement = ref('ReturnStatement');
+const ContinueStatement = ref('ContinueStatement');
+const BreakStatement = ref('BreakStatement');
 
 const AstBinaryExpression = [
   '?',
@@ -42,6 +53,47 @@ const AstBinaryExpression = [
 ];
 const AstBinaryExpressionCont = ['?', ['len', ['$', '/children']], ['$', '/children/0'], null];
 
+const keywords = [
+  'await',
+  'break',
+  'case',
+  'class',
+  'catch',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'import',
+  'in',
+  'instanceof',
+  'new',
+  'null',
+  'return',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+];
+
 /**
  * JavaScript grammar.
  */
@@ -49,31 +101,115 @@ export const grammar: Grammar = {
   start: 'Program',
 
   cst: {
-    [W]: {t: /\s+/, ast: null},
-    [WOpt]: {t: /\s*/, ast: null},
+    [Whitespace]: /\s+/,
+    [WhitespaceOpt]: /\s*/,
+    [ASI]: {
+      t: /;|\n|$/,
+      ast: null,
+    },
+    [LineComment]: /\/\/.*(\n|$)/,
+    [BlockComment]: /\/\*.*?\*\//,
+    [ShebangComment]: /#!.*(\n|$)/,
+    [Separator]: {
+      l: {
+        u: [Whitespace, LineComment, BlockComment],
+      },
+      ast: null,
+    },
+    [SeparatorOpt]: {
+      u: [Separator, EPSILON],
+      ast: null,
+    },
+
     Program: {
-      u: [
-          Statement,
+      p: [
+        {
+          l: {
+            p: [
+              SeparatorOpt,
+              {
+                u: [Statement],
+                ast: ['$', '/children/0'],
+              },
+            ],
+            ast: ['$', '/children/0'],
+          },
+        },
+        SeparatorOpt,
       ],
+      ast: ['o.del', ['o.set', ['$', ''], 'body', ['$', '/children/0/children', [[]]]], 'children']
     },
 
     [Statement]: {
       u: [
+        ReturnStatement,
+        ContinueStatement,
+        BreakStatement,
         VariableStatement,
       ],
+      ast: ['$', '/children/0'],
     },
 
     [VariableStatement]: {
-      p: [VariableStatementKind, W, Identifier, WOpt, '=', WOpt, Expression, /;|\n|$/],
-      ast: ['o.del', ['o.set', ['$', ''],
-        'kind', ['$', '/children/0'],
-        'id', ['$', '/children/1'],
-        'declarations', ['$', '/children/2'],
-      ], 'children'],
+      p: [
+        VariableStatementKind,
+        Separator,
+        Identifier,
+        SeparatorOpt,
+        '=',
+        SeparatorOpt,
+        Expression,
+        SeparatorOpt,
+        ASI,
+      ],
+      ast: [
+        'o.del',
+        [
+          'o.set',
+          ['$', ''],
+          'kind',
+          ['$', '/children/0'],
+          'id',
+          ['$', '/children/1'],
+          'declarations',
+          ['$', '/children/2'],
+        ],
+        'children',
+      ],
     },
     [VariableStatementKind]: {
       t: /var|let|const/,
       ast: ['$', '/raw'],
+    },
+
+    [ReturnStatement]: {
+      p: ['return', Separator, Expression, SeparatorOpt, ASI],
+    },
+
+    [ContinueStatement]: {
+      p: [
+        'continue',
+        {
+          u: [
+            {
+              p: [
+                Separator,
+                Identifier,
+              ],
+              ast: ['$', '/children/0'],
+            },
+            EPSILON,
+          ],
+          ast: ['$', '/children/0', null],
+        },
+        SeparatorOpt,
+        ASI
+      ],
+      ast: ['o.del', ['o.set', ['$', ''], 'label', ['$', '/children/0', null]], 'children'],
+    },
+
+    [BreakStatement]: {
+      p: ['break', Separator, {u: [Identifier, '']}, SeparatorOpt, ASI],
     },
 
     [Expression]: {
@@ -87,7 +223,7 @@ export const grammar: Grammar = {
       ast: AstBinaryExpression,
     },
     [AddExpressionCont]: {
-      u: [[WOpt, AddOperator, WOpt, AddExpression, AddExpressionCont], EPSILON],
+      u: [[WhitespaceOpt, AddOperator, WhitespaceOpt, AddExpression, AddExpressionCont], EPSILON],
       ast: AstBinaryExpressionCont,
     },
 
@@ -97,12 +233,12 @@ export const grammar: Grammar = {
       ast: AstBinaryExpression,
     },
     [MulExpressionCont]: {
-      u: [[WOpt, MulOperator, WOpt, MulExpression, MulExpressionCont], EPSILON],
+      u: [[WhitespaceOpt, MulOperator, WhitespaceOpt, MulExpression, MulExpressionCont], EPSILON],
       ast: AstBinaryExpressionCont,
     },
 
     [Identifier]: {
-      t: /[a-zA-Z_]+/
+      t: /[a-zA-Z_]+/,
     },
 
     [Literal]: {
@@ -122,6 +258,11 @@ export const grammar: Grammar = {
     NumericLiteral: {
       t: /\d+/,
       ast: ['o.set', ['$', ''], 'value', ['num', ['$', '/raw']]],
+    },
+
+    // See: https://tc39.es/ecma262/#prod-ReservedWord
+    [ReservedWord]: {
+      t: keywords,
     },
   },
 };
