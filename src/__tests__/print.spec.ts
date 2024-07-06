@@ -114,7 +114,7 @@ test('JSON', () => {
   const result = GrammarPrinter.print(jsonGrammar);
   expect(result).toBe(
 `Value (production)
-├─ Ws (terminal): (" " | "\\n" | "\\t" | "\\r")
+├─ Ws (terminal): (" " | "\\n" | "\\t" | "\\r")*
 ├─ TValue (union)
 │  ├─ Null (terminal): "null"
 │  ├─ Boolean (terminal): ("true" | "false")

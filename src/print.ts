@@ -20,7 +20,8 @@ export class GrammarPrinter {
   public printNode(node: GrammarNode, type?: string, tab?: string): string {
     if (type) this.visited.add(type);
     if (isTerminalNode(node)) {
-      return `${node.type ?? type ?? 'Text'} (terminal): ${typeof node.t === 'string' ? JSON.stringify(node.t) : Array.isArray(node.t) ? '(' + node.t.map(c => JSON.stringify(c)).join(' | ') + ')' : node.t}`;
+      const pattern = typeof node.t === 'string' ? JSON.stringify(node.t) : Array.isArray(node.t) ? '(' + node.t.map(c => JSON.stringify(c)).join(' | ') + ')' + (node.repeat ?? '') : node.t;
+      return `${node.type ?? type ?? 'Text'} (terminal): ${pattern}`;
     } else if (isTerminalShorthandNode(node)) {
       return this.printNode({t: node}, type, tab);
     } else if (isRefNode(node)) {
