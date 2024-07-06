@@ -1,3 +1,4 @@
 # JIT Parser
 
-Top-down backtracking LL scanner-less JIT parser combinator generator.
+Top-down recursive descent backtracking PEG scanner-less JIT parser combinator
+generator.
