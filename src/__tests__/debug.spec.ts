@@ -59,3 +59,41 @@ test('can capture debug trace in production node', () => {
     }],
   });
 });
+
+test('can capture debug trace in union node', () => {
+  const grammar: Grammar = {
+    start: 'Value',
+    cst: {
+      Value: {
+        u: [
+          'var',
+          'let',
+          'const',
+        ],
+      },
+    },
+  };
+  const codegen = new CodegenGrammar(grammar, new CodegenContext(true, true, true));
+  const parser = codegen.compile();
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const ctx = new ParseContext('const', false, [rootTraceNode]);
+  parser(ctx, 0);
+  expect(rootTraceNode).toMatchObject({
+    pos: 0,
+    children: [{
+      pos: 0,
+      children: [
+        {
+          pos: 0,
+        },
+        {
+          pos: 0,
+        },
+        {
+          pos: 0,
+          match: {pos: 0, end: 5},
+        },
+      ],
+    }],
+  });
+});
