@@ -35,8 +35,9 @@ export class CodegenUnion {
     const deps: string[] = [];
     const dPattern = codegen.linkDependency(pattern);
     const dCstMatch = codegen.linkDependency(CstMatch);
-    const rDebug = codegen.var();
+    let rDebug = '';
     if (this.ctx.debug) {
+      rDebug = codegen.var();
       codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos, children: []}`);
       const rTrace = codegen.var('ctx.trace');
       const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);

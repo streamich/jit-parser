@@ -38,11 +38,29 @@ export class CodegenList {
     const rStart = codegen.var('pos');
     const rChild = codegen.var();
     const rChildren = codegen.var('[]');
+    let rDebug = '';
+    if (this.ctx.debug) {
+      rDebug = codegen.var();
+      codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos, children: []}`);
+      const rTrace = codegen.var('ctx.trace');
+      const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
+      codegen.if(rTraceNodeParent, () => {
+        codegen.js(`${rTraceNodeParent}.children.push(${rDebug})`);
+        codegen.js(`${rTrace}.push(${rDebug})`);
+      });
+    }
     codegen.while(`${rChild} = ${dParser}(ctx, pos)`, () => {
       codegen.js(`${rChildren}.push(${rChild})`);
       codegen.js(`pos = ${rChild}.end`);
     });
-    return codegen.return(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
+    const rResult = codegen.var(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
+    if (this.ctx.debug) {
+      codegen.if(`${rDebug}`, () => {
+        codegen.js(`ctx.trace.pop();`);
+        codegen.js(`${rDebug}.match = ${rResult}`);
+      });
+    }
+    codegen.return(rResult);
   }
 
   public compile(): Parser {
