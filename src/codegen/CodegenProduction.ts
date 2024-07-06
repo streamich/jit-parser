@@ -34,21 +34,43 @@ export class CodegenProduction {
   public generate() {
     const {codegen, pattern, parsers} = this;
     const results: string[] = [];
+    const rDebug = codegen.var();
     const dCstMatch = codegen.linkDependency(CstMatch);
     const rStart = codegen.var('pos');
     const rChildren = codegen.var('[]');
     const dPattern = codegen.linkDependency(pattern);
+    if (this.ctx.debug) {
+      codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos, children: []}`);
+      const rTrace = codegen.var('ctx.trace');
+      const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
+      codegen.if(rTraceNodeParent, () => {
+        codegen.js(`${rTraceNodeParent}.children.push(${rDebug})`);
+        codegen.js(`${rTrace}.push(${rDebug})`);
+      });
+    }
     for (const parser of parsers) {
       const dep = codegen.linkDependency(parser);
       const reg = codegen.var(`${dep}(ctx, pos)`);
       results.push(reg);
       codegen.if(`!${reg}`, () => {
+        if (this.ctx.debug) {
+          codegen.if(`${rDebug}`, () => {
+            const rTrace = codegen.var('ctx.trace');
+            codegen.js(`${rTrace}.pop();`);
+          });
+        }
         codegen.return('');
       });
       codegen.js(`pos = ${reg}.end`);
       codegen.js(`${rChildren}.push(${reg})`);
     }
-    codegen.return(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
+    const rMatch = codegen.var(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
+    if (this.ctx.debug) {
+      codegen.if(`${rDebug}`, () => {
+        codegen.js(`${rDebug}.match = ${rMatch}`);
+      });
+    }
+    codegen.return(rMatch);
   }
 
   public compile(): Parser {
