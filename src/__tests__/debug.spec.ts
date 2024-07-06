@@ -145,35 +145,68 @@ test('can capture JSON grammar trace', () => {
   const codegen = new CodegenGrammar(jsonGrammar, new CodegenContext(true, true, true));
   const parser = codegen.compile();
   const rootTraceNode: RootTraceNode = {pos: 0, children: []}
-  const json = JSON.stringify(json1);
-  // const json = JSON.stringify([1]);
+  const json = ' {"foo": ["bar", 123]}';
   const ctx = new ParseContext(json, false, [rootTraceNode]);
   parser(ctx, 0);
-  // console.log(JSON.stringify(rootTraceNode, null, 2));
-  // console.log(JSON.stringify([1], null, 2));
-  console.log(printTraceNode(rootTraceNode, '', json));
-  // expect(rootTraceNode).toMatchObject({
-  //   pos: 0,
-  //   children: [{
-  //     pos: 0,
-  //     children: [
-  //       {
-  //         pos: 0,
-  //         match: {pos: 0, end: 1},
-  //       },
-  //       {
-  //         pos: 1,
-  //         match: {pos: 1, end: 2},
-  //       },
-  //       {
-  //         pos: 2,
-  //         match: {pos: 2, end: 3},
-  //       },
-  //       {
-  //         pos: 3,
-  //       },
-  //     ],
-  //     match: {pos: 0, end: 3},
-  //   }],
-  // });
+  const formatted = printTraceNode(rootTraceNode, '', json);
+  expect(formatted).toBe(
+`Root
+└─ Value 0:22 → ' {"foo": ["bar", 123]}'
+   ├─ Ws 0:1 → " "
+   ├─ TValue 1:22 → '{"foo": ["bar", 123]}'
+   │  ├─ Null
+   │  ├─ Boolean
+   │  ├─ String
+   │  └─ Object 1:22 → '{"foo": ["bar", 123]}'
+   │     ├─ Text 1:2 → "{"
+   │     ├─ Members 2:21 → '"foo": ["bar", 123]'
+   │     │  └─ Production 2:21 → '"foo": ["bar", 123]'
+   │     │     ├─ Entry 2:21 → '"foo": ["bar", 123]'
+   │     │     │  ├─ Ws 2:2 → ""
+   │     │     │  ├─ String 2:7 → '"foo"'
+   │     │     │  ├─ Ws 7:7 → ""
+   │     │     │  ├─ Text 7:8 → ":"
+   │     │     │  └─ Value 8:21 → ' ["bar", 123]'
+   │     │     │     ├─ Ws 8:9 → " "
+   │     │     │     ├─ TValue 9:21 → '["bar", 123]'
+   │     │     │     │  ├─ Null
+   │     │     │     │  ├─ Boolean
+   │     │     │     │  ├─ String
+   │     │     │     │  ├─ Object
+   │     │     │     │  │  └─ Text
+   │     │     │     │  └─ Array 9:21 → '["bar", 123]'
+   │     │     │     │     ├─ Text 9:10 → "["
+   │     │     │     │     ├─ Elements 10:20 → '"bar", 123'
+   │     │     │     │     │  └─ Production 10:20 → '"bar", 123'
+   │     │     │     │     │     ├─ Value 10:15 → '"bar"'
+   │     │     │     │     │     │  ├─ Ws 10:10 → ""
+   │     │     │     │     │     │  ├─ TValue 10:15 → '"bar"'
+   │     │     │     │     │     │  │  ├─ Null
+   │     │     │     │     │     │  │  ├─ Boolean
+   │     │     │     │     │     │  │  └─ String 10:15 → '"bar"'
+   │     │     │     │     │     │  └─ Ws 15:15 → ""
+   │     │     │     │     │     └─ List 15:20 → ", 123"
+   │     │     │     │     │        ├─ Production 15:20 → ", 123"
+   │     │     │     │     │        │  ├─ Text 15:16 → ","
+   │     │     │     │     │        │  └─ Value 16:20 → " 123"
+   │     │     │     │     │        │     ├─ Ws 16:17 → " "
+   │     │     │     │     │        │     ├─ TValue 17:20 → "123"
+   │     │     │     │     │        │     │  ├─ Null
+   │     │     │     │     │        │     │  ├─ Boolean
+   │     │     │     │     │        │     │  ├─ String
+   │     │     │     │     │        │     │  ├─ Object
+   │     │     │     │     │        │     │  │  └─ Text
+   │     │     │     │     │        │     │  ├─ Array
+   │     │     │     │     │        │     │  │  └─ Text
+   │     │     │     │     │        │     │  └─ Number 17:20 → "123"
+   │     │     │     │     │        │     └─ Ws 20:20 → ""
+   │     │     │     │     │        └─ Production
+   │     │     │     │     │           └─ Text
+   │     │     │     │     └─ Text 20:21 → "]"
+   │     │     │     └─ Ws 21:21 → ""
+   │     │     └─ List 21:21 → ""
+   │     │        └─ Production
+   │     │           └─ Text
+   │     └─ Text 21:22 → "}"
+   └─ Ws 22:22 → ""`);
 });

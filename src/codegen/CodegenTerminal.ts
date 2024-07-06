@@ -39,8 +39,9 @@ export class CodegenTerminal {
     const match = node.t;
     const dPattern = codegen.linkDependency(pattern);
     const dLeafCstMatch = codegen.linkDependency(LeafCstMatch);
-    const rDebug = codegen.var();
+    let rDebug = '';
     if (this.ctx.debug) {
+      rDebug = codegen.var();
       codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos}`);
       const rTrace = codegen.var('ctx.trace');
       const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
@@ -72,7 +73,13 @@ export class CodegenTerminal {
         codegen.return('');
       });
       const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
-      codegen.return(`new ${dLeafCstMatch}(pos, pos + ${rLength}, ${dPattern});`);
+      const rResult = codegen.var(`new ${dLeafCstMatch}(pos, pos + ${rLength}, ${dPattern});`);
+      if (this.ctx.debug) {
+        codegen.if(`${rDebug}`, () => {
+          codegen.js(`${rDebug}.match = ${rResult}`);
+        });
+      }
+      codegen.return(rResult);
     } else if (match instanceof Array) {
       if (node.repeat) {
         const rEnd = codegen.var('pos');
