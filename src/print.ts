@@ -8,7 +8,7 @@ import {
   isTerminalShorthandNode,
   isUnionNode,
 } from './util';
-import type {Grammar, GrammarNode, ParseTraceNode, RootTraceNode} from './types';
+import type {CstNode, Grammar, GrammarNode, ParseTraceNode, RootTraceNode} from './types';
 
 export class GrammarPrinter {
   public static readonly print = (grammar: Grammar, tab?: string): string => {
@@ -32,7 +32,7 @@ export class GrammarPrinter {
         typeof node.t === 'string'
           ? JSON.stringify(node.t)
           : Array.isArray(node.t)
-            ? '(' + node.t.map((c) => JSON.stringify(c)).join(' | ') + ')' + (node.repeat ?? ' ')
+            ? '(' + node.t.map((c) => JSON.stringify(c)).join(' | ') + ')' + (node.repeat ?? '')
             : node.t;
       return `${node.type ?? type ?? 'Text'} (terminal): ${pattern}`;
     } else if (isTerminalShorthandNode(node)) {
@@ -76,30 +76,46 @@ export class GrammarPrinter {
   }
 }
 
+const formatMatch = (cst: CstNode, text?: string): string => {
+  let formatted = ' ' + cst.pos + ':' + cst.end;
+  if (text) {
+    const end = cst.pos + Math.min(32, cst.end - cst.pos);
+    const slice = text.slice(cst.pos, end) + (end !== cst.end ? '...' : '');
+    const sliceFormatted =
+      slice.indexOf('"') >= 0 && slice.indexOf("'") === -1
+        ? "'" + JSON.stringify(slice).slice(1, -1).replaceAll('\\"', '"') + "'"
+        : JSON.stringify(slice);
+    formatted += ' → ' + sliceFormatted;
+  }
+  return formatted;
+};
+
 export const printTraceNode = (trace: RootTraceNode | ParseTraceNode, tab?: string, text?: string): string => {
   const pattern = (trace as ParseTraceNode).ptr;
   const type = pattern?.type ?? ((trace as ParseTraceNode).ptr ? 'Anonymous' : 'Root');
   const match = (trace as ParseTraceNode).match;
-  let matchFormatted = '';
-  if (match) {
-    matchFormatted = ' ' + match.pos + ':' + match.end;
-    if (text) {
-      const end = match.pos + Math.min(32, match.end - match.pos);
-      const slice = text.slice(match.pos, end) + (end !== match.end ? '...' : '');
-      const sliceFormatted =
-        slice.indexOf('"') >= 0 && slice.indexOf("'") === -1
-          ? "'" + JSON.stringify(slice).slice(1, -1).replaceAll('\\"', '"') + "'"
-          : JSON.stringify(slice);
-      matchFormatted += ' → ' + sliceFormatted;
-    }
-  }
   return (
     `${type}` +
-    matchFormatted +
+    (match ? formatMatch(match, text) : '') +
     (trace.children && trace.children.length
       ? printTree(
           tab,
           trace.children.map((n) => (tab) => printTraceNode(n, tab, text)),
+        )
+      : '')
+  );
+};
+
+export const printCst = (cst: CstNode, tab?: string, text?: string): string => {
+  const pattern = cst.ptr;
+  const type = pattern.type;
+  return (
+    `${type}` +
+    formatMatch(cst, text) +
+    (cst.children && cst.children.length
+      ? printTree(
+          tab,
+          cst.children.map((n) => (tab) => printCst(n, tab, text)),
         )
       : '')
   );
