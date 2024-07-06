@@ -39,13 +39,28 @@ export class CodegenTerminal {
     const match = node.t;
     const dPattern = codegen.linkDependency(pattern);
     const dLeafCstMatch = codegen.linkDependency(LeafCstMatch);
+    const rDebug = codegen.var();
+    if (this.ctx.debug) {
+      codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos}`);
+      const rTrace = codegen.var('ctx.trace');
+      const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
+      codegen.if(rTraceNodeParent, () => {
+        codegen.js(`${rTraceNodeParent}.children.push(${rDebug})`);
+      });
+    }
     if (typeof match === 'string') {
       const cleanTerminal = scrub(match);
       const condition = cleanTerminal ? emitStringMatch('str', 'pos', cleanTerminal) : 'true';
       codegen.if(`!(${condition})`, () => {
         codegen.return('');
       });
-      codegen.return(`new ${dLeafCstMatch}(pos, pos + ${cleanTerminal.length}, ${dPattern});`);
+      const rMatch = codegen.var(`new ${dLeafCstMatch}(pos, pos + ${cleanTerminal.length}, ${dPattern});`);
+      if (this.ctx.debug) {
+        codegen.if(`${rDebug}`, () => {
+          codegen.js(`${rDebug}.match = ${rMatch}`);
+        });
+      }
+      codegen.return(rMatch);
     } else if (match instanceof RegExp) {
       let source = match.source;
       if (source[0] !== '^') source = '^(' + source + ')';
@@ -77,7 +92,13 @@ export class CodegenTerminal {
             codegen.return('');
           });
         }
-        codegen.return(`new ${dLeafCstMatch}(pos, ${rEnd}, ${dPattern});`);
+        const rMatch = codegen.var(`new ${dLeafCstMatch}(pos, ${rEnd}, ${dPattern});`);
+        if (this.ctx.debug) {
+          codegen.if(`${rDebug}`, () => {
+            codegen.js(`${rDebug}.match = ${rMatch}`);
+          });
+        }
+        codegen.return(rMatch);
       } else {
         const rEnd = codegen.var('pos');
         for (const match0 of match) {
@@ -90,7 +111,13 @@ export class CodegenTerminal {
         codegen.if(`${rEnd} === pos`, () => {
           codegen.return('');
         });
-        codegen.return(`new ${dLeafCstMatch}(pos, ${rEnd}, ${dPattern});`);
+        const rMatch = codegen.var(`new ${dLeafCstMatch}(pos, ${rEnd}, ${dPattern});`);
+        if (this.ctx.debug) {
+          codegen.if(`${rDebug}`, () => {
+            codegen.js(`${rDebug}.match = ${rMatch}`);
+          });
+        }
+        codegen.return(rMatch);
       }
     } else {
       throw new Error('INVALID_TERMINAL');

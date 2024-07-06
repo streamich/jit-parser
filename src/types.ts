@@ -189,3 +189,24 @@ export interface AstExpressionData {
 }
 
 export type AstNodeFactory = (cst: CstNode, src: string) => unknown;
+
+/**
+ * When in debug mode, the parser will generate a trace of the parsing process.
+ * Each node in the trace represents a grammar node that was attempted to be
+ * matched at a specific position in the input string.
+ */
+export interface ParseTraceNode {
+  /** The position in the input string where the match was attempted. */
+  pos: number;
+  /** The grammar node, which was attempted to be matched. */
+  ptr: ResolvedGrammarNode;
+  /** The matched CST node, if the match was successful. */
+  match?: CstNode;
+  /** The list of recursively called children nodes. */
+  children?: ParseTraceNode[];
+}
+
+export interface RootTraceNode {
+  pos: number;
+  children: ParseTraceNode[];
+}

@@ -1,3 +1,5 @@
+import type {ParseTraceNode, RootTraceNode} from './types';
+
 export class ParseContext {
   constructor(
     /**
@@ -10,6 +12,13 @@ export class ParseContext {
      * CST, when this flag is set to `true`, it generates both the CST and the AST.
      */
     public readonly ast: boolean,
+
+    /**
+     * Stack of debugging trace nodes. When defined, and when codegen has was
+     * run with `debug` flag, the parser will use this tack to capture a trace
+     * of the parsing process.
+     */
+    public readonly trace: undefined | (RootTraceNode | ParseTraceNode)[] = undefined,
   ) {}
 }
 export class CodegenContext {
@@ -23,5 +32,10 @@ export class CodegenContext {
      * Whether to run JSON Expression for generating AST nodes.
      */
     public readonly astExpressions: boolean = true,
+
+    /**
+     * Whether to generate generate code which can capture a debugging trace.
+     */
+    public readonly debug: boolean = false,
   ) {}
 }

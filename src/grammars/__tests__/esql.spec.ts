@@ -23,7 +23,7 @@ describe('AST', () => {
   test('...', () => {
     // const ast = toAst('FROM sample-index-* [METADATA _id]');
     const ast = toAst('ROW abc(a), ad');
-    console.log(JSON.stringify(ast, null, 2));
+    // console.log(JSON.stringify(ast, null, 2));
   });
 
   // test('can parse a function', () => {
