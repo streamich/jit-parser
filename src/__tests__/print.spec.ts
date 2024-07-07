@@ -127,30 +127,30 @@ describe('GrammarPrinter', () => {
 │  │  ├─ Members (union)
 │  │  │  ├─ Production (production)
 │  │  │  │  ├─ Entry (production)
-│  │  │  │  │  ├─ Ws →
-│  │  │  │  │  ├─ String →
-│  │  │  │  │  ├─ Ws →
+│  │  │  │  │  ├─ → Ws
+│  │  │  │  │  ├─ → String
+│  │  │  │  │  ├─ → Ws
 │  │  │  │  │  ├─ Text (terminal): ":"
-│  │  │  │  │  └─ Value →
+│  │  │  │  │  └─ → Value
 │  │  │  │  └─ List (list)
 │  │  │  │     └─ Production (production)
 │  │  │  │        ├─ Text (terminal): ","
-│  │  │  │        └─ Entry →
-│  │  │  └─ Ws →
+│  │  │  │        └─ → Entry
+│  │  │  └─ → Ws
 │  │  └─ Text (terminal): "}"
 │  ├─ Array (production)
 │  │  ├─ Text (terminal): "["
 │  │  ├─ Elements (union)
 │  │  │  ├─ Production (production)
-│  │  │  │  ├─ Value →
+│  │  │  │  ├─ → Value
 │  │  │  │  └─ List (list)
 │  │  │  │     └─ Production (production)
 │  │  │  │        ├─ Text (terminal): ","
-│  │  │  │        └─ Value →
-│  │  │  └─ Ws →
+│  │  │  │        └─ → Value
+│  │  │  └─ → Ws
 │  │  └─ Text (terminal): "]"
 │  └─ Number (terminal): /\\-?(0|([1-9][0-9]{0,25}))(\\.[0-9]{1,25})?([eE][\\+\\\-]?[0-9]{1,25})?/
-└─ Ws →`);
+└─ → Ws`);
   });
 });
 

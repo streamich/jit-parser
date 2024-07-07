@@ -41,7 +41,7 @@ export class GrammarPrinter {
       const reference = node.r;
       const visited = this.visited.has(reference);
       if (!type) {
-        if (visited) return `${reference} →`;
+        if (visited) return `→ ${reference}`;
         else return this.printNode(this.grammar.cst[reference], reference, tab);
       }
       this.visited.add(reference);
