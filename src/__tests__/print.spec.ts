@@ -117,7 +117,7 @@ describe('GrammarPrinter', () => {
     const result = GrammarPrinter.print(jsonGrammar);
     expect(result).toBe(
 `Value (production)
-├─ Ws (terminal): (" " | "\\n" | "\\t" | "\\r")*
+├─ WOpt (terminal): (" " | "\\n" | "\\t" | "\\r")*
 ├─ TValue (union)
 │  ├─ Null (terminal): "null"
 │  ├─ Boolean (terminal): ("true" | "false")
@@ -127,16 +127,16 @@ describe('GrammarPrinter', () => {
 │  │  ├─ Members (union)
 │  │  │  ├─ Production (production)
 │  │  │  │  ├─ Entry (production)
-│  │  │  │  │  ├─ → Ws
+│  │  │  │  │  ├─ → WOpt
 │  │  │  │  │  ├─ → String
-│  │  │  │  │  ├─ → Ws
+│  │  │  │  │  ├─ → WOpt
 │  │  │  │  │  ├─ Text (terminal): ":"
 │  │  │  │  │  └─ → Value
 │  │  │  │  └─ List (list)
 │  │  │  │     └─ Production (production)
 │  │  │  │        ├─ Text (terminal): ","
 │  │  │  │        └─ → Entry
-│  │  │  └─ → Ws
+│  │  │  └─ → WOpt
 │  │  └─ Text (terminal): "}"
 │  ├─ Array (production)
 │  │  ├─ Text (terminal): "["
@@ -147,10 +147,10 @@ describe('GrammarPrinter', () => {
 │  │  │  │     └─ Production (production)
 │  │  │  │        ├─ Text (terminal): ","
 │  │  │  │        └─ → Value
-│  │  │  └─ → Ws
+│  │  │  └─ → WOpt
 │  │  └─ Text (terminal): "]"
 │  └─ Number (terminal): /\\-?(0|([1-9][0-9]{0,25}))(\\.[0-9]{1,25})?([eE][\\+\\\-]?[0-9]{1,25})?/
-└─ → Ws`);
+└─ → WOpt`);
   });
 });
 
@@ -163,41 +163,41 @@ describe('printCst()', () => {
     const formatted = printCst(cst!, '', json);
     expect(formatted).toBe(
 `Value 0:22 → ' {"foo": ["bar", 123]}'
-├─ Ws 0:1 → " "
+├─ WOpt 0:1 → " "
 ├─ TValue 1:22 → '{"foo": ["bar", 123]}'
 │  └─ Object 1:22 → '{"foo": ["bar", 123]}'
 │     ├─ Text 1:2 → "{"
 │     ├─ Members 2:21 → '"foo": ["bar", 123]'
 │     │  └─ Production 2:21 → '"foo": ["bar", 123]'
 │     │     ├─ Entry 2:21 → '"foo": ["bar", 123]'
-│     │     │  ├─ Ws 2:2 → ""
+│     │     │  ├─ WOpt 2:2 → ""
 │     │     │  ├─ String 2:7 → '"foo"'
-│     │     │  ├─ Ws 7:7 → ""
+│     │     │  ├─ WOpt 7:7 → ""
 │     │     │  ├─ Text 7:8 → ":"
 │     │     │  └─ Value 8:21 → ' ["bar", 123]'
-│     │     │     ├─ Ws 8:9 → " "
+│     │     │     ├─ WOpt 8:9 → " "
 │     │     │     ├─ TValue 9:21 → '["bar", 123]'
 │     │     │     │  └─ Array 9:21 → '["bar", 123]'
 │     │     │     │     ├─ Text 9:10 → "["
 │     │     │     │     ├─ Elements 10:20 → '"bar", 123'
 │     │     │     │     │  └─ Production 10:20 → '"bar", 123'
 │     │     │     │     │     ├─ Value 10:15 → '"bar"'
-│     │     │     │     │     │  ├─ Ws 10:10 → ""
+│     │     │     │     │     │  ├─ WOpt 10:10 → ""
 │     │     │     │     │     │  ├─ TValue 10:15 → '"bar"'
 │     │     │     │     │     │  │  └─ String 10:15 → '"bar"'
-│     │     │     │     │     │  └─ Ws 15:15 → ""
+│     │     │     │     │     │  └─ WOpt 15:15 → ""
 │     │     │     │     │     └─ List 15:20 → ", 123"
 │     │     │     │     │        └─ Production 15:20 → ", 123"
 │     │     │     │     │           ├─ Text 15:16 → ","
 │     │     │     │     │           └─ Value 16:20 → " 123"
-│     │     │     │     │              ├─ Ws 16:17 → " "
+│     │     │     │     │              ├─ WOpt 16:17 → " "
 │     │     │     │     │              ├─ TValue 17:20 → "123"
 │     │     │     │     │              │  └─ Number 17:20 → "123"
-│     │     │     │     │              └─ Ws 20:20 → ""
+│     │     │     │     │              └─ WOpt 20:20 → ""
 │     │     │     │     └─ Text 20:21 → "]"
-│     │     │     └─ Ws 21:21 → ""
+│     │     │     └─ WOpt 21:21 → ""
 │     │     └─ List 21:21 → ""
 │     └─ Text 21:22 → "}"
-└─ Ws 22:22 → ""`);
+└─ WOpt 22:22 → ""`);
   });
 });
