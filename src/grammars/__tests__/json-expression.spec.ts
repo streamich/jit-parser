@@ -7,15 +7,15 @@ import {grammar} from '../json-expression';
 const codegenCtx = new CodegenContext(true, true, true);
 const codegen = new CodegenGrammar(grammar, codegenCtx);
 
-console.log(GrammarPrinter.print(grammar));
+// console.log(GrammarPrinter.print(grammar));
 
 const toCst = (src: string) => {
   const parser = codegen.compile();
   const trace: RootTraceNode = {pos: 0, children: []};
   const ctx = new ParseContext(src, true, [trace]);
   const cst = parser(ctx, 0)!;
-  console.log(printTraceNode(trace.children[0], '', src));
-  console.log(printCst(cst, '', src));
+  // console.log(printTraceNode(trace.children[0], '', src));
+  // console.log(printCst(cst, '', src));
   return {cst, trace};
 };
 

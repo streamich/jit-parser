@@ -7,7 +7,7 @@ export const grammar: Grammar = {
   start: 'Value',
 
   cst: {
-    WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null},
+    WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null, sample: ' '},
     Value: [{r: 'WOpt'}, {r: 'TValue'}, {r: 'WOpt'}],
     TValue: {
       u: [{r: 'Null'}, {r: 'Boolean'}, {r: 'String'}, {r: 'Object'}, {r: 'Array'}, {r: 'Number'}],
@@ -15,9 +15,15 @@ export const grammar: Grammar = {
 
     Null: 'null',
     Boolean: {t: ['true', 'false']},
-    Number: /\-?(0|([1-9][0-9]{0,25}))(\.[0-9]{1,25})?([eE][\+\-]?[0-9]{1,25})?/,
+    Number: {
+      t: /\-?(0|([1-9][0-9]{0,25}))(\.[0-9]{1,25})?([eE][\+\-]?[0-9]{1,25})?/,
+      sample: '123',
+    },
     // String: /"((\\["\\/bfnrt])|(\\u[0-9a-fA-F]{4})|[^"\\])*"/,
-    String: /"[^"\\]*(?:\\.|[^"\\]*)*"/,
+    String: {
+      t: /"[^"\\]*(?:\\.|[^"\\]*)*"/,
+      sample: '"abc"',
+    },
 
     Array: ['[', {r: 'Elements'}, ']'],
     Elements: {

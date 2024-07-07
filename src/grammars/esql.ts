@@ -24,8 +24,8 @@ export const grammar: Grammar = {
     QueryChain: {l: r`PipedCommand`},
     PipedCommand: [OptW, '|', OptW, r`Command`],
     Command: {u: [r`SourceCommand`, r`ProcessingCommand`]},
-    W: /\s+/,
-    Ws: /\s*/,
+    W: {t: /\s+/, sample: ' '},
+    Ws: {t: /\s*/, sample: ' '},
     SourceCommand: {
       u: [
         r`ExplainCommand`,
@@ -223,12 +223,18 @@ export const grammar: Grammar = {
 
     // ------------------------------------------------------------ Identifiers
 
-    IndexIdentifier: /(?!\/)(?!.*\/$)(?!.*\/\/)[a-zA-Z_\.][a-zA-Z0-9_\.\/\-\*]*/,
+    IndexIdentifier: {
+      t: /(?!\/)(?!.*\/$)(?!.*\/\/)[a-zA-Z_\.][a-zA-Z0-9_\.\/\-\*]*/,
+      sample: 'abc',
+    },
     QualifiedName: [{r: 'Identifier'}, {l: {r: 'NextIdentifier'}, ast: AstUseChildren}],
     Identifier: {u: [{r: 'UnquotedIdentifier'}, {r: 'QuotedIdentifier'}]},
     NextIdentifier: [OptW, '.', OptW, {r: 'Identifier'}],
     UnquotedIdentifier: /[a-zA-Z][a-zA-Z0-9_]*|[_\@][a-zA-Z0-9_]+/,
-    QuotedIdentifier: /`([^`]|``)+`/,
+    QuotedIdentifier: {
+      t: /`([^`]|``)+`/,
+      sample: '`abc`',
+    },
   },
 
   ast: {

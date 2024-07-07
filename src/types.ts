@@ -56,7 +56,7 @@ export type TerminalNodeShorthand = RegExp | string | '';
  * tree. It specifies a single match pattern either as a string or a regular
  * expression.
  */
-export interface TerminalNode extends AstCodegenOpts {
+export interface TerminalNode extends GrammarNodeBase {
   /**
    * Type of the terminal node, if not provided "Text" will be used.
    */
@@ -78,7 +78,7 @@ export interface TerminalNode extends AstCodegenOpts {
 
 export type ProductionNodeShorthand = GrammarNode[];
 
-export interface ProductionNode extends AstCodegenOpts {
+export interface ProductionNode extends GrammarNodeBase {
   p: ProductionNodeShorthand;
 
   /**
@@ -91,7 +91,7 @@ export interface ProductionNode extends AstCodegenOpts {
  * A union node is a node that can match one of the alternatives. The first
  * matching alternative is selected.
  */
-export interface UnionNode extends AstCodegenOpts {
+export interface UnionNode extends GrammarNodeBase {
   /**
    * A collection of alternatives to match. Picks the first matching alternative.
    */
@@ -106,7 +106,7 @@ export interface UnionNode extends AstCodegenOpts {
 /**
  * A list node is a node that can match a list of elements - zero or more.
  */
-export interface ListNode extends AstCodegenOpts {
+export interface ListNode extends GrammarNodeBase {
   /**
    * The node to use for repeating elements.
    */
@@ -116,6 +116,10 @@ export interface ListNode extends AstCodegenOpts {
    * Type of the list node, if not provided "List" will be used.
    */
   type?: string;
+}
+
+export interface GrammarNodeBase extends AstCodegenOpts {
+  sample?: string;
 }
 
 export interface AstCodegenOpts {
