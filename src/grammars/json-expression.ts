@@ -1,4 +1,5 @@
 import {grammar as jsonGrammar} from './json';
+import {delimitedList} from '../util';
 import type {Grammar} from '../types';
 
 /**
@@ -39,25 +40,14 @@ export const grammar: Grammar = {
       },
     },
     Operator: /[^\s\n\t\r]+/,
-    Operands: {
-      p: [
-        {r: 'Operand'},
-        {
-          l: {
-            p: [{r: 'W'}, {r: 'Operand'}],
-            ast: ['$', '/children/0'],
-          },
-        },
-      ],
-      ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1/children', [[]]]],
-    },
-    Operand: {
+    ...delimitedList('Operands', {r: 'W'}, {
+      type: 'Operand',
       u: [
         {r: 'Expression'},
         {r: 'TValue'},
       ],
       ast: ['$', '/children/0'],
-    },
+    }),
   },
 
   ast: {
