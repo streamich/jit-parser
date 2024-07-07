@@ -210,3 +210,47 @@ test('can capture JSON grammar trace', () => {
    │     └─ Text 21:22 → "}"
    └─ Ws 22:22 → ""`);
 });
+
+test('can capture two partial routes', () => {
+  const grammar: Grammar = {
+    start: 'Program',
+    cst: {
+      Program: {
+        u: [
+          {r: 'Object'},
+          {r: 'BlockStatement'},
+        ],
+      },
+      Whitespace: {t: [' '], repeat: '*'},
+      Object: ['{', {r: 'Whitespace'}, {r: 'Key'}, {r: 'Whitespace'}, ':', {r: 'Whitespace'}, {r: 'Value'}, {r: 'Whitespace'}, '}', ';'],
+      Key: 'abc',
+      Value: '123',
+      BlockStatement: ['{', {r: 'Whitespace'}, {r: 'ID'}, '()', ';', {r: 'Whitespace'}, '}'],
+      ID: /[a-zA-Z_][a-zA-Z0-9_]*/,
+    },
+  };
+  const codegen = new CodegenGrammar(grammar, new CodegenContext(true, true, true));
+  const parser = codegen.compile();
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const text = '{ abc: 123 bd };';
+  const ctx = new ParseContext(text, false, [rootTraceNode]);
+  parser(ctx, 0);
+  const trace = printTraceNode(rootTraceNode.children[0], '', text);
+  expect(trace).toBe(
+`Program
+├─ Object
+│  ├─ Text 0:1 → "{"
+│  ├─ Whitespace 1:2 → " "
+│  ├─ Key 2:5 → "abc"
+│  ├─ Whitespace 5:5 → ""
+│  ├─ Text 5:6 → ":"
+│  ├─ Whitespace 6:7 → " "
+│  ├─ Value 7:10 → "123"
+│  ├─ Whitespace 10:11 → " "
+│  └─ Text
+└─ BlockStatement
+   ├─ Text 0:1 → "{"
+   ├─ Whitespace 1:2 → " "
+   ├─ ID 2:5 → "abc"
+   └─ Text`);
+});
