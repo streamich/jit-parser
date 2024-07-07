@@ -7,10 +7,8 @@ export const grammar: Grammar = {
   start: 'Value',
 
   cst: {
-    Value: [{r: 'Ws'}, {r: 'TValue'}, {r: 'Ws'}],
-
-    Ws: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null},
-
+    WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null},
+    Value: [{r: 'WOpt'}, {r: 'TValue'}, {r: 'WOpt'}],
     TValue: {
       u: [{r: 'Null'}, {r: 'Boolean'}, {r: 'String'}, {r: 'Object'}, {r: 'Array'}, {r: 'Number'}],
     },
@@ -35,9 +33,10 @@ export const grammar: Grammar = {
               ast: ['$', '/children'],
             },
           ],
+          // (concat (push [] ($ "/children/0")) ($ "/children/1"))
           ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
         },
-        {r: 'Ws'},
+        {r: 'WOpt'},
       ],
     },
 
@@ -57,11 +56,11 @@ export const grammar: Grammar = {
           ],
           ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
         },
-        {r: 'Ws'},
+        {r: 'WOpt'},
       ],
     },
     Entry: {
-      p: [{r: 'Ws'}, {r: 'String'}, {r: 'Ws'}, ':', {r: 'Value'}],
+      p: [{r: 'WOpt'}, {r: 'String'}, {r: 'WOpt'}, ':', {r: 'Value'}],
       children: {
         0: 'key',
         1: 'value',
