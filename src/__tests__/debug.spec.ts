@@ -14,7 +14,7 @@ test('can capture terminal debug information', () => {
   };
   const codegen = new CodegenGrammar(grammar, new CodegenContext(true, true, true));
   const parser = codegen.compile();
-  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []};
   const ctx = new ParseContext('value', false, [rootTraceNode]);
   parser(ctx, 0);
   expect(rootTraceNode).toMatchObject({
@@ -38,28 +38,30 @@ test('can capture debug trace in production node', () => {
   };
   const codegen = new CodegenGrammar(grammar, new CodegenContext(true, true, true));
   const parser = codegen.compile();
-  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []};
   const ctx = new ParseContext('{value}', false, [rootTraceNode]);
   parser(ctx, 0);
   expect(rootTraceNode).toMatchObject({
     pos: 0,
-    children: [{
-      pos: 0,
-      children: [
-        {
-          pos: 0,
-          match: {pos: 0, end: 1},
-        },
-        {
-          pos: 1,
-          match: {pos: 1, end: 6},
-        },
-        {
-          pos: 6,
-          match: {pos: 6, end: 7},
-        },
-      ],
-    }],
+    children: [
+      {
+        pos: 0,
+        children: [
+          {
+            pos: 0,
+            match: {pos: 0, end: 1},
+          },
+          {
+            pos: 1,
+            match: {pos: 1, end: 6},
+          },
+          {
+            pos: 6,
+            match: {pos: 6, end: 7},
+          },
+        ],
+      },
+    ],
   });
 });
 
@@ -68,36 +70,34 @@ test('can capture debug trace in union node', () => {
     start: 'Value',
     cst: {
       Value: {
-        u: [
-          'var',
-          'let',
-          'const',
-        ],
+        u: ['var', 'let', 'const'],
       },
     },
   };
   const codegen = new CodegenGrammar(grammar, new CodegenContext(true, true, true));
   const parser = codegen.compile();
-  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []};
   const ctx = new ParseContext('const', false, [rootTraceNode]);
   parser(ctx, 0);
   expect(rootTraceNode).toMatchObject({
     pos: 0,
-    children: [{
-      pos: 0,
-      children: [
-        {
-          pos: 0,
-        },
-        {
-          pos: 0,
-        },
-        {
-          pos: 0,
-          match: {pos: 0, end: 5},
-        },
-      ],
-    }],
+    children: [
+      {
+        pos: 0,
+        children: [
+          {
+            pos: 0,
+          },
+          {
+            pos: 0,
+          },
+          {
+            pos: 0,
+            match: {pos: 0, end: 5},
+          },
+        ],
+      },
+    ],
   });
 });
 
@@ -112,45 +112,47 @@ test('can capture debug trace in list node', () => {
   };
   const codegen = new CodegenGrammar(grammar, new CodegenContext(true, true, true));
   const parser = codegen.compile();
-  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []};
   const ctx = new ParseContext('aaa', false, [rootTraceNode]);
   parser(ctx, 0);
   expect(rootTraceNode).toMatchObject({
     pos: 0,
-    children: [{
-      pos: 0,
-      children: [
-        {
-          pos: 0,
-          match: {pos: 0, end: 1},
-        },
-        {
-          pos: 1,
-          match: {pos: 1, end: 2},
-        },
-        {
-          pos: 2,
-          match: {pos: 2, end: 3},
-        },
-        {
-          pos: 3,
-        },
-      ],
-      match: {pos: 0, end: 3},
-    }],
+    children: [
+      {
+        pos: 0,
+        children: [
+          {
+            pos: 0,
+            match: {pos: 0, end: 1},
+          },
+          {
+            pos: 1,
+            match: {pos: 1, end: 2},
+          },
+          {
+            pos: 2,
+            match: {pos: 2, end: 3},
+          },
+          {
+            pos: 3,
+          },
+        ],
+        match: {pos: 0, end: 3},
+      },
+    ],
   });
 });
 
 test('can capture JSON grammar trace', () => {
   const codegen = new CodegenGrammar(jsonGrammar, new CodegenContext(true, true, true));
   const parser = codegen.compile();
-  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []};
   const json = ' {"foo": ["bar", 123]}';
   const ctx = new ParseContext(json, false, [rootTraceNode]);
   parser(ctx, 0);
   const formatted = printTraceNode(rootTraceNode, '', json);
   expect(formatted).toBe(
-`Root
+    `Root
 └─ Value 0:22 → ' {"foo": ["bar", 123]}'
    ├─ WOpt 0:1 → " "
    ├─ TValue 1:22 → '{"foo": ["bar", 123]}'
@@ -208,7 +210,8 @@ test('can capture JSON grammar trace', () => {
    │     │        └─ Production
    │     │           └─ Text
    │     └─ Text 21:22 → "}"
-   └─ WOpt 22:22 → ""`);
+   └─ WOpt 22:22 → ""`,
+  );
 });
 
 test('can capture two partial routes', () => {
@@ -216,13 +219,21 @@ test('can capture two partial routes', () => {
     start: 'Program',
     cst: {
       Program: {
-        u: [
-          {r: 'Object'},
-          {r: 'BlockStatement'},
-        ],
+        u: [{r: 'Object'}, {r: 'BlockStatement'}],
       },
       Whitespace: {t: [' '], repeat: '*'},
-      Object: ['{', {r: 'Whitespace'}, {r: 'Key'}, {r: 'Whitespace'}, ':', {r: 'Whitespace'}, {r: 'Value'}, {r: 'Whitespace'}, '}', ';'],
+      Object: [
+        '{',
+        {r: 'Whitespace'},
+        {r: 'Key'},
+        {r: 'Whitespace'},
+        ':',
+        {r: 'Whitespace'},
+        {r: 'Value'},
+        {r: 'Whitespace'},
+        '}',
+        ';',
+      ],
       Key: 'abc',
       Value: '123',
       BlockStatement: ['{', {r: 'Whitespace'}, {r: 'ID'}, '()', ';', {r: 'Whitespace'}, '}'],
@@ -231,13 +242,13 @@ test('can capture two partial routes', () => {
   };
   const codegen = new CodegenGrammar(grammar, new CodegenContext(true, true, true));
   const parser = codegen.compile();
-  const rootTraceNode: RootTraceNode = {pos: 0, children: []}
+  const rootTraceNode: RootTraceNode = {pos: 0, children: []};
   const text = '{ abc: 123 bd };';
   const ctx = new ParseContext(text, false, [rootTraceNode]);
   parser(ctx, 0);
   const trace = printTraceNode(rootTraceNode.children[0], '', text);
   expect(trace).toBe(
-`Program
+    `Program
 ├─ Object
 │  ├─ Text 0:1 → "{"
 │  ├─ Whitespace 1:2 → " "
@@ -252,5 +263,6 @@ test('can capture two partial routes', () => {
    ├─ Text 0:1 → "{"
    ├─ Whitespace 1:2 → " "
    ├─ ID 2:5 → "abc"
-   └─ Text`);
+   └─ Text`,
+  );
 });

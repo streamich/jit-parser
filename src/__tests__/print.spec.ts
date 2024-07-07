@@ -33,14 +33,15 @@ describe('GrammarPrinter', () => {
       cst: {
         Prod: {
           p: ['{', '}'],
-        }
+        },
       },
     };
     const result = GrammarPrinter.print(grammar);
     expect(result).toBe(
-`Prod (production)
+      `Prod (production)
 ├─ Text (terminal): "{"
-└─ Text (terminal): "}"`);
+└─ Text (terminal): "}"`,
+    );
   });
 
   test('can print a production shorthand node', () => {
@@ -52,9 +53,10 @@ describe('GrammarPrinter', () => {
     };
     const result = GrammarPrinter.print(grammar);
     expect(result).toBe(
-`Prod (production)
+      `Prod (production)
 ├─ Text (terminal): "{"
-└─ Text (terminal): "}"`);
+└─ Text (terminal): "}"`,
+    );
   });
 
   test('can print a union node', () => {
@@ -62,15 +64,16 @@ describe('GrammarPrinter', () => {
       start: 'U',
       cst: {
         U: {
-          u: ['{', '}']
-        }
+          u: ['{', '}'],
+        },
       },
     };
     const result = GrammarPrinter.print(grammar);
     expect(result).toBe(
-`U (union)
+      `U (union)
 ├─ Text (terminal): "{"
-└─ Text (terminal): "}"`);
+└─ Text (terminal): "}"`,
+    );
   });
 
   test('can print a list node', () => {
@@ -79,13 +82,14 @@ describe('GrammarPrinter', () => {
       cst: {
         L: {
           l: 'a',
-        }
+        },
       },
     };
     const result = GrammarPrinter.print(grammar);
     expect(result).toBe(
-`L (list)
-└─ Text (terminal): "a"`);
+      `L (list)
+└─ Text (terminal): "a"`,
+    );
   });
 
   test('can print a reference node', () => {
@@ -98,8 +102,9 @@ describe('GrammarPrinter', () => {
     };
     const result = GrammarPrinter.print(grammar);
     expect(result).toBe(
-`Start (reference)
-└─ ws (terminal): /\\s+/`);
+      `Start (reference)
+└─ ws (terminal): /\\s+/`,
+    );
   });
 
   test('can print recursive grammar', () => {
@@ -116,7 +121,7 @@ describe('GrammarPrinter', () => {
   test('JSON', () => {
     const result = GrammarPrinter.print(jsonGrammar);
     expect(result).toBe(
-`Value (production)
+      `Value (production)
 ├─ WOpt (terminal): (" " | "\\n" | "\\t" | "\\r")*
 ├─ TValue (union)
 │  ├─ Null (terminal): "null"
@@ -150,7 +155,8 @@ describe('GrammarPrinter', () => {
 │  │  │  └─ → WOpt
 │  │  └─ Text (terminal): "]"
 │  └─ Number (terminal): /\\-?(0|([1-9][0-9]{0,25}))(\\.[0-9]{1,25})?([eE][\\+\\\-]?[0-9]{1,25})?/
-└─ → WOpt`);
+└─ → WOpt`,
+    );
   });
 });
 
@@ -162,7 +168,7 @@ describe('printCst()', () => {
     const cst = parser(ctx, 0);
     const formatted = printCst(cst!, '', json);
     expect(formatted).toBe(
-`Value 0:22 → ' {"foo": ["bar", 123]}'
+      `Value 0:22 → ' {"foo": ["bar", 123]}'
 ├─ WOpt 0:1 → " "
 ├─ TValue 1:22 → '{"foo": ["bar", 123]}'
 │  └─ Object 1:22 → '{"foo": ["bar", 123]}'
@@ -198,6 +204,7 @@ describe('printCst()', () => {
 │     │     │     └─ WOpt 21:21 → ""
 │     │     └─ List 21:21 → ""
 │     └─ Text 21:22 → "}"
-└─ WOpt 22:22 → ""`);
+└─ WOpt 22:22 → ""`,
+    );
   });
 });

@@ -4,13 +4,13 @@ import type {Grammar} from '../types';
 
 /**
  * JSON Expression grammar.
- * 
+ *
  * ```
  * ["add", 1, 2]
  * ```
- * 
+ *
  * Result:
- * 
+ *
  * ```
  * (add 1 2)
  * ```
@@ -26,28 +26,22 @@ export const grammar: Grammar = {
       ast: ['$', '/children/0'],
     },
     Expression: {
-      p: [
-        '(',
-        {r: 'Operator'},
-        {r: 'W'},
-        {r: 'Operands'},
-        {r: 'WOpt'},
-        ')',
-      ],
+      p: ['(', {r: 'Operator'}, {r: 'W'}, {r: 'Operands'}, {r: 'WOpt'}, ')'],
       children: {
         0: 'operator',
         1: 'operands',
       },
     },
     Operator: /[^\s\n\t\r]+/,
-    ...delimitedList('Operands', {r: 'W'}, {
-      type: 'Operand',
-      u: [
-        {r: 'Expression'},
-        {r: 'TValue'},
-      ],
-      ast: ['$', '/children/0'],
-    }),
+    ...delimitedList(
+      'Operands',
+      {r: 'W'},
+      {
+        type: 'Operand',
+        u: [{r: 'Expression'}, {r: 'TValue'}],
+        ast: ['$', '/children/0'],
+      },
+    ),
   },
 
   ast: {

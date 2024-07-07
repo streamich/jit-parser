@@ -105,10 +105,7 @@ export const grammar: Grammar = {
     // ------------------------------------------------------------ Expressions
 
     BooleanExpressionList: {
-      p: [
-        r`BooleanExpression`,
-        {l: r`NextBooleanExpression`, ast: AstUseChildren},
-      ],
+      p: [r`BooleanExpression`, {l: r`NextBooleanExpression`, ast: AstUseChildren}],
       ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
     },
     NextBooleanExpression: {p: [OptW, ',', OptW, r`BooleanExpression`], ast: AstUseFirstChild},
@@ -160,10 +157,7 @@ export const grammar: Grammar = {
       '(',
       OptW,
       {
-        u: [
-          {type: 'StarArgument', t: '*'},
-          r`BooleanExpressionList`,
-        ],
+        u: [{type: 'StarArgument', t: '*'}, r`BooleanExpressionList`],
         ast: AstUseFirstChild,
       },
       OptW,
@@ -196,30 +190,9 @@ export const grammar: Grammar = {
     UnnamedParam: '?',
     NamedParam: /\?[a-zA-Z][a-zA-Z0-9_]*/,
     PositionalParam: /\?\d+/,
-    NumericArrayLiteral: [
-      '[',
-      OptW,
-      {r: 'NumericLiteral'},
-      {l: [OptW, ',', OptW, {r: 'NumericLiteral'}]},
-      OptW,
-      ']',
-    ],
-    BooleanArrayLiteral: [
-      '[',
-      OptW,
-      {r: 'BooleanLiteral'},
-      {l: [OptW, ',', OptW, {r: 'BooleanLiteral'}]},
-      OptW,
-      ']',
-    ],
-    StringArrayLiteral: [
-      '[',
-      OptW,
-      {r: 'StringLiteral'},
-      {l: [OptW, ',', OptW, {r: 'StringLiteral'}]},
-      OptW,
-      ']',
-    ],
+    NumericArrayLiteral: ['[', OptW, {r: 'NumericLiteral'}, {l: [OptW, ',', OptW, {r: 'NumericLiteral'}]}, OptW, ']'],
+    BooleanArrayLiteral: ['[', OptW, {r: 'BooleanLiteral'}, {l: [OptW, ',', OptW, {r: 'BooleanLiteral'}]}, OptW, ']'],
+    StringArrayLiteral: ['[', OptW, {r: 'StringLiteral'}, {l: [OptW, ',', OptW, {r: 'StringLiteral'}]}, OptW, ']'],
 
     // ------------------------------------------------------------ Identifiers
 
@@ -240,12 +213,7 @@ export const grammar: Grammar = {
   ast: {
     W: null,
     Ws: null,
-    Query: [
-      'o.set',
-      ['$', ''],
-      'children',
-      ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
-    ],
+    Query: ['o.set', ['$', ''], 'children', ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']]],
     QueryChain: AstUseChildren,
     PipedCommand: ['$', '/children/0'],
     Command: AstUseFirstChild,
@@ -280,12 +248,7 @@ export const grammar: Grammar = {
       ],
       'children',
     ],
-    Fields: [
-      'o.set',
-      ['$', ''],
-      'children',
-      ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
-    ],
+    Fields: ['o.set', ['$', ''], 'children', ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']]],
     NextField: AstUseFirstChild,
     Field: ['o.del', ['o.set', ['$', ''], 'value', ['$', '/children/0']], 'children'],
     BooleanExpression: AstUseFirstChild,
@@ -297,7 +260,11 @@ export const grammar: Grammar = {
       ['o.set', ['$', ''], 'left', ['$', '/children/0'], 'right', ['$', '/children/1']],
       'children',
     ],
-    FunctionExpression: ['o.del', ['o.set', ['$', ''], 'name', ['$', '/children/0'], 'arguments', ['$', '/children/1']], 'children'],
+    FunctionExpression: [
+      'o.del',
+      ['o.set', ['$', ''], 'name', ['$', '/children/0'], 'arguments', ['$', '/children/1']],
+      'children',
+    ],
     Constant: ['o.del', ['o.set', ['$', ''], 'value', ['$', '/children/0']], 'children'],
     QualifiedName: [
       'o.set',
@@ -305,22 +272,12 @@ export const grammar: Grammar = {
       'children',
       ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
       'value',
-      [
-        'substr',
-        ['reduce', ['$', '/children'], '', 'acc', 'x', ['.', ['$', 'acc'], '.', ['$', 'x/value']]],
-        1,
-        4096,
-      ],
+      ['substr', ['reduce', ['$', '/children'], '', 'acc', 'x', ['.', ['$', 'acc'], '.', ['$', 'x/value']]], 1, 4096],
     ],
     Identifier: ['o.del', ['o.set', ['$', ''], 'value', ['$', '/children/0/value']], 'children'],
     NextIdentifier: ['$', '/children/0'],
     UnquotedIdentifier: ['o.set', ['$', ''], 'value', ['$', '/raw']],
-    QuotedIdentifier: [
-      'o.set',
-      ['$', ''],
-      'value',
-      ['substr', ['$', '/raw'], 1, ['-', ['len', ['$', '/raw']], 1]],
-    ],
+    QuotedIdentifier: ['o.set', ['$', ''], 'value', ['substr', ['$', '/raw'], 1, ['-', ['len', ['$', '/raw']], 1]]],
   },
 };
 

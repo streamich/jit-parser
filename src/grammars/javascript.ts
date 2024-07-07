@@ -104,12 +104,8 @@ export const grammar: Grammar = {
 
   cst: {
     Program: {
-      p: [
-        StatementList,
-        SeparatorOpt,
-        /$/,
-      ],
-      ast: ['o.del', ['o.set', ['$', ''], 'body', ['$', '/children/0/children', [[]]]], 'children']
+      p: [StatementList, SeparatorOpt, /$/],
+      ast: ['o.del', ['o.set', ['$', ''], 'body', ['$', '/children/0/children', [[]]]], 'children'],
     },
 
     [Whitespace]: /\s+/,
@@ -133,12 +129,7 @@ export const grammar: Grammar = {
     },
 
     [BlockStatement]: {
-      p: [
-        '{',
-        StatementList,
-        SeparatorOpt,
-        '}',
-      ],
+      p: ['{', StatementList, SeparatorOpt, '}'],
       ast: ['o.del', ['o.set', ['$', ''], 'body', ['$', '/children/0/children', [[]]]], 'children'],
     },
 
@@ -156,28 +147,12 @@ export const grammar: Grammar = {
     },
 
     [Statement]: {
-      u: [
-        BlockStatement,
-        ReturnStatement,
-        ContinueStatement,
-        BreakStatement,
-        VariableStatement,
-      ],
+      u: [BlockStatement, ReturnStatement, ContinueStatement, BreakStatement, VariableStatement],
       ast: ['$', '/children/0'],
     },
 
     [VariableStatement]: {
-      p: [
-        VariableStatementKind,
-        Separator,
-        Identifier,
-        SeparatorOpt,
-        '=',
-        SeparatorOpt,
-        Expression,
-        SeparatorOpt,
-        ASI,
-      ],
+      p: [VariableStatementKind, Separator, Identifier, SeparatorOpt, '=', SeparatorOpt, Expression, SeparatorOpt, ASI],
       ast: [
         'o.del',
         [
@@ -204,10 +179,7 @@ export const grammar: Grammar = {
         {
           u: [
             {
-              p: [
-                Separator,
-                Expression,
-              ],
+              p: [Separator, Expression],
               ast: ['$', '/children/0'],
             },
             EPSILON,
@@ -215,7 +187,7 @@ export const grammar: Grammar = {
           ast: ['$', '/children/0', null],
         },
         SeparatorOpt,
-        ASI
+        ASI,
       ],
       children: {
         0: 'argument',
@@ -224,14 +196,11 @@ export const grammar: Grammar = {
 
     [ContinueStatement]: {
       p: [
-        {t: 'continue', ast: null, /* tags: ['keyword'] */},
+        {t: 'continue', ast: null /* tags: ['keyword'] */},
         {
           u: [
             {
-              p: [
-                Separator,
-                Identifier,
-              ],
+              p: [Separator, Identifier],
               ast: ['$', '/children/0'],
             },
             EPSILON,
@@ -239,7 +208,7 @@ export const grammar: Grammar = {
           ast: ['$', '/children/0', null],
         },
         SeparatorOpt,
-        ASI
+        ASI,
       ],
       children: {
         0: 'label',

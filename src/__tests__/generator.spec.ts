@@ -2,10 +2,11 @@ import {Generator} from '../generator';
 import {grammar as jsonGrammar} from '../grammars/json';
 import {grammar as esqlGrammar} from '../grammars/esql';
 
-const generator = () => new Generator({
-  grammar: jsonGrammar,
-  useSamples: true,
-});
+const generator = () =>
+  new Generator({
+    grammar: jsonGrammar,
+    useSamples: true,
+  });
 
 test('can generate string terminal', () => {
   const res = generator().genTerminal('null');

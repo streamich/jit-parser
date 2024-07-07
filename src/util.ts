@@ -56,5 +56,5 @@ export const delimitedList = (name: string, delim: GrammarNode, elem: ResolvedGr
       ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1/children', [[]]]],
     },
     [itemName]: elem,
-  }
+  };
 };
