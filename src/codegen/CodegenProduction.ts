@@ -39,11 +39,12 @@ export class CodegenProduction {
     const rChildren = codegen.var('[]');
     const dPattern = codegen.linkDependency(pattern);
     const rDebug = codegen.var();
+    const rTraceNodeParent = codegen.var();
     if (this.ctx.debug) {
-      codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos, children: []}`);
       const rTrace = codegen.var('ctx.trace');
-      const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
+      codegen.js(`${rTraceNodeParent} = ${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
       codegen.if(rTraceNodeParent, () => {
+        codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos, children: []}`);
         codegen.js(`${rTraceNodeParent}.children.push(${rDebug})`);
         codegen.js(`${rTrace}.push(${rDebug})`);
       });
@@ -54,7 +55,7 @@ export class CodegenProduction {
       results.push(reg);
       codegen.if(`!${reg}`, () => {
         if (this.ctx.debug) {
-          codegen.if(`${rDebug}`, () => {
+          codegen.if(rTraceNodeParent, () => {
             codegen.js(`ctx.trace.pop();`);
           });
         }
@@ -65,7 +66,7 @@ export class CodegenProduction {
     }
     const rMatch = codegen.var(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
     if (this.ctx.debug) {
-      codegen.if(`${rDebug}`, () => {
+      codegen.if(rTraceNodeParent, () => {
         codegen.js(`ctx.trace.pop();`);
         codegen.js(`${rDebug}.match = ${rMatch}`);
       });

@@ -40,12 +40,13 @@ export class CodegenTerminal {
     const dPattern = codegen.linkDependency(pattern);
     const dLeafCstMatch = codegen.linkDependency(LeafCstMatch);
     let rDebug = '';
+    const rTraceNodeParent = codegen.var();
     if (this.ctx.debug) {
       rDebug = codegen.var();
-      codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos}`);
       const rTrace = codegen.var('ctx.trace');
-      const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
+      codegen.js(`${rTraceNodeParent} = ${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
       codegen.if(rTraceNodeParent, () => {
+        codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos}`);
         codegen.js(`${rTraceNodeParent}.children.push(${rDebug})`);
       });
     }
@@ -57,7 +58,7 @@ export class CodegenTerminal {
       });
       const rMatch = codegen.var(`new ${dLeafCstMatch}(pos, pos + ${cleanTerminal.length}, ${dPattern});`);
       if (this.ctx.debug) {
-        codegen.if(`${rDebug}`, () => {
+        codegen.if(rTraceNodeParent, () => {
           codegen.js(`${rDebug}.match = ${rMatch}`);
         });
       }
@@ -75,7 +76,7 @@ export class CodegenTerminal {
       const rLength = codegen.var(`${rMatch} ? +(${rMatch}[0].length) : 0`);
       const rResult = codegen.var(`new ${dLeafCstMatch}(pos, pos + ${rLength}, ${dPattern});`);
       if (this.ctx.debug) {
-        codegen.if(`${rDebug}`, () => {
+        codegen.if(rTraceNodeParent, () => {
           codegen.js(`${rDebug}.match = ${rResult}`);
         });
       }
@@ -101,7 +102,7 @@ export class CodegenTerminal {
         }
         const rMatch = codegen.var(`new ${dLeafCstMatch}(pos, ${rEnd}, ${dPattern});`);
         if (this.ctx.debug) {
-          codegen.if(`${rDebug}`, () => {
+          codegen.if(rTraceNodeParent, () => {
             codegen.js(`${rDebug}.match = ${rMatch}`);
           });
         }
@@ -120,7 +121,7 @@ export class CodegenTerminal {
         });
         const rMatch = codegen.var(`new ${dLeafCstMatch}(pos, ${rEnd}, ${dPattern});`);
         if (this.ctx.debug) {
-          codegen.if(`${rDebug}`, () => {
+          codegen.if(rTraceNodeParent, () => {
             codegen.js(`${rDebug}.match = ${rMatch}`);
           });
         }

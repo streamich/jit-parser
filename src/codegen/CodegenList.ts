@@ -39,12 +39,13 @@ export class CodegenList {
     const rChild = codegen.var();
     const rChildren = codegen.var('[]');
     let rDebug = '';
+    const rTraceNodeParent = codegen.var();
     if (this.ctx.debug) {
       rDebug = codegen.var();
-      codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos, children: []}`);
       const rTrace = codegen.var('ctx.trace');
-      const rTraceNodeParent = codegen.var(`${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
+      codegen.js(`${rTraceNodeParent} = ${rTrace} && ${rTrace}[${rTrace}.length - 1]`);
       codegen.if(rTraceNodeParent, () => {
+        codegen.js(`${rDebug} = {ptr: ${dPattern}, pos: pos, children: []}`);
         codegen.js(`${rTraceNodeParent}.children.push(${rDebug})`);
         codegen.js(`${rTrace}.push(${rDebug})`);
       });
@@ -55,7 +56,7 @@ export class CodegenList {
     });
     const rResult = codegen.var(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
     if (this.ctx.debug) {
-      codegen.if(`${rDebug}`, () => {
+      codegen.if(`${rTraceNodeParent}`, () => {
         codegen.js(`ctx.trace.pop();`);
         codegen.js(`${rDebug}.match = ${rResult}`);
       });
