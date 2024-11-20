@@ -10,6 +10,7 @@ import {
 } from './util';
 import type {CstNode, Grammar, GrammarNode, ParseTraceNode, RootTraceNode} from './types';
 
+/** @todo Add ability to print AST expression using s-expression bracket notation. */
 export class GrammarPrinter {
   public static readonly print = (grammar: Grammar, tab?: string): string => {
     const printer = new GrammarPrinter(grammar);

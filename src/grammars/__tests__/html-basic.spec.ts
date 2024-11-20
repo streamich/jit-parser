@@ -4,9 +4,8 @@ import {GrammarPrinter, printCst, printTraceNode} from '../../print';
 import {grammar} from '../html-basic';
 import type {RootTraceNode} from '../../types';
 
-
 const parse = (src: string) => {
-  const debug = true;
+  const debug = false;
   const codegenContext = new CodegenContext(true, true, debug);
   const codegen = new CodegenGrammar(grammar, codegenContext);
   const parser = codegen.compile();
@@ -18,6 +17,7 @@ const parse = (src: string) => {
     console.log('Grammar:\n' + GrammarPrinter.print(grammar));
     console.log('CST:\n' + printCst(cst));
     console.log('Debug trace:\n' + printTraceNode(trace));
+    console.log(JSON.stringify(ast, null, 2));
   }
   return {cst, ast, parser};
 };
@@ -25,14 +25,44 @@ const parse = (src: string) => {
 describe('AST', () => {
   describe('fragments', () => {
     test('can parse plain text', () => {
-      const {ast, cst, parser} = parse('the text');
-      
-      console.log(ast);
+      const {ast} = parse('the text');
       expect(ast).toEqual({
-        type: 'Text',
+        type: 'Element',
         pos: 0,
         end: 8,
-        raw: 'the text',
+        children: [
+          {
+            type: 'Text',
+            pos: 0,
+            end: 8,
+            raw: 'the text',
+          },
+        ],
+      });
+    });
+
+    test('can parse a simple element', () => {
+      const {ast} = parse('<div>abc</div>');
+      expect(ast).toEqual({
+        type: 'Element',
+        pos: 0,
+        end: 14,
+        children: [
+          {
+            type: 'Element',
+            tag: 'div',
+            pos: 0,
+            end: 14,
+            children: [
+              {
+                type: 'Text',
+                pos: 5,
+                end: 8,
+                raw: 'abc',
+              },
+            ],
+          },
+        ],
       });
     });
   });

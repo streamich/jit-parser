@@ -124,6 +124,10 @@ export interface ListNode extends GrammarNodeBase {
 }
 
 export interface GrammarNodeBase extends AstCodegenOpts {
+  /**
+   * A sample string which matches this grammar rule, used when randomly
+   * generating text according to the grammar.
+   */
   sample?: string;
 }
 

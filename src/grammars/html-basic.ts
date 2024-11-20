@@ -10,20 +10,23 @@ import type {Grammar} from '../types';
  */
 export const grammar: Grammar = {
   start: 'Fragment',
-
   cst: {
     Fragment: {
-      l: {p: [{r: 'WOpt'}, {r: 'Node'}]}
+      l: {r: 'Node'},
+      ast: ['o.set', ['$', ''], 'type', 'Element'],
     },
-    Node: {u: [{r: 'Text'}]},
+    Node: {
+      u: [{r: 'Element'}, {r: 'Text'}],
+      ast: ['$', '/children/0'],
+    },
+    Element: {
+      p: ['<', {r: 'Tag'}, '>', {r: 'Fragment'}, '<', '/', {r: 'Tag'}, '>',],
+      ast: ['o.set', ['$', ''],
+        'tag', ['$', '/children/0/raw'],
+        'children', ['$', '/children/1/children'],
+      ],
+    },
+    Tag: {t: /[^>\s]+/},
     Text: /[^<]+/,
-    // Node: {u: [{r: 'Element'}, {r: 'Text'}]},
-    // Element: {
-    //   p: ['<', '...', '>', {r: 'Fragment'}, '<', '/', '...', '>',],
-    // },
-    WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null, sample: ' '},
-  },
-
-  ast: {
   },
 };
