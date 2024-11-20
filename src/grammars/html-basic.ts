@@ -13,12 +13,14 @@ export const grammar: Grammar = {
 
   cst: {
     Fragment: {
-      l: {p: ['WOpt', {r: 'Node'}]}
+      l: {p: [{r: 'WOpt'}, {r: 'Node'}]}
     },
-    Node: {u: [{r: 'Element'}, {r: 'Text'}]},
-    Element: {
-      p: ['<', '...', '>', {r: 'Fragment'}, '<', '/', '...', '>',],
-    },
+    Node: {u: [{r: 'Text'}]},
+    Text: /[^<]+/,
+    // Node: {u: [{r: 'Element'}, {r: 'Text'}]},
+    // Element: {
+    //   p: ['<', '...', '>', {r: 'Fragment'}, '<', '/', '...', '>',],
+    // },
     WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null, sample: ' '},
   },
 

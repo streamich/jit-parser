@@ -15,7 +15,7 @@ export class ParseContext {
 
     /**
      * Stack of debugging trace nodes. When defined, and when codegen has was
-     * run with `debug` flag, the parser will use this tack to capture a trace
+     * run with `debug` flag, the parser will use this stack to capture a trace
      * of the parsing process.
      */
     public readonly trace: undefined | (RootTraceNode | ParseTraceNode)[] = undefined,
