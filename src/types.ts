@@ -72,12 +72,17 @@ export interface TerminalNode extends GrammarNodeBase {
    * When true, the terminal node will be repeated until no more matches are
    * found. The default is false. Only applicable when the terminal node is
    * an array of strings.
+   * 
+   * @todo Make it default to `1`.
    */
   repeat?: '*' | '+';
 }
 
 export type ProductionNodeShorthand = GrammarNode[];
 
+/**
+ * @todo Rename to "choice"?
+ */
 export interface ProductionNode extends GrammarNodeBase {
   p: ProductionNodeShorthand;
 
