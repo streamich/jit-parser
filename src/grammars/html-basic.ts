@@ -20,13 +20,25 @@ export const grammar: Grammar = {
       ast: ['$', '/children/0'],
     },
     Element: {
-      p: ['<', {r: 'Tag'}, '>', {r: 'Fragment'}, '<', '/', {r: 'Tag'}, '>',],
-      ast: ['o.set', ['$', ''],
-        'tag', ['$', '/children/0/raw'],
-        'children', ['$', '/children/1/children'],
-      ],
+      p: [{r: 'Element0'}, {u: [
+        '/>',
+        // {p: ['>', {r: 'Fragment'}, '</', {r: 'Tag'}, '>']},
+        {p: ['>', {r: 'Fragment'}, /<\/[^>]+>/]},
+      ]}],
+      // ast: ['o.set', ['$', ''],
+      //   'tag', ['$', '/children/0/raw'],
+      //   'children', ['$', '/children/1/children'],
+      // ],
+    },
+    Element0: {
+      p: ['<', {r: 'Tag'}, {r: 'Attrs'}],
     },
     Tag: {t: /[^>\s]+/},
+    Attrs: {l: {r: 'Attr'}},
+    Attr: {
+      p: [{r: 'WOpt'}, 'key', {r: 'WOpt'}, '=', {r: 'WOpt'}, '"', 'value', '"'],
+    },
     Text: /[^<]+/,
+    WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null, sample: ' '},
   },
 };
