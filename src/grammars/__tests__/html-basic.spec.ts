@@ -26,41 +26,27 @@ describe('AST', () => {
   describe('fragments', () => {
     test('can parse plain text', () => {
       const {ast} = parse('the text');
-      expect(ast).toEqual({
-        type: 'Element',
+      expect(ast).toMatchObject({
+        type: 'Text',
         pos: 0,
         end: 8,
-        children: [
-          {
-            type: 'Text',
-            pos: 0,
-            end: 8,
-            raw: 'the text',
-          },
-        ],
+        raw: 'the text',
       });
     });
 
     test('can parse a simple element', () => {
       const {ast} = parse('<div>abc</div>');
-      expect(ast).toEqual({
+      expect(ast).toMatchObject({
         type: 'Element',
+        tag: 'div',
         pos: 0,
         end: 14,
         children: [
           {
-            type: 'Element',
-            tag: 'div',
-            pos: 0,
-            end: 14,
-            children: [
-              {
-                type: 'Text',
-                pos: 5,
-                end: 8,
-                raw: 'abc',
-              },
-            ],
+            type: 'Text',
+            pos: 5,
+            end: 8,
+            raw: 'abc',
           },
         ],
       });

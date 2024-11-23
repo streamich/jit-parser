@@ -13,27 +13,38 @@ export const grammar: Grammar = {
   cst: {
     Fragment: {
       l: {r: 'Node'},
-      ast: ['o.set', ['$', ''], 'type', 'Element'],
+      ast: ['?', ['==', ['len', ['$', '/children']], 1], ['$', '/children/0'], ['o.set', ['$', ''], 'type', 'Element']],
     },
     Node: {
       u: [{r: 'Element'}, {r: 'Text'}],
       ast: ['$', '/children/0'],
     },
     Element: {
-      p: [{r: 'Element0'}, {u: [
-        '/>',
-        // {p: ['>', {r: 'Fragment'}, '</', {r: 'Tag'}, '>']},
-        {p: ['>', {r: 'Fragment'}, /<\/[^>]+>/]},
-      ]}],
-      // ast: ['o.set', ['$', ''],
-      //   'tag', ['$', '/children/0/raw'],
-      //   'children', ['$', '/children/1/children'],
-      // ],
+      p: [
+        '<',
+        {r: 'Tag'},
+        {r: 'Attrs'},
+        {
+          u: [
+            '/>',
+            {
+              p: ['>', {r: 'Fragment'}, /<\/[^>]+>/],
+              ast: ['$', '/children'],
+            },
+          ],
+          ast: ['$', '/children/0'],
+        },
+      ],
+      children: {
+        0: 'tag',
+        1: 'attr',
+        2: 'children',
+      },
     },
-    Element0: {
-      p: ['<', {r: 'Tag'}, {r: 'Attrs'}],
+    Tag: {
+      t: /[^>\s]+/,
+      ast: ['$', '/raw'],
     },
-    Tag: {t: /[^>\s]+/},
     Attrs: {l: {r: 'Attr'}},
     Attr: {
       p: [{r: 'WOpt'}, 'key', {r: 'WOpt'}, '=', {r: 'WOpt'}, '"', 'value', '"'],
