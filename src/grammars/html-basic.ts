@@ -13,7 +13,10 @@ export const grammar: Grammar = {
   cst: {
     Fragment: {
       l: {r: 'Node'},
-      ast: ['?', ['==', ['len', ['$', '/children']], 1], ['$', '/children/0'], ['o.set', ['$', ''], 'type', 'Element']],
+      ast: ['?', ['==', ['len', ['$', '/children']], 1],
+        ['$', '/children/0'],
+        ['concat', [['', null]], ['$', '/children']],
+      ],
     },
     Node: {
       u: [{r: 'Element'}, {r: 'Text'}],
@@ -29,27 +32,46 @@ export const grammar: Grammar = {
             '/>',
             {
               p: ['>', {r: 'Fragment'}, /<\/[^>]+>/],
-              ast: ['$', '/children'],
+              ast: ['$', '/children/0'],
             },
           ],
           ast: ['$', '/children/0'],
         },
       ],
-      children: {
-        0: 'tag',
-        1: 'attr',
-        2: 'children',
-      },
+      ast: ['push', [[]],
+        ['$', '/children/0'],
+        ['?', ['==', ['len', ['$', '/children/1']], 0],
+          null,
+          ['$', '/children/1'],
+        ],
+        ['$', '/children/2']
+      ],
     },
     Tag: {
       t: /[^>\s]+/,
       ast: ['$', '/raw'],
     },
-    Attrs: {l: {r: 'Attr'}},
-    Attr: {
-      p: [{r: 'WOpt'}, 'key', {r: 'WOpt'}, '=', {r: 'WOpt'}, '"', 'value', '"'],
+    Attrs: {
+      l: {r: 'Attr'},
+      ast: ['fromEntries', ['$', '/children']],
     },
-    Text: /[^<]+/,
+    Attr: {
+      p: [
+        {r: 'WOpt'},
+        {t: /[^\s=]+/},
+        {r: 'WOpt'},
+        '=',
+        {r: 'WOpt'},
+        {t: ['"', "'"], ast: null},
+        {t: /[^"']+/},
+        {t: ['"', "'"], ast: null},
+      ],
+      ast: ['push', [[]], ['$', '/children/0/raw'], ['$', '/children/1/raw']],
+    },
+    Text: {
+      t: /[^<]+/,
+      ast: ['$', '/raw'],
+    },
     WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null, sample: ' '},
   },
 };

@@ -26,30 +26,29 @@ describe('AST', () => {
   describe('fragments', () => {
     test('can parse plain text', () => {
       const {ast} = parse('the text');
-      expect(ast).toMatchObject({
-        type: 'Text',
-        pos: 0,
-        end: 8,
-        raw: 'the text',
-      });
+      expect(ast).toBe('the text');
     });
 
     test('can parse a simple element', () => {
       const {ast} = parse('<div>abc</div>');
-      expect(ast).toMatchObject({
-        type: 'Element',
-        tag: 'div',
-        pos: 0,
-        end: 14,
-        children: [
-          {
-            type: 'Text',
-            pos: 5,
-            end: 8,
-            raw: 'abc',
-          },
-        ],
-      });
+      expect(ast).toMatchObject(['div', null, 'abc']);
+    });
+
+    test('can parse one attribute', () => {
+      const {ast} = parse('<span id="asdf">abc</span>');
+      expect(ast).toMatchObject(['span', {id: 'asdf'}, 'abc']);
+    });
+
+    test('can parse two attributes', () => {
+      const {ast} = parse('<span id="asdf" style=\'color: red\'>abc</span>');
+      expect(ast).toMatchObject([
+        "span",
+        {
+          "id": "asdf",
+          "style": "color: red"
+        },
+        "abc"
+      ]);
     });
   });
 });
