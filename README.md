@@ -18,14 +18,14 @@ A high-performance parser library that compiles grammar definitions into efficie
 ## Installation
 
 ```bash
-npm install jit-router
+npm install jit-parser
 ```
 
 ## Quick Start
 
 ```typescript
-import {CodegenGrammar} from 'jit-router';
-import {ParseContext} from 'jit-router';
+import {CodegenGrammar} from 'jit-parser';
+import {ParseContext} from 'jit-parser';
 
 // Define a simple grammar
 const grammar = {
@@ -46,7 +46,7 @@ console.log(cst); // CST node representing the parse result
 
 ## Grammar Node Types
 
-JIT Parser supports five main grammar node types for defining parsing rules:
+JIT Parser supports five main grammar node types for defining parsing rules. Grammar rules can be fully defined in JSON, making them language-agnostic and easy to serialize.
 
 ### 1. RefNode (Reference Node)
 
@@ -249,7 +249,7 @@ Arguments: {
 
 ## Tree Types
 
-JIT Parser works with three types of tree structures:
+JIT Parser works with four types of tree structures:
 
 ### 1. Grammar Nodes
 
@@ -339,6 +339,23 @@ interface CanonicalAstNode {
 
 4. **Type Override**: Specify custom `type` property instead of default node type names.
 
+### 4. Debug Trace Tree
+
+If debug mode is enabled during compilation, the parser captures all grammar node tree paths that were attempted during parsing. This debug trace tree is useful for debugging parser behavior and improving parser performance by understanding which rules were tried and failed.
+
+**Interface:**
+```typescript
+interface TraceNode {
+  type: string;         // Grammar rule name that was attempted
+  pos: number;          // Start position where rule was tried
+  end?: number;         // End position if rule succeeded  
+  children?: TraceNode[]; // Nested rule attempts
+  success: boolean;     // Whether the rule matched successfully
+}
+```
+
+The debug trace captures the complete parsing process, including failed attempts, making it invaluable for understanding complex parsing scenarios and optimizing grammar rules.
+
 ## Grammar Compilation
 
 Grammars are compiled to efficient JavaScript functions that can parse input strings rapidly.
@@ -346,7 +363,7 @@ Grammars are compiled to efficient JavaScript functions that can parse input str
 ### Basic Compilation
 
 ```typescript
-import {CodegenGrammar} from 'jit-router';
+import {CodegenGrammar} from 'jit-parser';
 
 const grammar = {
   start: 'Value',
@@ -363,7 +380,7 @@ const parser = CodegenGrammar.compile(grammar);
 ### Compilation Options
 
 ```typescript
-import {CodegenContext} from 'jit-router';
+import {CodegenContext} from 'jit-parser';
 
 const ctx = new CodegenContext(
   true,  // positions: Include pos/end in AST
@@ -379,7 +396,7 @@ const parser = CodegenGrammar.compile(grammar, ctx);
 You can print the grammar structure by converting it to a string:
 
 ```typescript
-import {GrammarPrinter} from 'jit-router';
+import {GrammarPrinter} from 'jit-parser';
 
 const grammarString = GrammarPrinter.print(grammar);
 console.log(grammarString);
@@ -440,7 +457,7 @@ Debug mode captures a trace of the parsing process, showing which grammar rules 
 ### Enabling Debug Mode
 
 ```typescript
-import {CodegenContext, ParseContext} from 'jit-router';
+import {CodegenContext, ParseContext} from 'jit-parser';
 
 // Enable debug during compilation
 const debugCtx = new CodegenContext(true, true, true); // debug = true
@@ -454,7 +471,7 @@ const parseCtx = new ParseContext('input text', false, [rootTrace]);
 const cst = parser(parseCtx, 0);
 
 // Print debug trace
-import {printTraceNode} from 'jit-router';
+import {printTraceNode} from 'jit-parser';
 console.log(printTraceNode(rootTrace, '', 'input text'));
 ```
 
@@ -515,7 +532,7 @@ console.log(ast); // {type: 'Number', pos: 0, end: 2, raw: '42'}
 ### 2. JSON Parser
 
 ```typescript
-import {grammar as jsonGrammar} from 'jit-router/lib/grammars/json';
+import {grammar as jsonGrammar} from 'jit-parser/lib/grammars/json';
 
 const parser = CodegenGrammar.compile(jsonGrammar);
 const json = '{"name": "John", "age": 30}';
