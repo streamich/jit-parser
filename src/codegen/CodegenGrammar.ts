@@ -243,8 +243,17 @@ export class CodegenGrammar {
    * This creates a self-contained JavaScript parser function.
    */
   public generateFullCode(): string {
-    // First compile all rules to ensure all codegen objects are created
-    this.compileAll();
+    // Clear any existing patterns to start fresh
+    this.patterns.clear();
+    this.codegenObjects.clear();
+    
+    // Enable text generation mode to avoid lazy functions
+    this.textGenerationMode = true;
+    
+    // Compile all rules to generate all codegen objects
+    for (const ruleName of Object.keys(this.grammar.cst)) {
+      this.compileRule(ruleName);
+    }
     
     // Start building the complete code
     let fullCode = '// Generated parser with shared library\n';
@@ -255,13 +264,13 @@ export class CodegenGrammar {
     fullCode += `const sharedLib = ${sharedLibraryText};\n`;
     fullCode += 'const library = sharedLib();\n\n';
     
-    // Collect all parser code by iterating through all patterns
-    const allGeneratedCode = new Map<string, {js: string; deps: unknown[]; dependencyNames: string[];}>();
+    // Collect all the generated code for each pattern
+    const generatedParsers = new Map<string, {js: string; deps: unknown[]; dependencyNames: string[];}>();
     
     for (const [patternType, codegenObj] of this.codegenObjects) {
       const generated = codegenObj.generateCodeText();
       const dependencyNames = (codegenObj.codegen as any).dependencyNames || [];
-      allGeneratedCode.set(patternType, {
+      generatedParsers.set(patternType, {
         js: generated.js,
         deps: generated.deps,
         dependencyNames: dependencyNames
@@ -274,27 +283,55 @@ export class CodegenGrammar {
       parserToPattern.set(pattern.parser, patternType);
     }
     
-    // Generate parser variables for each pattern (except the main one)
-    const parserVars = new Map<string, string>();
-    let counter = 0;
+    // Process all patterns except the root pattern
     const rootPattern = this.compileRule(this.grammar.start);
     
-    for (const patternType of allGeneratedCode.keys()) {
+    // Order patterns by dependencies (simple topological sort)
+    const patternOrder: string[] = [];
+    const visited = new Set<string>();
+    
+    const visitPattern = (patternType: string) => {
+      if (visited.has(patternType)) return;
+      visited.add(patternType);
+      
+      const patternInfo = generatedParsers.get(patternType);
+      if (!patternInfo) return;
+      
+      // Visit dependencies first
+      for (const dep of patternInfo.deps) {
+        if (typeof dep === 'function') {
+          const depPatternType = parserToPattern.get(dep);
+          if (depPatternType && !visited.has(depPatternType)) {
+            visitPattern(depPatternType);
+          }
+        }
+      }
+      
+      patternOrder.push(patternType);
+    };
+    
+    // Visit all patterns starting from root
+    for (const patternType of generatedParsers.keys()) {
+      visitPattern(patternType);
+    }
+    
+    // Generate parser variables for each pattern
+    const parserVars = new Map<string, string>();
+    for (const patternType of patternOrder) {
       if (patternType !== rootPattern.type) {
         parserVars.set(patternType, `parser_${patternType.replace(/[^a-zA-Z0-9]/g, '_')}`);
       }
     }
     
-    // Generate all non-root parsers first
-    for (const [patternType, codeInfo] of allGeneratedCode) {
+    // Generate all non-root parsers
+    for (const patternType of patternOrder) {
       if (patternType === rootPattern.type) continue;
       
+      const patternInfo = generatedParsers.get(patternType)!;
       const varName = parserVars.get(patternType)!;
       const dependencyValues: string[] = [];
       
-      for (let i = 0; i < codeInfo.deps.length; i++) {
-        const dep = codeInfo.deps[i];
-        
+      for (const dep of patternInfo.deps) {
         if (typeof dep === 'function') {
           // Check if it's from our library
           if (dep === library.scrub) {
@@ -311,7 +348,7 @@ export class CodegenGrammar {
             if (referencedPattern && parserVars.has(referencedPattern)) {
               dependencyValues.push(parserVars.get(referencedPattern)!);
             } else {
-              // Serialize the function
+              // This shouldn't happen, but fallback to string representation
               dependencyValues.push(dep.toString());
             }
           }
@@ -327,16 +364,14 @@ export class CodegenGrammar {
       }
       
       fullCode += `// Parser for ${patternType}\n`;
-      fullCode += `const ${varName} = ${codeInfo.js}(${dependencyValues.join(', ')});\n\n`;
+      fullCode += `const ${varName} = ${patternInfo.js}(${dependencyValues.join(', ')});\n\n`;
     }
     
     // Generate the main parser
-    const rootCodeInfo = allGeneratedCode.get(rootPattern.type)!;
+    const rootPatternInfo = generatedParsers.get(rootPattern.type)!;
     const rootDependencyValues: string[] = [];
     
-    for (let i = 0; i < rootCodeInfo.deps.length; i++) {
-      const dep = rootCodeInfo.deps[i];
-      
+    for (const dep of rootPatternInfo.deps) {
       if (typeof dep === 'function') {
         // Check if it's from our library
         if (dep === library.scrub) {
@@ -353,7 +388,7 @@ export class CodegenGrammar {
           if (referencedPattern && parserVars.has(referencedPattern)) {
             rootDependencyValues.push(parserVars.get(referencedPattern)!);
           } else {
-            // Serialize the function
+            // This shouldn't happen, but fallback to string representation
             rootDependencyValues.push(dep.toString());
           }
         }
@@ -370,7 +405,7 @@ export class CodegenGrammar {
     
     // Add the main parser function
     fullCode += '// Main parser function\n';
-    fullCode += `const parser = ${rootCodeInfo.js}(${rootDependencyValues.join(', ')});\n\n`;
+    fullCode += `const parser = ${rootPatternInfo.js}(${rootDependencyValues.join(', ')});\n\n`;
     
     // Export the parser
     fullCode += '// Export the parser\n';
@@ -381,6 +416,9 @@ export class CodegenGrammar {
     fullCode += '}\n\n';
     fullCode += '// Return the parser for direct usage\n';
     fullCode += 'parser;\n';
+    
+    // Disable text generation mode
+    this.textGenerationMode = false;
     
     return fullCode;
   }
