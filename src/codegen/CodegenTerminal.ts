@@ -136,4 +136,8 @@ export class CodegenTerminal {
     const fn = this.codegen.compile();
     return fn;
   }
+
+  public generateCodeText(): {js: string; deps: unknown[]} {
+    return this.codegen.generate();
+  }
 }

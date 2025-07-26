@@ -2,6 +2,8 @@ import {lazy} from '@jsonjoy.com/util/lib/lazyFunction';
 import {CodegenTerminal} from './CodegenTerminal';
 import {CodegenProduction} from './CodegenProduction';
 import {CodegenUnion} from './CodegenUnion';
+import {CodegenList} from './CodegenList';
+import {CodegenAstFactory} from './CodegenAstFactory';
 import type {
   Grammar,
   UnionNode,
@@ -13,10 +15,8 @@ import type {
   ListNode,
   CstNode,
 } from '../types';
-import {CodegenList} from './CodegenList';
 import {CodegenContext} from '../context';
 import {Pattern} from './Pattern';
-import {CodegenAstFactory} from './CodegenAstFactory';
 import {
   isListNode,
   isProductionNode,
@@ -26,6 +26,7 @@ import {
   isTerminalShorthandNode,
   isUnionNode,
 } from '../util';
+import {sharedLibraryText, library} from '../sharedLibrary';
 
 export class CodegenGrammar {
   public static readonly compile = (grammar: Grammar, ctx?: CodegenContext): Parser => {
@@ -35,6 +36,7 @@ export class CodegenGrammar {
 
   protected readonly parsers = new Map<string, Pattern>();
   protected readonly patterns = new Map<string, Pattern>();
+  protected readonly codegenObjects = new Map<string, any>();
 
   constructor(
     public readonly grammar: Grammar,
@@ -76,8 +78,14 @@ export class CodegenGrammar {
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Text');
-    pattern.parser = CodegenTerminal.compile(node, pattern, this.ctx);
+    const codegen = new CodegenTerminal(node, pattern, this.ctx);
+    codegen.generate();
+    pattern.parser = codegen.compile();
     pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
+    
+    // Store codegen object for text generation
+    this.codegenObjects.set(pattern.type, codegen);
+    
     return pattern;
   }
 
@@ -89,8 +97,14 @@ export class CodegenGrammar {
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Production');
-    pattern.parser = CodegenProduction.compile(node, pattern, parsers, this.ctx);
+    const codegen = new CodegenProduction(node, pattern, parsers, this.ctx);
+    codegen.generate();
+    pattern.parser = codegen.compile();
     pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
+    
+    // Store codegen object for text generation
+    this.codegenObjects.set(pattern.type, codegen);
+    
     return pattern;
   }
 
@@ -102,8 +116,14 @@ export class CodegenGrammar {
       if (ast !== void 0) node.ast = ast;
     }
     pattern ??= new Pattern(node.type ?? 'Union');
-    pattern.parser = CodegenUnion.compile(node, pattern, parsers, this.ctx);
+    const codegen = new CodegenUnion(node, pattern, parsers, this.ctx);
+    codegen.generate();
+    pattern.parser = codegen.compile();
     pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
+    
+    // Store codegen object for text generation
+    this.codegenObjects.set(pattern.type, codegen);
+    
     return pattern;
   }
 
@@ -114,8 +134,14 @@ export class CodegenGrammar {
     }
     pattern ??= new Pattern(node.type ?? 'List');
     const childParser = this.getNodeParser(node.l);
-    pattern.parser = CodegenList.compile(node, pattern, childParser, this.ctx);
+    const codegen = new CodegenList(node, pattern, childParser, this.ctx);
+    codegen.generate();
+    pattern.parser = codegen.compile();
     pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
+    
+    // Store codegen object for text generation
+    this.codegenObjects.set(pattern.type, codegen);
+    
     return pattern;
   }
 
@@ -153,5 +179,110 @@ export class CodegenGrammar {
 
   public createAst(cst: CstNode, src: string): unknown {
     return cst.ptr.toAst(cst, src);
+  }
+
+  /**
+   * Generate JavaScript code for the parser instead of compiling it.
+   * Returns an object containing the generated JavaScript code and dependencies.
+   */
+  public generateCode(): {js: string; dependencies: {[key: string]: unknown}} {
+    const pattern = this.compileRule(this.grammar.start);
+    
+    // Get the codegen object for the start rule
+    const codegen = this.codegenObjects.get(pattern.type);
+    if (!codegen) {
+      throw new Error(`Unable to find codegen object for pattern: ${pattern.type}`);
+    }
+    
+    const generated = codegen.generateCodeText();
+    
+    // Create a map of dependencies by their variable names
+    const dependencyMap: {[key: string]: unknown} = {};
+    const dependencyNames = (codegen.codegen as any).dependencyNames || [];
+    const dependencies = (codegen.codegen as any).dependencies || [];
+    
+    // Map dependency names to their values
+    for (let i = 0; i < Math.min(dependencyNames.length, dependencies.length); i++) {
+      dependencyMap[dependencyNames[i]] = dependencies[i];
+    }
+    
+    return {
+      js: generated.js,
+      dependencies: dependencyMap
+    };
+  }
+
+  /**
+   * Generate complete JavaScript code with all dependencies inlined.
+   * This creates a self-contained JavaScript parser function.
+   */
+  public generateFullCode(): string {
+    const {js, dependencies} = this.generateCode();
+    
+    // Start building the complete code
+    let fullCode = '// Generated parser with shared library\n';
+    fullCode += '// This code was auto-generated by jit-parser\n\n';
+    
+    // Add the shared library
+    fullCode += '// Shared library functions\n';
+    fullCode += `const sharedLib = ${sharedLibraryText};\n`;
+    fullCode += 'const library = sharedLib();\n\n';
+    
+    // Create dependency variables
+    const dependencyVars: string[] = [];
+    const dependencyValues: string[] = [];
+    
+    for (const [name, value] of Object.entries(dependencies)) {
+      dependencyVars.push(name);
+      
+      if (typeof value === 'function') {
+        // For functions, we need to serialize them - but some are from our library
+        if (value === library.scrub) {
+          dependencyValues.push('library.scrub');
+        } else if (value === library.CstMatch) {
+          dependencyValues.push('library.CstMatch');
+        } else if (value === library.LeafCstMatch) {
+          dependencyValues.push('library.LeafCstMatch');
+        } else if (value === library.defaultAstFactory) {
+          dependencyValues.push('library.defaultAstFactory');
+        } else {
+          // For other functions, serialize them
+          dependencyValues.push(value.toString());
+        }
+      } else if (value instanceof RegExp) {
+        // For regexps, serialize them
+        dependencyValues.push(value.toString());
+      } else if (value && typeof value === 'object' && 'type' in value) {
+        // This looks like a Pattern object
+        dependencyValues.push(`new library.Pattern('${(value as any).type}')`);
+      } else {
+        // Literal values can be inlined
+        dependencyValues.push(JSON.stringify(value));
+      }
+    }
+    
+    // Add dependency declarations
+    if (dependencyVars.length > 0) {
+      for (let i = 0; i < dependencyVars.length; i++) {
+        fullCode += `const ${dependencyVars[i]} = ${dependencyValues[i]};\n`;
+      }
+      fullCode += '\n';
+    }
+    
+    // Add the main parser function
+    fullCode += '// Main parser function\n';
+    fullCode += `const parser = ${js}(${dependencyVars.join(', ')});\n\n`;
+    
+    // Export the parser
+    fullCode += '// Export the parser\n';
+    fullCode += 'if (typeof module !== "undefined" && module.exports) {\n';
+    fullCode += '  module.exports = parser;\n';
+    fullCode += '} else if (typeof window !== "undefined") {\n';
+    fullCode += '  window.parser = parser;\n';
+    fullCode += '}\n\n';
+    fullCode += '// For direct usage\n';
+    fullCode += 'parser;\n';
+    
+    return fullCode;
   }
 }
