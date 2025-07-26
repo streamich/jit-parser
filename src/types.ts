@@ -1,4 +1,4 @@
-import type {Expr} from 'json-joy/lib/json-expression';
+import type {Expr} from '@jsonjoy.com/json-expression';
 import type {ParseContext} from './context';
 import type {Pattern} from './codegen/Pattern';
 
