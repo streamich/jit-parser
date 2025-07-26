@@ -1,8 +1,8 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {CodegenContext} from '../context';
 import {defaultAstFactory, Pattern} from './Pattern';
-import {Expr, JsonExpressionCodegen, Vars} from 'json-joy/lib/json-expression';
-import {operatorsMap} from 'json-joy/lib/json-expression/operators';
+import {Expr, JsonExpressionCodegen, Vars} from '@jsonjoy.com/json-expression';
+import {operatorsMap} from '@jsonjoy.com/json-expression/lib/operators';
 import {isListNode, isProductionNode, isTerminalNode, isUnionNode} from '../util';
 import type {AstNodeFactory, ResolvedGrammarNode} from '../types';
 
