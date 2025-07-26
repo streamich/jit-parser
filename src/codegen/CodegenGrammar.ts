@@ -61,11 +61,19 @@ export class CodegenGrammar {
     }
   }
 
+  private textGenerationMode = false;
+
   private getNodeParser(node: GrammarNode): Parser {
     if (isRefNode(node)) {
       const pattern = this.patterns.get(node.r);
       if (pattern) return pattern.parser;
     }
+    
+    // In text generation mode, compile immediately instead of using lazy
+    if (this.textGenerationMode) {
+      return this.compileNode(node).parser;
+    }
+    
     return lazy(() => this.compileNode(node).parser);
   }
 
@@ -161,6 +169,21 @@ export class CodegenGrammar {
     return pattern.parser;
   }
 
+  /**
+   * Compile all rules in the grammar to ensure all codegen objects are created
+   */
+  public compileAll(): void {
+    // Enable text generation mode to avoid lazy functions
+    this.textGenerationMode = true;
+    
+    for (const ruleName of Object.keys(this.grammar.cst)) {
+      this.compileRule(ruleName);
+    }
+    
+    // Disable text generation mode
+    this.textGenerationMode = false;
+  }
+
   public walk(node: CstNode, visitor: (node: CstNode) => void) {
     const stack: CstNode[] = [node];
     while (stack.length > 0) {
@@ -186,6 +209,9 @@ export class CodegenGrammar {
    * Returns an object containing the generated JavaScript code and dependencies.
    */
   public generateCode(): {js: string; dependencies: {[key: string]: unknown}} {
+    // First compile all rules to ensure all codegen objects are created
+    this.compileAll();
+    
     const pattern = this.compileRule(this.grammar.start);
     
     // Get the codegen object for the start rule
@@ -217,7 +243,8 @@ export class CodegenGrammar {
    * This creates a self-contained JavaScript parser function.
    */
   public generateFullCode(): string {
-    const {js, dependencies} = this.generateCode();
+    // First compile all rules to ensure all codegen objects are created
+    this.compileAll();
     
     // Start building the complete code
     let fullCode = '// Generated parser with shared library\n';
@@ -228,50 +255,122 @@ export class CodegenGrammar {
     fullCode += `const sharedLib = ${sharedLibraryText};\n`;
     fullCode += 'const library = sharedLib();\n\n';
     
-    // Create dependency variables
-    const dependencyVars: string[] = [];
-    const dependencyValues: string[] = [];
+    // Collect all parser code by iterating through all patterns
+    const allGeneratedCode = new Map<string, {js: string; deps: unknown[]; dependencyNames: string[];}>();
     
-    for (const [name, value] of Object.entries(dependencies)) {
-      dependencyVars.push(name);
-      
-      if (typeof value === 'function') {
-        // For functions, we need to serialize them - but some are from our library
-        if (value === library.scrub) {
-          dependencyValues.push('library.scrub');
-        } else if (value === library.CstMatch) {
-          dependencyValues.push('library.CstMatch');
-        } else if (value === library.LeafCstMatch) {
-          dependencyValues.push('library.LeafCstMatch');
-        } else if (value === library.defaultAstFactory) {
-          dependencyValues.push('library.defaultAstFactory');
-        } else {
-          // For other functions, serialize them
-          dependencyValues.push(value.toString());
-        }
-      } else if (value instanceof RegExp) {
-        // For regexps, serialize them
-        dependencyValues.push(value.toString());
-      } else if (value && typeof value === 'object' && 'type' in value) {
-        // This looks like a Pattern object
-        dependencyValues.push(`new library.Pattern('${(value as any).type}')`);
-      } else {
-        // Literal values can be inlined
-        dependencyValues.push(JSON.stringify(value));
+    for (const [patternType, codegenObj] of this.codegenObjects) {
+      const generated = codegenObj.generateCodeText();
+      const dependencyNames = (codegenObj.codegen as any).dependencyNames || [];
+      allGeneratedCode.set(patternType, {
+        js: generated.js,
+        deps: generated.deps,
+        dependencyNames: dependencyNames
+      });
+    }
+    
+    // Create a mapping from parser functions to their pattern types
+    const parserToPattern = new Map<Function, string>();
+    for (const [patternType, pattern] of this.patterns) {
+      parserToPattern.set(pattern.parser, patternType);
+    }
+    
+    // Generate parser variables for each pattern (except the main one)
+    const parserVars = new Map<string, string>();
+    let counter = 0;
+    const rootPattern = this.compileRule(this.grammar.start);
+    
+    for (const patternType of allGeneratedCode.keys()) {
+      if (patternType !== rootPattern.type) {
+        parserVars.set(patternType, `parser_${patternType.replace(/[^a-zA-Z0-9]/g, '_')}`);
       }
     }
     
-    // Add dependency declarations
-    if (dependencyVars.length > 0) {
-      for (let i = 0; i < dependencyVars.length; i++) {
-        fullCode += `const ${dependencyVars[i]} = ${dependencyValues[i]};\n`;
+    // Generate all non-root parsers first
+    for (const [patternType, codeInfo] of allGeneratedCode) {
+      if (patternType === rootPattern.type) continue;
+      
+      const varName = parserVars.get(patternType)!;
+      const dependencyValues: string[] = [];
+      
+      for (let i = 0; i < codeInfo.deps.length; i++) {
+        const dep = codeInfo.deps[i];
+        
+        if (typeof dep === 'function') {
+          // Check if it's from our library
+          if (dep === library.scrub) {
+            dependencyValues.push('library.scrub');
+          } else if (dep === library.CstMatch) {
+            dependencyValues.push('library.CstMatch');
+          } else if (dep === library.LeafCstMatch) {
+            dependencyValues.push('library.LeafCstMatch');
+          } else if (dep === library.defaultAstFactory) {
+            dependencyValues.push('library.defaultAstFactory');
+          } else {
+            // Check if it's another parser
+            const referencedPattern = parserToPattern.get(dep);
+            if (referencedPattern && parserVars.has(referencedPattern)) {
+              dependencyValues.push(parserVars.get(referencedPattern)!);
+            } else {
+              // Serialize the function
+              dependencyValues.push(dep.toString());
+            }
+          }
+        } else if (dep instanceof RegExp) {
+          dependencyValues.push(dep.toString());
+        } else if (dep && typeof dep === 'object' && 'type' in dep) {
+          // This looks like a Pattern object
+          dependencyValues.push(`new library.Pattern('${(dep as any).type}')`);
+        } else {
+          // Literal values
+          dependencyValues.push(JSON.stringify(dep));
+        }
       }
-      fullCode += '\n';
+      
+      fullCode += `// Parser for ${patternType}\n`;
+      fullCode += `const ${varName} = ${codeInfo.js}(${dependencyValues.join(', ')});\n\n`;
+    }
+    
+    // Generate the main parser
+    const rootCodeInfo = allGeneratedCode.get(rootPattern.type)!;
+    const rootDependencyValues: string[] = [];
+    
+    for (let i = 0; i < rootCodeInfo.deps.length; i++) {
+      const dep = rootCodeInfo.deps[i];
+      
+      if (typeof dep === 'function') {
+        // Check if it's from our library
+        if (dep === library.scrub) {
+          rootDependencyValues.push('library.scrub');
+        } else if (dep === library.CstMatch) {
+          rootDependencyValues.push('library.CstMatch');
+        } else if (dep === library.LeafCstMatch) {
+          rootDependencyValues.push('library.LeafCstMatch');
+        } else if (dep === library.defaultAstFactory) {
+          rootDependencyValues.push('library.defaultAstFactory');
+        } else {
+          // Check if it's another parser
+          const referencedPattern = parserToPattern.get(dep);
+          if (referencedPattern && parserVars.has(referencedPattern)) {
+            rootDependencyValues.push(parserVars.get(referencedPattern)!);
+          } else {
+            // Serialize the function
+            rootDependencyValues.push(dep.toString());
+          }
+        }
+      } else if (dep instanceof RegExp) {
+        rootDependencyValues.push(dep.toString());
+      } else if (dep && typeof dep === 'object' && 'type' in dep) {
+        // This looks like a Pattern object
+        rootDependencyValues.push(`new library.Pattern('${(dep as any).type}')`);
+      } else {
+        // Literal values
+        rootDependencyValues.push(JSON.stringify(dep));
+      }
     }
     
     // Add the main parser function
     fullCode += '// Main parser function\n';
-    fullCode += `const parser = ${js}(${dependencyVars.join(', ')});\n\n`;
+    fullCode += `const parser = ${rootCodeInfo.js}(${rootDependencyValues.join(', ')});\n\n`;
     
     // Export the parser
     fullCode += '// Export the parser\n';
@@ -280,7 +379,7 @@ export class CodegenGrammar {
     fullCode += '} else if (typeof window !== "undefined") {\n';
     fullCode += '  window.parser = parser;\n';
     fullCode += '}\n\n';
-    fullCode += '// For direct usage\n';
+    fullCode += '// Return the parser for direct usage\n';
     fullCode += 'parser;\n';
     
     return fullCode;
