@@ -58,7 +58,7 @@
   "peerDependenciesMeta": {},
   "dependencies": {
     "@jsonjoy.com/util": "^1.2.0",
-    "json-joy": "^16.11.0",
+    "json-joy": "^17.0.0",
     "reregexp": "^1.6.1",
     "tree-dump": "^1.0.2"
   },
