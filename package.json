@@ -1,5 +1,5 @@
 {
-  "name": "jit-router",
+  "name": "jit-parser",
   "private": false,
   "publishConfig": {
     "access": "public"
@@ -10,8 +10,8 @@
     "name": "streamich",
     "url": "https://github.com/streamich"
   },
-  "homepage": "https://github.com/streamich/jit-router",
-  "repository": "streamich/jit-router",
+  "homepage": "https://github.com/streamich/jit-parser",
+  "repository": "streamich/jit-parser",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/streamich"
