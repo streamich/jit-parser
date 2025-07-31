@@ -1,6 +1,6 @@
 # JSON Grammar Specification
 
-A comprehensive specification for defining PEG (Parsing Expression Grammar) parsers using JSON syntax with the `jit-parser` library.
+A comprehensive specification for defining PEG (Parsing Expression Grammar) parsers using JSON syntax. This specification provides a portable way of specifying grammars that can be easily implemented in different parsing libraries and programming languages.
 
 ## Table of Contents
 
@@ -14,9 +14,11 @@ A comprehensive specification for defining PEG (Parsing Expression Grammar) pars
 
 ## Introduction
 
-The JSON Grammar specification defines how to create parsing expression grammars using JSON syntax for the `jit-parser` library. This specification enables language-agnostic grammar definitions that can be serialized, shared, and processed across different platforms and programming languages.
+The JSON Grammar specification defines how to create parsing expression grammars using JSON syntax. This specification enables language-agnostic grammar definitions that can be serialized, shared, and processed across different platforms and programming languages.
 
-The `jit-parser` library is a high-performance, top-down recursive descent backtracking PEG scanner-less JIT parser combinator generator. It compiles grammar definitions into efficient JavaScript parsing functions at runtime, generating both Concrete Syntax Trees (CST) and Abstract Syntax Trees (AST) from textual input.
+A major advantage of JSON Grammar is that it can specify CST to AST transformation fully in JSON, which is "super" portable and does not require any code injections in the programming language where the parser is generated.
+
+JSON-based grammars leverage the power of PEG (Parsing Expression Grammar) parsing, which provides top-down recursive descent backtracking capabilities. The grammars can be compiled into efficient parsing functions at runtime, generating both Concrete Syntax Trees (CST) and Abstract Syntax Trees (AST) from textual input.
 
 ## Rationale and Portability
 
@@ -32,21 +34,13 @@ The `jit-parser` library is a high-performance, top-down recursive descent backt
 
 5. **Runtime Configuration**: Dynamically load and modify grammar definitions without code changes.
 
-### Portability Benefits
-
-- **Cross-platform**: JSON grammars work identically across Node.js, browsers, and other JavaScript environments
-- **Version Control**: Text-based format integrates seamlessly with Git and other VCS
-- **Documentation**: Self-documenting structure with optional metadata fields
-- **Validation**: JSON schema validation for grammar correctness
-- **Transformation**: Programmatic grammar generation and modification
-
 ## Grammar File Structure
 
 A JSON grammar file defines a complete parsing grammar with the following top-level structure:
 
-```typescript
+```js
 interface Grammar {
-  start: string;                              // Entry point rule name
+  start: string;                             // Entry point rule name
   cst: Record<string, GrammarNode>;          // Concrete syntax rules
   ast?: Record<string, AstNodeExpression>;   // AST transformation rules
 }
@@ -54,7 +48,7 @@ interface Grammar {
 
 ### Basic Example
 
-```json
+```js
 {
   "start": "Value",
   "cst": {
@@ -93,19 +87,19 @@ The JSON grammar specification supports five fundamental node types for defining
 References a named rule defined elsewhere in the grammar.
 
 #### Interface
-```typescript
+```js
 type RefNode<Name extends string = string> = {
   r: Name;
 };
 ```
 
 #### Syntax
-```json
+```js
 {"r": "RuleName"}
 ```
 
 #### Examples
-```json
+```js
 {
   "start": "Program",
   "cst": {
@@ -113,6 +107,9 @@ type RefNode<Name extends string = string> = {
     "Statement": "return;"
   }
 }
+
+// Matches:
+// return;
 ```
 
 ### 2. TerminalNode (Terminal Node)
@@ -120,7 +117,7 @@ type RefNode<Name extends string = string> = {
 Matches literal strings, regular expressions, or arrays of alternatives. Terminal nodes are leaf nodes in the parse tree.
 
 #### Interface
-```typescript
+```js
 interface TerminalNode {
   type?: string;                           // Type name (default: "Text")
   t: RegExp | string | '' | string[];      // Pattern(s) to match
@@ -136,31 +133,31 @@ type TerminalNodeShorthand = RegExp | string | '';
 #### Syntax Options
 
 **String Literal:**
-```json
-"hello"
+```js
+"hello"  // Matches exactly: hello
 ```
 
 **Regular Expression:**
-```json
-{"t": "/[a-z]+/"}
+```js
+{"t": "/[a-z]+/"}  // Matches: abc, hello, test
 ```
 
 Note: Regular expressions in JSON must be represented as objects with a `t` property containing the regex pattern as a string.
 
 **Array of Alternatives:**
-```json
-{"t": ["true", "false"]}
+```js
+{"t": ["true", "false"]}  // Matches: true OR false
 ```
 
 **With Repetition:**
-```json
-{"t": [" ", "\t", "\n"], "repeat": "*"}
+```js
+{"t": [" ", "\t", "\n"], "repeat": "*"}  // Matches: any whitespace sequence
 ```
 
 **Full Terminal Node:**
-```json
+```js
 {
-  "t": "/\\d+/",
+  "t": "/\\d+/",           // Matches: 123, 456, 7890
   "type": "Number",
   "sample": "123",
   "ast": ["num", ["$", "/raw"]]
@@ -181,15 +178,15 @@ Note: Regular expressions in JSON must be represented as objects with a `t` prop
 
 #### Examples
 
-```json
+```js
 {
   "cst": {
-    "Null": "null",
-    "Number": "/\\-?\\d+(\\.\\d+)?/",
-    "Boolean": {"t": ["true", "false"]},
-    "Whitespace": {"t": [" ", "\t", "\n"], "repeat": "*"},
+    "Null": "null",                          // Matches: null
+    "Number": "/\\-?\\d+(\\.\\d+)?/",       // Matches: 123, -45.67, 0.5
+    "Boolean": {"t": ["true", "false"]},     // Matches: true OR false
+    "Whitespace": {"t": [" ", "\t", "\n"], "repeat": "*"},  // Matches: any whitespace
     "Identifier": {
-      "t": "/[a-zA-Z_][a-zA-Z0-9_]*/",
+      "t": "/[a-zA-Z_][a-zA-Z0-9_]*/",      // Matches: varName, _temp, MY_CONST
       "type": "Identifier",
       "sample": "variable_name"
     }
@@ -202,7 +199,7 @@ Note: Regular expressions in JSON must be represented as objects with a `t` prop
 Matches a sequence of grammar nodes in order. All nodes in the sequence must match for the production to succeed.
 
 #### Interface
-```typescript
+```js
 interface ProductionNode {
   p: GrammarNode[];                    // Sequence of nodes to match
   type?: string;                       // Type name (default: "Production")
@@ -217,14 +214,24 @@ type ProductionNodeShorthand = GrammarNode[];
 #### Syntax Options
 
 **Shorthand Array:**
-```json
-["{", {"r": "Content"}, "}"]
+```js
+["{", {"r": "Content"}, "}"]  // Matches: { content }
+```
+
+#### Example
+```js
+{
+  "cst": {
+    "FunctionCall": ["identifier", "(", {"r": "Arguments"}, ")"],  // Matches: func(args)
+    "Assignment": [{"r": "Variable"}, "=", {"r": "Expression"}]     // Matches: x = value
+  }
+}
 ```
 
 **Full Production Node:**
-```json
+```js
 {
-  "p": ["{", {"r": "Content"}, "}"],
+  "p": ["{", {"r": "Content"}, "}"],  // Matches: { content }
   "type": "Block",
   "children": {
     "1": "content"
@@ -232,14 +239,14 @@ type ProductionNodeShorthand = GrammarNode[];
 }
 ```
 
-#### Examples
+#### More Examples
 
-```json
+```js
 {
   "cst": {
-    "FunctionCall": ["func", "(", ")"],
+    "FunctionCall": ["func", "(", ")"],                              // Matches: func()
     "Assignment": {
-      "p": [{"r": "Identifier"}, "=", {"r": "Expression"}],
+      "p": [{"r": "Identifier"}, "=", {"r": "Expression"}],        // Matches: x = 5
       "type": "Assignment",
       "children": {
         "0": "target",
@@ -247,7 +254,7 @@ type ProductionNodeShorthand = GrammarNode[];
       }
     },
     "IfStatement": {
-      "p": ["if", "(", {"r": "Expression"}, ")", {"r": "Statement"}],
+      "p": ["if", "(", {"r": "Expression"}, ")", {"r": "Statement"}],  // Matches: if (x) stmt
       "children": {
         "2": "condition",
         "4": "body"
@@ -262,7 +269,7 @@ type ProductionNodeShorthand = GrammarNode[];
 Matches one of several alternative patterns. The first matching alternative is selected (ordered choice).
 
 #### Interface
-```typescript
+```js
 interface UnionNode {
   u: GrammarNode[];           // Array of alternative nodes
   type?: string;              // Type name (default: "Union")
@@ -271,29 +278,29 @@ interface UnionNode {
 ```
 
 #### Syntax
-```json
+```js
 {
-  "u": ["pattern1", "pattern2", "pattern3"]
+  "u": ["pattern1", "pattern2", "pattern3"]  // Matches: pattern1 OR pattern2 OR pattern3
 }
 ```
 
 #### Examples
 
-```json
+```js
 {
   "cst": {
     "Literal": {
-      "u": ["null", "true", "false", {"r": "Number"}, {"r": "String"}]
+      "u": ["null", "true", "false", {"r": "Number"}, {"r": "String"}]  // Matches any literal type
     },
     "Statement": {
-      "u": [
+      "u": [                                                              // Matches any statement type
         {"r": "IfStatement"},
         {"r": "ReturnStatement"},
         {"r": "ExpressionStatement"}
       ]
     },
     "BinaryOperator": {
-      "u": ["+", "-", "*", "/", "==", "!=", "<", ">"]
+      "u": ["+", "-", "*", "/", "==", "!=", "<", ">"]                   // Matches any operator
     }
   }
 }
@@ -304,7 +311,7 @@ interface UnionNode {
 Matches zero or more repetitions of a pattern.
 
 #### Interface
-```typescript
+```js
 interface ListNode {
   l: GrammarNode;              // Node to repeat
   type?: string;               // Type name (default: "List")
@@ -313,28 +320,28 @@ interface ListNode {
 ```
 
 #### Syntax
-```json
+```js
 {
-  "l": "pattern"
+  "l": "pattern"  // Matches: zero or more occurrences of pattern
 }
 ```
 
 #### Examples
 
-```json
+```js
 {
   "cst": {
     "Statements": {
-      "l": {"r": "Statement"}
+      "l": {"r": "Statement"}                                           // Matches: multiple statements
     },
     "Parameters": {
-      "l": {
+      "l": {                                                            // Matches: param1, param2, param3
         "p": [",", {"r": "Parameter"}],
         "ast": ["$", "/children/1"]
       }
     },
     "Digits": {
-      "l": "/[0-9]/",
+      "l": "/[0-9]/",                                                   // Matches: 123456789
       "type": "DigitSequence"
     }
   }
@@ -343,40 +350,70 @@ interface ListNode {
 
 ## AST Conversion
 
-The Abstract Syntax Tree (AST) conversion process transforms the detailed Concrete Syntax Tree (CST) into a simplified, semantically meaningful tree structure suitable for further processing.
+The Abstract Syntax Tree (AST) conversion process transforms the detailed Concrete Syntax Tree (CST) into a simplified, semantically meaningful tree structure suitable for further processing. A major advantage is that all transformations are specified purely in JSON, making them completely portable without requiring any language-specific code injections.
 
 ### Default AST Generation
 
 When no custom AST transformation is specified, the library generates a canonical AST node:
 
-```typescript
+```js
 interface CanonicalAstNode {
   type: string;                                    // Node type
   pos: number;                                     // Start position
   end: number;                                     // End position
-  raw?: string;                                    // Raw matched text
-  children?: (CanonicalAstNode | unknown)[];      // Child nodes
+  raw?: string;                                    // Raw matched text (the actual text that was matched)
+  children?: (CanonicalAstNode | unknown)[];       // Child nodes
+}
+```
+
+The `raw` property contains the actual text that was matched by the grammar node, providing access to the original input text for that specific node.
+
+### Simplified AST Construction with `children`
+
+The simplest way to customize AST generation is using the `children` property mapping in grammar nodes. This allows you to specify which child nodes should be included in the AST and assign them meaningful property names:
+
+```js
+{
+  "cst": {
+    "Assignment": {
+      "p": [{"r": "Variable"}, "=", {"r": "Expression"}],
+      "children": {
+        "0": "target",    // First child becomes "target" property
+        "2": "value"      // Third child becomes "value" property
+      }
+    }
+  }
 }
 ```
 
 ### AST Expression System
 
-AST transformations use JSON Expression syntax for powerful, declarative tree transformations. This leverages the `@jsonjoy.com/json-expression` library to provide a rich set of transformation operations.
+AST transformations use JSON Expression syntax for powerful, declarative tree transformations. This system is completely portable since it's all JSON - no language-specific transformations or code injections are needed.
+
+#### JSON Expression Transformation Process
+
+The transformation happens as follows:
+
+1. **Default AST Creation**: First, a default (canonical) AST node is created from the CST
+2. **JSON Expression Application**: Then a JSON Expression is applied to that node, allowing modification or extraction of specific parts
+3. **Result Generation**: The resulting JSON from the JSON Expression evaluation becomes the final AST node
+4. **Bottom-up Processing**: The process happens bottom-up, with resulting AST nodes supplied to parent node JSON Expression transformations as part of their `children` array
+5. **Children Array**: The `children` array is the canonical way to specify all children in both CST and AST
 
 #### Basic AST Expressions
 
 **Skip Node:**
-```json
+```js
 {"ast": null}
 ```
 
 **Use Child Node:**
-```json
+```js
 {"ast": ["$", "/children/0"]}
 ```
 
 **Custom Object:**
-```json
+```js
 {
   "ast": {
     "type": "CustomType",
@@ -388,7 +425,7 @@ AST transformations use JSON Expression syntax for powerful, declarative tree tr
 #### JSON Expression Operations
 
 **Value Extraction:**
-```json
+```js
 ["$", "/raw"]              // Get raw matched text
 ["$", "/children/0"]       // Get first child's AST
 ["$", "/pos"]              // Get start position
@@ -396,19 +433,29 @@ AST transformations use JSON Expression syntax for powerful, declarative tree tr
 ```
 
 **Type Conversion:**
-```json
+```js
 ["num", ["$", "/raw"]]     // Convert to number
 ["bool", ["$", "/raw"]]    // Convert to boolean
+
+// Example transformation:
+// Input CST: {type: "Number", raw: "42", pos: 0, end: 2}
+// Transform: ["num", ["$", "/raw"]]
+// Output AST: 42
 ```
 
 **String Operations:**
-```json
+```js
 ["substr", ["$", "/raw"], 1, -1]  // Remove first and last character
 ["len", ["$", "/raw"]]            // Get string length
+
+// Example transformation:
+// Input CST: {type: "String", raw: "\"hello\"", pos: 0, end: 7}
+// Transform: ["substr", ["$", "/raw"], 1, -1]
+// Output AST: "hello"
 ```
 
 **Array Operations:**
-```json
+```js
 ["push", [[]], ["$", "/children/0"]]    // Create array with element
 ["concat", ["$", "/children/0"], ["$", "/children/1"]]  // Concatenate arrays
 ```
@@ -490,7 +537,7 @@ This creates an AST node with `key` and `value` properties instead of a `childre
 ```
 
 #### List Flattening
-```json
+```js
 {
   "cst": {
     "CommaSeparated": {
@@ -511,26 +558,36 @@ This creates an AST node with `key` and `value` properties instead of a `childre
 
 ## Complete Examples
 
-### Simple Expression Parser
+### Simple Calculator Parser
 
-A basic arithmetic expression parser:
+A basic calculator that handles addition and multiplication with proper precedence:
 
-```json
+```js
 {
   "start": "Expression",
   "cst": {
-    "Expression": {"r": "Term"},
-    "Term": {"r": "Number"},
-    "Number": {
-      "t": "/\\d+/",
-      "type": "Number"
-    }
+    "Expression": {
+      "p": [{"r": "Term"}, {"l": {"p": [{"r": "AddOp"}, {"r": "Term"}]}}],
+      "ast": ["foldl", ["$", "/children/0"], ["$", "/children/1"]]
+    },
+    "Term": {
+      "p": [{"r": "Factor"}, {"l": {"p": [{"r": "MulOp"}, {"r": "Factor"}]}}],
+      "ast": ["foldl", ["$", "/children/0"], ["$", "/children/1"]]
+    },
+    "Factor": {
+      "u": [
+        {"r": "Number"},
+        {"p": ["(", {"r": "Expression"}, ")"], "ast": ["$", "/children/1"]}
+      ]
+    },
+    "Number": "/\\d+/",
+    "AddOp": {"u": ["+", "-"]},
+    "MulOp": {"u": ["*", "/"]}
   },
   "ast": {
-    "Number": {
-      "type": "Number",
-      "value": ["num", ["$", "/raw"]]
-    }
+    "Number": ["num", ["$", "/raw"]],
+    "AddOp": ["$", "/raw"],
+    "MulOp": ["$", "/raw"]
   }
 }
 ```
@@ -539,7 +596,7 @@ A basic arithmetic expression parser:
 
 A complete JSON parser grammar:
 
-```json
+```js
 {
   "start": "Value",
   "cst": {
@@ -616,55 +673,6 @@ A complete JSON parser grammar:
 }
 ```
 
-### Calculator with Operator Precedence
-
-A calculator supporting basic arithmetic with proper operator precedence:
-
-```json
-{
-  "start": "Expression",
-  "cst": {
-    "Expression": {"r": "AddExpr"},
-    "AddExpr": {
-      "p": [
-        {"r": "MulExpr"},
-        {
-          "l": {
-            "p": [{"r": "AddOp"}, {"r": "MulExpr"}],
-            "children": {"0": "op", "1": "right"}
-          }
-        }
-      ],
-      "ast": ["foldl", ["$", "/children/0"], ["$", "/children/1"]]
-    },
-    "MulExpr": {
-      "p": [
-        {"r": "Primary"},
-        {
-          "l": {
-            "p": [{"r": "MulOp"}, {"r": "Primary"}],
-            "children": {"0": "op", "1": "right"}
-          }
-        }
-      ],
-      "ast": ["foldl", ["$", "/children/0"], ["$", "/children/1"]]
-    },
-    "Primary": {
-      "u": [
-        {"r": "Number"},
-        {"p": ["(", {"r": "Expression"}, ")"], "ast": ["$", "/children/1"]}
-      ]
-    },
-    "Number": "/\\d+/",
-    "AddOp": {"u": ["+", "-"]},
-    "MulOp": {"u": ["*", "/"]}
-  },
-  "ast": {
-    "Number": ["num", ["$", "/raw"]]
-  }
-}
-```
-
 ## Best Practices
 
 ### Grammar Design
@@ -699,48 +707,28 @@ A calculator supporting basic arithmetic with proper operator precedence:
 ### Debugging and Validation
 
 #### Debug Mode
-Enable debug mode during development to capture parsing traces:
 
-```javascript
-import {CodegenContext, ParseContext} from 'jit-parser';
+Debug traces can be captured during grammar development to understand parsing behavior. Debug trace nodes typically form a tree structure that mirrors the grammar execution, allowing developers to:
 
-// Enable debug during compilation
-const debugCtx = new CodegenContext(true, true, true); // positions, ast, debug
-const parser = CodegenGrammar.compile(grammar, debugCtx);
+- **Trace Execution**: Follow the parser's decision-making process through the grammar
+- **Identify Failures**: Pinpoint where parsing fails and why certain rules don't match
+- **Performance Analysis**: Understand which rules are expensive or cause excessive backtracking
+- **Grammar Validation**: Verify that the grammar behaves as expected on test inputs
 
-// Create trace collection
-const rootTrace = {pos: 0, children: []};
-const parseCtx = new ParseContext('input text', false, [rootTrace]);
+Debug trace nodes generally contain information about:
+- Rule name being executed
+- Input position and matched text
+- Success or failure status
+- Child trace nodes for nested rule calls
+- Backtracking information
 
-// Parse with debug trace
-const cst = parser(parseCtx, 0);
+#### Grammar Inspection
 
-// Print debug trace
-import {printTraceNode} from 'jit-parser';
-console.log(printTraceNode(rootTrace, '', 'input text'));
-```
-
-#### Grammar Visualization
-Use the built-in grammar printer to visualize grammar structure:
-
-```javascript
-import {GrammarPrinter} from 'jit-parser';
-
-const grammarString = GrammarPrinter.print(grammar);
-console.log(grammarString);
-```
-
-#### CST Inspection
-Print concrete syntax trees for debugging:
-
-```javascript
-import {printCst} from 'jit-parser';
-
-const parser = CodegenGrammar.compile(grammar);
-const ctx = new ParseContext('input', false);
-const cst = parser(ctx, 0);
-console.log(printCst(cst, '', 'input'));
-```
+Most JSON Grammar implementations provide utilities to:
+- **Print Grammar Structure**: Display the grammar in a human-readable format
+- **Visualize Parse Trees**: Show the concrete syntax tree structure
+- **Export Grammar Metadata**: Generate documentation or schema information
+- **Validate Grammar Rules**: Check for common issues like left recursion or unreachable rules
 
 ### Maintainability
 
@@ -752,43 +740,39 @@ console.log(printCst(cst, '', 'input'));
 ### Common Patterns
 
 #### Optional Elements
-```json
-{"u": [{"r": "Element"}, ""]}
+```js
+{"u": [{"r": "Element"}, ""]}  // Matches: Element OR nothing
 ```
 
 #### Comma-Separated Lists
-```json
+```js
 {
   "u": [
     {
-      "p": [
+      "p": [                                     // Matches: item1, item2, item3
         {"r": "Item"},
         {"l": {"p": [",", {"r": "Item"}], "ast": ["$", "/children/1"]}}
       ],
       "ast": ["concat", ["push", [[]], ["$", "/children/0"]], ["$", "/children/1"]]
     },
-    ""
+    ""                                           // OR empty list
   ]
 }
 ```
 
 #### Identifier with Keywords
-```json
+```js
 {
   "cst": {
     "Identifier": {
-      "u": [
+      "u": [                                     // Matches: any identifier except keywords
         {"r": "Keyword"},
         "/[a-zA-Z_][a-zA-Z0-9_]*/"
       ]
     },
     "Keyword": {
-      "u": ["if", "else", "while", "for", "return"]
+      "u": ["if", "else", "while", "for", "return"]  // Matches: reserved keywords
     }
   }
 }
 ```
-
----
-
-This specification provides a complete reference for creating PEG parsers using JSON grammar definitions with the `jit-parser` library. The JSON format ensures portability, maintainability, and interoperability while providing the full power of parsing expression grammars.
