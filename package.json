@@ -1,5 +1,5 @@
 {
-  "name": "jit-router",
+  "name": "jit-parser",
   "private": false,
   "publishConfig": {
     "access": "public"
@@ -10,8 +10,8 @@
     "name": "streamich",
     "url": "https://github.com/streamich"
   },
-  "homepage": "https://github.com/streamich/jit-router",
-  "repository": "streamich/jit-router",
+  "homepage": "https://github.com/streamich/jit-parser",
+  "repository": "streamich/jit-parser",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/streamich"
@@ -41,13 +41,13 @@
     "prettier:check": "prettier --ignore-path .gitignore --list-different 'src/**/*.{ts,tsx,js,jsx}'",
     "lint": "yarn tslint",
     "tslint": "tslint 'src/**/*.{js,jsx,ts,tsx}' -t verbose --project .",
-    "clean": "rimraf lib typedocs coverage gh-pages yarn-error.log",
+    "clean": "npx rimraf@5.0.5 lib es6 es2019 es2020 esm typedocs coverage gh-pages yarn-error.log",
     "build": "tsc --project tsconfig.build.json --module commonjs --target es2020 --outDir lib",
     "jest": "node -r ts-node/register ./node_modules/.bin/jest",
     "test": "jest --maxWorkers 7",
     "test:ci": "yarn jest --maxWorkers 3 --no-cache",
     "coverage": "yarn test --collectCoverage",
-    "typedoc": "typedoc",
+    "typedoc": "npx typedoc@0.28.5 --tsconfig tsconfig.build.json",
     "build:pages": "rimraf gh-pages && mkdir -p gh-pages && cp -r typedocs/* gh-pages && cp -r coverage gh-pages/coverage",
     "deploy:pages": "gh-pages -d gh-pages",
     "publish-coverage-and-typedocs": "yarn typedoc && yarn coverage && yarn build:pages && yarn deploy:pages"
@@ -57,10 +57,11 @@
   },
   "peerDependenciesMeta": {},
   "dependencies": {
-    "@jsonjoy.com/util": "^1.2.0",
-    "json-joy": "^16.11.0",
+    "@jsonjoy.com/json-expression": "^1.1.0",
+    "@jsonjoy.com/util": "^1.8.0",
+    "json-joy": "^17.49.1",
     "reregexp": "^1.6.1",
-    "tree-dump": "^1.0.2"
+    "tree-dump": "^1.0.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
