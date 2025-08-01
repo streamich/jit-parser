@@ -21,11 +21,16 @@ export const grammar: Grammar = {
 
     AdditiveExpression: {
       p: [{r: 'MultiplicativeExpression'}, {r: 'AdditiveExpressionCont'}],
-      ast: ['?', ['==', ['len', ['$', '/children']], 1], ['$', '/children/0'],
-        ['?', ['==', ['$', '/children/1/children/0'], '+'],
+      ast: [
+        '?',
+        ['==', ['len', ['$', '/children']], 1],
+        ['$', '/children/0'],
+        [
+          '?',
+          ['==', ['$', '/children/1/children/0'], '+'],
           ['+', ['$', '/children/0'], ['$', '/children/1/children/1', 1]],
-          ['-', ['$', '/children/0'], ['$', '/children/1/children/1', 1]]
-        ]
+          ['-', ['$', '/children/0'], ['$', '/children/1/children/1', 1]],
+        ],
       ],
     },
     AdditiveExpressionCont: {
@@ -44,11 +49,16 @@ export const grammar: Grammar = {
 
     MultiplicativeExpression: {
       p: [{r: 'Literal'}, {r: 'MultiplicativeExpressionCont'}],
-      ast: ['?', ['==', ['len', ['$', '/children']], 1], ['$', '/children/0'],
-        ['?', ['==', ['$', '/children/1/children/0'], '*'],
+      ast: [
+        '?',
+        ['==', ['len', ['$', '/children']], 1],
+        ['$', '/children/0'],
+        [
+          '?',
+          ['==', ['$', '/children/1/children/0'], '*'],
           ['*', ['$', '/children/0'], ['$', '/children/1/children/1', 1]],
-          ['/', ['$', '/children/0'], ['$', '/children/1/children/1', 1]]
-        ]
+          ['/', ['$', '/children/0'], ['$', '/children/1/children/1', 1]],
+        ],
       ],
     },
     MultiplicativeExpressionCont: {
