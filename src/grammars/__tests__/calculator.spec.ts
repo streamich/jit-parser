@@ -1,6 +1,6 @@
 import {CodegenGrammar} from '../../codegen/CodegenGrammar';
 import {CodegenContext, ParseContext} from '../../context';
-import {printCst, printTraceNode} from '../../print';
+import {GrammarPrinter, printCst, printTraceNode} from '../../print';
 import {RootTraceNode} from '../../types';
 import {grammar} from '../calculator';
 
@@ -23,14 +23,11 @@ const toAst = (src: string) => {
   return {...cst, ast};
 };
 
-test('..', () => {
+test('can evaluate a simple expression', () => {
   const text = '2 * 2 + 4 * 3';
   const res = toAst(text);
-  console.log(printTraceNode(res.trace, '', text));
-  console.log(printCst(res.cst, '', text));
-  console.log(res.ast);
-  console.log(JSON.stringify(res.ast, null, 2));
-  // console.log(cst);
-  // console.log(res.ast);
-  // expect(res.ast).toMatchSnapshot();
+  // console.log(GrammarPrinter.print(grammar));
+  // console.log(printTraceNode(res.trace, '', text));
+  // console.log(printCst(res.cst, '', text));
+  expect(res.ast).toBe(16);
 });
