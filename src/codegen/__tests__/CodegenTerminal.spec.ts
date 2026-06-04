@@ -62,6 +62,38 @@ describe('CodegenTerminal', () => {
         ptr: pattern,
       });
     });
+
+    describe('anchoring', () => {
+      test('anchors every branch of a top-level alternation', () => {
+        // The whole match must start at `pos`. Both branches of the alternation
+        // must be anchored, not just the first.
+        const node = {type: 'AB', t: /a|b/};
+        const pattern = createPattern(node);
+        const parser = pattern.parser;
+        expect(parser(new ParseContext('abc', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+        expect(parser(new ParseContext('bcd', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+        expect(parser(new ParseContext('xb', false), 0)).toBe(undefined);
+        expect(parser(new ParseContext('zzb', false), 0)).toBe(undefined);
+      });
+
+      test('a leading-caret source with alternation is still fully anchored', () => {
+        const node = {type: 'AB', t: /^a|b/};
+        const pattern = createPattern(node);
+        const parser = pattern.parser;
+        expect(parser(new ParseContext('abc', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+        expect(parser(new ParseContext('bcd', false), 0)).toStrictEqual(new LeafCstMatch(0, 1, pattern));
+        expect(parser(new ParseContext('xb', false), 0)).toBe(undefined);
+        expect(parser(new ParseContext('zzb', false), 0)).toBe(undefined);
+      });
+
+      test('matches at a non-zero position', () => {
+        const node = {type: 'AB', t: /a|b/};
+        const pattern = createPattern(node);
+        const parser = pattern.parser;
+        expect(parser(new ParseContext('xxb', false), 2)).toStrictEqual(new LeafCstMatch(2, 3, pattern));
+        expect(parser(new ParseContext('xxb', false), 1)).toBe(undefined);
+      });
+    });
   });
 
   describe('string[]', () => {

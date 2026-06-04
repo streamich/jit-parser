@@ -126,7 +126,7 @@ describe('GrammarPrinter', () => {
 ├─ TValue (union)
 │  ├─ Null (terminal): "null"
 │  ├─ Boolean (terminal): ("true" | "false")
-│  ├─ String (terminal): /"[^"\\\\]*(?:\\\\.|[^"\\\\]*)*"/
+│  ├─ String (terminal): /"(?:[^"\\\\]|\\\\.)*"/
 │  ├─ Object (production)
 │  │  ├─ Text (terminal): "{"
 │  │  ├─ Members (union)

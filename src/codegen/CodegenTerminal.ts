@@ -64,8 +64,7 @@ export class CodegenTerminal {
       }
       codegen.return(rMatch);
     } else if (match instanceof RegExp) {
-      let source = match.source;
-      if (source[0] !== '^') source = '^(' + source + ')';
+      const source = '^(?:' + match.source + ')';
       const regExp = new RegExp(source, match.flags);
       const dRegExp = codegen.linkDependency(regExp);
       const rSlice = codegen.var(`str.slice(pos)`);

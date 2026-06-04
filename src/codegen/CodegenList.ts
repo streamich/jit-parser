@@ -51,6 +51,7 @@ export class CodegenList {
       });
     }
     codegen.while(`${rChild} = ${dParser}(ctx, pos)`, () => {
+      codegen.js(`if (${rChild}.end === pos) break;`);
       codegen.js(`${rChildren}.push(${rChild})`);
       codegen.js(`pos = ${rChild}.end`);
     });
