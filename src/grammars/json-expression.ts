@@ -18,10 +18,18 @@ import type {AstNodeExpression, Grammar} from '../types';
  * (+ 1 2)              =>  ["+", 1, 2]
  * (+ 1 (* 2 3))        =>  ["+", 1, ["*", 2, 3]]
  * (get "/foo")         =>  ["get", "/foo"]
- * (== x null)          =>  ["==", "x"-ish..., null]
+ * (== (get "/a") null) =>  ["==", ["get", "/a"], null]
  * 42                   =>  42
- * [1, 2, 3]            =>  [1, 2, 3]
  * {"a": 1}             =>  {"a": 1}
+ * ```
+ *
+ * Note: in JSON Expression an array in operand position is itself an
+ * expression, so a *literal* array operand is wrapped in a nullary operator
+ * (double brackets) — this is the correct, evaluable encoding:
+ *
+ * ```
+ * (in (get "/x") ["a", "b"])  =>  ["in", ["get", "/x"], [["a", "b"]]]
+ * [1, 2, 3]                   =>  [[1, 2, 3]]
  * ```
  */
 
@@ -97,8 +105,19 @@ export const grammar: Grammar = {
       ast: UNBOX_LIST,
     },
     Operand: {
-      u: [{r: 'Expression'}, {r: 'Value'}],
+      u: [{r: 'Expression'}, {r: 'ArrayOperand'}, {r: 'Value'}],
       ast: ['$', '/children/0', null],
+    },
+    // A literal array in operand position must be wrapped in a nullary operator
+    // (`[[...]]`) so the JSON Expression evaluator treats it as a literal value
+    // rather than an expression (where the array's first element would be read
+    // as the operator). Scalars and objects are passed through as-is — only
+    // arrays are ambiguous with expressions. (`ArrayOperand` precedes `Value`
+    // in `Operand`, so every operand array is boxed here; arrays nested inside
+    // literal arrays/objects go through `Value` and stay raw.)
+    ArrayOperand: {
+      u: [{r: 'Array'}],
+      ast: ['push', [[]], ['$', '/children/0', [[]]]],
     },
 
     // --------------------------------------------------------- literal values

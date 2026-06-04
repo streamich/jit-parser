@@ -81,11 +81,14 @@ describe('operands as literal JSON values', () => {
     expect(parse('(f null null)')).toEqual(['f', null, null]);
   });
 
-  test('arrays', () => {
-    expect(parse('(f [1, 2, 3])')).toEqual(['f', [1, 2, 3]]);
+  test('arrays are boxed (a literal array operand is a nullary expression)', () => {
+    // `[1, 2, 3]` in operand position would otherwise be read as an expression
+    // with operator `1`, so a literal array is wrapped: `[[1, 2, 3]]`.
+    expect(parse('(f [1, 2, 3])')).toEqual(['f', [[1, 2, 3]]]);
+    expect(parse('(f [])')).toEqual(['f', [[]]]);
   });
 
-  test('objects', () => {
+  test('objects are passed through as-is (not boxed)', () => {
     expect(parse('(f {"a": 1, "b": 2})')).toEqual(['f', {a: 1, b: 2}]);
   });
 
@@ -112,8 +115,8 @@ describe('top-level literals', () => {
   test('null', () => {
     expect(parse('null')).toEqual(null);
   });
-  test('array', () => {
-    expect(parse('[1, 2, 3]')).toEqual([1, 2, 3]);
+  test('array (boxed, since an array at the root is also expression position)', () => {
+    expect(parse('[1, 2, 3]')).toEqual([[1, 2, 3]]);
   });
   test('object', () => {
     expect(parse('{"foo": "bar"}')).toEqual({foo: 'bar'});
@@ -121,30 +124,29 @@ describe('top-level literals', () => {
 });
 
 describe('JSON literal edge cases', () => {
-  test('empty array', () => {
-    expect(parse('[]')).toEqual([]);
-    expect(parse('[  ]')).toEqual([]);
+  test('empty array literal operand is boxed', () => {
+    expect(parse('(f [])')).toEqual(['f', [[]]]);
+    expect(parse('(f [  ])')).toEqual(['f', [[]]]);
   });
 
-  test('empty object', () => {
-    expect(parse('{}')).toEqual({});
-    expect(parse('{ }')).toEqual({});
+  test('empty object operand passes through', () => {
+    expect(parse('(f {})')).toEqual(['f', {}]);
+    expect(parse('(f { })')).toEqual(['f', {}]);
   });
 
-  test('nested arrays and objects', () => {
-    expect(parse('[[1], [2, [3]], {"a": [4]}]')).toEqual([[1], [2, [3]], {a: [4]}]);
+  test('arrays nested as data (not in operand position) are NOT boxed', () => {
+    // The operand array is boxed once; arrays nested inside it stay raw data.
+    expect(parse('(f [[1], [2, [3]]])')).toEqual(['f', [[[1], [2, [3]]]]]);
+    // The operand is an object (passed as-is); the array value inside is raw.
+    expect(parse('(f {"xs": [1, 2]})')).toEqual(['f', {xs: [1, 2]}]);
   });
 
-  test('null inside an array is preserved', () => {
-    expect(parse('[1, null, 2]')).toEqual([1, null, 2]);
+  test('null inside an array (as data) is preserved', () => {
+    expect(parse('(f {"xs": [1, null, 2]})')).toEqual(['f', {xs: [1, null, 2]}]);
   });
 
   test('null inside an object is preserved', () => {
     expect(parse('{"a": null, "b": 1}')).toEqual({a: null, b: 1});
-  });
-
-  test('an array operand containing expressions stays a literal array of values', () => {
-    expect(parse('(f [1, 2])')).toEqual(['f', [1, 2]]);
   });
 });
 
@@ -158,7 +160,7 @@ describe('whitespace handling', () => {
   });
 
   test('tolerates whitespace inside arrays and objects', () => {
-    expect(parse('( f  [ 1 , 2 ]  { "a" : 1 } )')).toEqual(['f', [1, 2], {a: 1}]);
+    expect(parse('( f  [ 1 , 2 ]  { "a" : 1 } )')).toEqual(['f', [[1, 2]], {a: 1}]);
   });
 });
 
@@ -204,7 +206,8 @@ describe('spec examples', () => {
   });
 
   test('original combined example', () => {
-    expect(parse('(add (mul 1 2 [123]) (. "a" "b"))')).toEqual(['add', ['mul', 1, 2, [123]], ['.', 'a', 'b']]);
+    // The literal array operand `[123]` is boxed to `[[123]]`.
+    expect(parse('(add (mul 1 2 [123]) (. "a" "b"))')).toEqual(['add', ['mul', 1, 2, [[123]]], ['.', 'a', 'b']]);
   });
 });
 
@@ -233,5 +236,12 @@ describe('evaluation roundtrip (output is valid, executable JSON Expression)', (
 
   test('object construction operand', () => {
     expect(run('(o.set {"a": 1} "b" 2)')).toEqual({a: 1, b: 2});
+  });
+
+  test('literal array operands evaluate correctly thanks to boxing', () => {
+    // Without boxing `[1, 2]` would be read as an expression (operator `1`) and
+    // throw; boxed as `[[1, 2]]` it evaluates back to the literal array.
+    expect(run('(++ [1, 2] [3, 4])')).toEqual([1, 2, 3, 4]);
+    expect(run('[1, 2, 3]')).toEqual([1, 2, 3]);
   });
 });
