@@ -164,6 +164,68 @@ describe('whitespace handling', () => {
   });
 });
 
+describe('comments', () => {
+  test('leading comment', () => {
+    expect(parse('// header\n(+ 1 2)')).toEqual(['+', 1, 2]);
+  });
+
+  test('trailing comment (with and without a final newline)', () => {
+    expect(parse('(+ 1 2) // trailing\n')).toEqual(['+', 1, 2]);
+    expect(parse('(+ 1 2) // trailing')).toEqual(['+', 1, 2]);
+    expect(parse('(+ 1 2)//glued')).toEqual(['+', 1, 2]);
+  });
+
+  test('comment between operands', () => {
+    expect(parse('(+ 1 // one\n 2)')).toEqual(['+', 1, 2]);
+  });
+
+  test('comment between operator and first operand', () => {
+    expect(parse('(+ // op\n 1 2)')).toEqual(['+', 1, 2]);
+  });
+
+  test('comment before the operator', () => {
+    expect(parse('( // c\n + 1 2)')).toEqual(['+', 1, 2]);
+  });
+
+  test('multiple / multi-line comments', () => {
+    const src = `
+      // compute a + b
+      (
+        // operator
+        +
+        // operands
+        1   // first
+        2   // second
+      )
+      // done
+    `;
+    expect(parse(src)).toEqual(['+', 1, 2]);
+  });
+
+  test('comments inside array and object literals', () => {
+    expect(parse('(f [1, // a\n 2])')).toEqual(['f', [[1, 2]]]);
+    expect(parse('(f {"a": 1 // a\n , "b": 2})')).toEqual(['f', {a: 1, b: 2}]);
+  });
+
+  test('comment with special characters', () => {
+    expect(parse('(+ 1 2) // !@#$%^&*()[]{}"\\,')).toEqual(['+', 1, 2]);
+  });
+
+  test('a "//" inside a string is not a comment', () => {
+    expect(parse('(f "a//b")')).toEqual(['f', 'a//b']);
+  });
+
+  test('does not interfere with the division operator', () => {
+    expect(parse('(/ 6 2)')).toEqual(['/', 6, 2]);
+    expect(parse('(/ 6 2) // divide')).toEqual(['/', 6, 2]);
+  });
+
+  test('a comment-only input has no expression and is rejected', () => {
+    expect(parse('// just a comment')).toBeUndefined();
+    expect(parse('// a\n// b\n')).toBeUndefined();
+  });
+});
+
 describe('full-input enforcement', () => {
   test('rejects trailing garbage', () => {
     expect(parse('(+ 1 2) extra')).toBeUndefined();

@@ -31,6 +31,15 @@ import type {AstNodeExpression, Grammar} from '../types';
  * (in (get "/x") ["a", "b"])  =>  ["in", ["get", "/x"], [["a", "b"]]]
  * [1, 2, 3]                   =>  [[1, 2, 3]]
  * ```
+ *
+ * Single-line `// ...` comments are allowed anywhere whitespace is, and run to
+ * the end of the line:
+ *
+ * ```
+ * // pick the larger value
+ * (max (get "/a") // left
+ *      (get "/b")) // right
+ * ```
  */
 
 // ---------------------------------------------------------------- AST helpers
@@ -71,9 +80,16 @@ export const grammar: Grammar = {
   start: 'Root',
 
   cst: {
-    // ------------------------------------------------------------- whitespace
-    WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null, sample: ' '},
-    W: {t: [' ', '\n', '\t', '\r'], repeat: '+', ast: null, sample: ' '},
+    // ----------------------------------------------- whitespace & comments
+    // A `// ...` single-line comment runs to the end of the line (or input) and
+    // is treated exactly like whitespace anywhere `WOpt`/`W` are allowed.
+    WsChar: {t: [' ', '\n', '\t', '\r'], repeat: '+', sample: ' '},
+    Comment: {t: /\/\/[^\n]*/, sample: '// comment\n'},
+    WsUnit: {u: [{r: 'WsChar'}, {r: 'Comment'}]},
+    // Optional run of whitespace/comments.
+    WOpt: {l: {r: 'WsUnit'}, ast: null, sample: ' '},
+    // Mandatory whitespace/comments (at least one unit).
+    W: {p: [{r: 'WsUnit'}, {r: 'WOpt'}], ast: null, sample: ' '},
 
     // ------------------------------------------------------------------- root
     // A single operand (expression or literal), surrounded by optional
