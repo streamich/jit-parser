@@ -11,14 +11,17 @@ import type {
   TerminalNode,
   ProductionNode,
   ListNode,
+  PredicateNode,
   CstNode,
 } from '../types';
 import {CodegenList} from './CodegenList';
+import {CodegenPredicate} from './CodegenPredicate';
 import {CodegenContext} from '../context';
 import {Pattern} from './Pattern';
 import {CodegenAstFactory} from './CodegenAstFactory';
 import {
   isListNode,
+  isPredNode,
   isProductionNode,
   isProductionShorthandNode,
   isRefNode,
@@ -52,6 +55,8 @@ export class CodegenGrammar {
       return this.compileUnion(node, pattern);
     } else if (isListNode(node)) {
       return this.compileList(node, pattern);
+    } else if (isPredNode(node)) {
+      return this.compilePredicate(node, pattern);
     } else if (isRefNode(node)) {
       return this.compileRule(node.r);
     } else {
@@ -116,6 +121,15 @@ export class CodegenGrammar {
     const childParser = this.getNodeParser(node.l);
     pattern.parser = CodegenList.compile(node, pattern, childParser, this.ctx);
     pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
+    return pattern;
+  }
+
+  protected compilePredicate(node: PredicateNode, pattern?: Pattern): Pattern {
+    const inner: GrammarNode = node.and !== undefined ? {not: node.and} : (node.not as GrammarNode);
+    const childParser = this.getNodeParser(inner);
+    pattern ??= new Pattern(node.type ?? 'Predicate');
+    pattern.parser = CodegenPredicate.compile(node, pattern, childParser, this.ctx);
+    pattern.toAst = () => null;
     return pattern;
   }
 

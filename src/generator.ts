@@ -1,5 +1,6 @@
 import {
   isListNode,
+  isPredNode,
   isProductionNode,
   isProductionShorthandNode,
   isRefNode,
@@ -104,6 +105,7 @@ export class Generator {
     else if (isProductionShorthandNode(node)) return this.genProduction({p: node});
     else if (isUnionNode(node)) return this.genUnion(node);
     else if (isListNode(node)) return this.genList(node);
+    else if (isPredNode(node)) return '';
     else if (isRefNode(node)) return this.genRef(node);
     else throw new Error('UNK_NODE');
   }
