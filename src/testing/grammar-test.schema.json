@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jsonjoy.com/schemas/grammar-test.json",
+  "title": "JSON Grammar Test Suite",
+  "description": "A standardized, language- and harness-agnostic test suite for a JSON Grammar.",
+  "type": "object",
+  "required": ["tests"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {"type": "string"},
+    "grammar": {
+      "type": "string",
+      "description": "Reference to the grammar under test (path or id). Informational."
+    },
+    "describe": {"type": "string", "description": "Human-readable suite label."},
+    "snapshot": {
+      "$ref": "#/definitions/snapshotChannels",
+      "description": "Channels to snapshot for every case (overridable per-case)."
+    },
+    "tests": {"type": "array", "items": {"$ref": "#/definitions/case"}}
+  },
+  "definitions": {
+    "snapshotChannels": {
+      "type": "array",
+      "items": {"enum": ["ast", "cst", "cstPrint", "trace", "end"]},
+      "uniqueItems": true
+    },
+    "structuralCst": {
+      "type": "object",
+      "required": ["type", "pos", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"type": "string"},
+        "pos": {"type": "integer"},
+        "end": {"type": "integer"},
+        "children": {"type": "array", "items": {"$ref": "#/definitions/structuralCst"}}
+      }
+    },
+    "case": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "description": "Label and stable snapshot key."},
+        "rule": {"type": "string", "description": "Rule to run in isolation (default: start symbol)."},
+        "src": {"type": "string", "description": "Input string to parse."},
+        "generate": {
+          "description": "Generate the input from the grammar instead of `src`.",
+          "oneOf": [
+            {"const": "sample"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sample": {"type": "boolean"},
+                "seed": {"type": "integer"},
+                "count": {"type": "integer", "minimum": 1}
+              }
+            }
+          ]
+        },
+        "skip": {"type": "boolean"},
+        "only": {"type": "boolean"},
+        "snapshot": {"$ref": "#/definitions/snapshotChannels"},
+
+        "ast": {"description": "Expected AST (exact deep-equality)."},
+        "cst": {"$ref": "#/definitions/structuralCst"},
+        "cstPrint": {"type": "array", "items": {"type": "string"}},
+        "trace": {"type": "array", "items": {"type": "string"}},
+        "end": {"type": "integer"},
+        "parses": {"type": "boolean"},
+        "consumes": {"const": "all"}
+      }
+    }
+  }
+}

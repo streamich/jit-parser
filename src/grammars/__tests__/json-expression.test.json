@@ -1,0 +1,219 @@
+{
+  "$schema": "../../testing/grammar-test.schema.json",
+  "grammar": "../json-expression.ts",
+  "describe": "JSON Expression (Lisp surface syntax)",
+  "tests": [
+    {
+      "name": "simple binary expression",
+      "src": "(+ 1 2)",
+      "ast": [
+        "+",
+        1,
+        2
+      ],
+      "consumes": "all"
+    },
+    {
+      "name": "variadic expression",
+      "src": "(+ 1 2 3 4 5)",
+      "ast": [
+        "+",
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "name": "nested expression",
+      "src": "(+ 1 (* 2 3))",
+      "ast": [
+        "+",
+        1,
+        [
+          "*",
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "name": "nullary expression (operator only)",
+      "src": "(rand)",
+      "ast": [
+        "rand"
+      ]
+    },
+    {
+      "name": "dotted/symbolic operator names",
+      "src": "(get? \"/x\")",
+      "ast": [
+        "get?",
+        "/x"
+      ]
+    },
+    {
+      "name": "literal null is preserved (not dropped)",
+      "src": "(== \"x\" null)",
+      "ast": [
+        "==",
+        "x",
+        null
+      ]
+    },
+    {
+      "name": "two nulls survive child collection",
+      "src": "(f null null)",
+      "ast": [
+        "f",
+        null,
+        null
+      ]
+    },
+    {
+      "name": "literal array operand is boxed",
+      "src": "(f [1, 2, 3])",
+      "ast": [
+        "f",
+        [
+          [
+            1,
+            2,
+            3
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "object operand passes through as-is",
+      "src": "(f {\"a\": 1, \"b\": 2})",
+      "ast": [
+        "f",
+        {
+          "a": 1,
+          "b": 2
+        }
+      ]
+    },
+    {
+      "name": "null inside an object is preserved",
+      "src": "{\"a\": null, \"b\": 1}",
+      "ast": {
+        "a": null,
+        "b": 1
+      }
+    },
+    {
+      "name": "top-level number",
+      "src": "42",
+      "ast": 42
+    },
+    {
+      "name": "top-level string",
+      "src": "\"hello\"",
+      "ast": "hello"
+    },
+    {
+      "name": "top-level array is boxed (root is expression position)",
+      "src": "[1, 2, 3]",
+      "ast": [
+        [
+          1,
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "name": "Number rule in isolation",
+      "rule": "Number",
+      "src": "-1.5e-2",
+      "ast": -0.015,
+      "consumes": "all"
+    },
+    {
+      "name": "String rule in isolation strips quotes",
+      "rule": "String",
+      "src": "\"a/b\"",
+      "ast": "a/b",
+      "consumes": "all"
+    },
+    {
+      "name": "leading comment is whitespace",
+      "src": "// header\n(+ 1 2)",
+      "ast": [
+        "+",
+        1,
+        2
+      ]
+    },
+    {
+      "name": "a // inside a string is not a comment",
+      "src": "(f \"a//b\")",
+      "ast": [
+        "f",
+        "a//b"
+      ]
+    },
+    {
+      "name": "a bare unquoted symbol is not a valid operand",
+      "src": "(get x)",
+      "parses": false
+    },
+    {
+      "name": "trailing garbage is rejected (Root enforces end-of-input)",
+      "src": "(+ 1 2) extra",
+      "parses": false
+    },
+    {
+      "name": "empty input is rejected",
+      "src": "   ",
+      "parses": false
+    },
+    {
+      "name": "Comment rule sample round-trips (generator -> parser)",
+      "rule": "Comment",
+      "generate": "sample",
+      "consumes": "all"
+    },
+    {
+      "name": "expression CST (printed tree, snapshot)",
+      "src": "(+ 1 2)",
+      "snapshot": [
+        "cstPrint"
+      ],
+      "cstPrint": [
+        "Root 0:7 → \"(+ 1 2)\"",
+        "├─ WOpt 0:0 → \"\"",
+        "├─ Operand 0:7 → \"(+ 1 2)\"",
+        "│  └─ Expression 0:7 → \"(+ 1 2)\"",
+        "│     ├─ Text 0:1 → \"(\"",
+        "│     ├─ WOpt 1:1 → \"\"",
+        "│     ├─ Operator 1:2 → \"+\"",
+        "│     │  └─ Symbol 1:2 → \"+\"",
+        "│     ├─ OperandList 2:6 → \" 1 2\"",
+        "│     │  ├─ Production 2:4 → \" 1\"",
+        "│     │  │  ├─ W 2:3 → \" \"",
+        "│     │  │  │  ├─ WsUnit 2:3 → \" \"",
+        "│     │  │  │  │  └─ WsChar 2:3 → \" \"",
+        "│     │  │  │  └─ WOpt 3:3 → \"\"",
+        "│     │  │  └─ Operand 3:4 → \"1\"",
+        "│     │  │     └─ Value 3:4 → \"1\"",
+        "│     │  │        └─ Number 3:4 → \"1\"",
+        "│     │  └─ Production 4:6 → \" 2\"",
+        "│     │     ├─ W 4:5 → \" \"",
+        "│     │     │  ├─ WsUnit 4:5 → \" \"",
+        "│     │     │  │  └─ WsChar 4:5 → \" \"",
+        "│     │     │  └─ WOpt 5:5 → \"\"",
+        "│     │     └─ Operand 5:6 → \"2\"",
+        "│     │        └─ Value 5:6 → \"2\"",
+        "│     │           └─ Number 5:6 → \"2\"",
+        "│     ├─ WOpt 6:6 → \"\"",
+        "│     └─ Text 6:7 → \")\"",
+        "├─ WOpt 7:7 → \"\"",
+        "└─ End 7:7 → \"\""
+      ]
+    }
+  ]
+}
