@@ -1,0 +1,247 @@
+{
+  "$schema": "../../testing/grammar-test.schema.json",
+  "grammar": "../json.ts",
+  "describe": "JSON grammar",
+  "tests": [
+    {
+      "name": "null literal (whole grammar, tolerates surrounding whitespace)",
+      "src": " null  ",
+      "ast": {
+        "type": "Null",
+        "pos": 1,
+        "end": 5,
+        "raw": "null"
+      }
+    },
+    {
+      "name": "true",
+      "src": "true",
+      "ast": {
+        "type": "Boolean",
+        "pos": 0,
+        "end": 4,
+        "raw": "true",
+        "value": true
+      }
+    },
+    {
+      "name": "false (leading whitespace)",
+      "src": " false",
+      "ast": {
+        "type": "Boolean",
+        "pos": 1,
+        "end": 6,
+        "raw": "false",
+        "value": false
+      }
+    },
+    {
+      "name": "integer",
+      "src": "123",
+      "ast": {
+        "type": "Number",
+        "pos": 0,
+        "end": 3,
+        "raw": "123",
+        "value": 123
+      }
+    },
+    {
+      "name": "negative fractional",
+      "src": " -1.123",
+      "ast": {
+        "type": "Number",
+        "pos": 1,
+        "end": 7,
+        "raw": "-1.123",
+        "value": -1.123
+      }
+    },
+    {
+      "name": "empty string",
+      "src": "\"\"",
+      "ast": {
+        "type": "String",
+        "pos": 0,
+        "end": 2,
+        "raw": "\"\"",
+        "value": ""
+      }
+    },
+    {
+      "name": "String rule in isolation, with an escaped quote",
+      "rule": "String",
+      "src": "\"a\\\"b\"",
+      "ast": {
+        "type": "String",
+        "pos": 0,
+        "end": 6,
+        "raw": "\"a\\\"b\"",
+        "value": "a\\\"b"
+      },
+      "consumes": "all"
+    },
+    {
+      "name": "Number rule in isolation, scientific notation",
+      "rule": "Number",
+      "src": "-1.5e3",
+      "ast": {
+        "type": "Number",
+        "pos": 0,
+        "end": 6,
+        "raw": "-1.5e3",
+        "value": -1500
+      },
+      "consumes": "all"
+    },
+    {
+      "name": "empty array",
+      "src": "[]",
+      "ast": {
+        "type": "Array",
+        "pos": 0,
+        "end": 2,
+        "children": []
+      }
+    },
+    {
+      "name": "array of numbers (whitespace tolerant)",
+      "src": "[ 1, 2, 3 ]",
+      "ast": {
+        "type": "Array",
+        "pos": 0,
+        "end": 11,
+        "children": [
+          {
+            "type": "Number",
+            "pos": 2,
+            "end": 3,
+            "raw": "1",
+            "value": 1
+          },
+          {
+            "type": "Number",
+            "pos": 5,
+            "end": 6,
+            "raw": "2",
+            "value": 2
+          },
+          {
+            "type": "Number",
+            "pos": 8,
+            "end": 9,
+            "raw": "3",
+            "value": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "object with one entry",
+      "src": "{\"a\":1}",
+      "ast": {
+        "type": "Object",
+        "pos": 0,
+        "end": 7,
+        "children": [
+          {
+            "type": "Entry",
+            "pos": 1,
+            "end": 6,
+            "key": {
+              "type": "String",
+              "pos": 1,
+              "end": 4,
+              "raw": "\"a\"",
+              "value": "a"
+            },
+            "value": {
+              "type": "Number",
+              "pos": 5,
+              "end": 6,
+              "raw": "1",
+              "value": 1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "full input can be required (consumes:all on a clean parse)",
+      "src": "42",
+      "consumes": "all"
+    },
+    {
+      "name": "trailing garbage is silently accepted (no end-of-input enforcement)",
+      "src": "42 43",
+      "ast": {
+        "type": "Number",
+        "pos": 0,
+        "end": 2,
+        "raw": "42",
+        "value": 42
+      }
+    },
+    {
+      "name": "Number CST in isolation (structural form)",
+      "rule": "Number",
+      "src": "123",
+      "cst": {
+        "type": "Number",
+        "pos": 0,
+        "end": 3
+      }
+    },
+    {
+      "name": "object CST (printed tree, snapshot)",
+      "src": "{\"a\": 1}",
+      "snapshot": [
+        "cstPrint"
+      ],
+      "cstPrint": [
+        "Value 0:8 → '{\"a\": 1}'",
+        "├─ WOpt 0:0 → \"\"",
+        "├─ TValue 0:8 → '{\"a\": 1}'",
+        "│  └─ Object 0:8 → '{\"a\": 1}'",
+        "│     ├─ Text 0:1 → \"{\"",
+        "│     ├─ Members 1:7 → '\"a\": 1'",
+        "│     │  └─ Production 1:7 → '\"a\": 1'",
+        "│     │     ├─ Entry 1:7 → '\"a\": 1'",
+        "│     │     │  ├─ WOpt 1:1 → \"\"",
+        "│     │     │  ├─ String 1:4 → '\"a\"'",
+        "│     │     │  ├─ WOpt 4:4 → \"\"",
+        "│     │     │  ├─ Text 4:5 → \":\"",
+        "│     │     │  └─ Value 5:7 → \" 1\"",
+        "│     │     │     ├─ WOpt 5:6 → \" \"",
+        "│     │     │     ├─ TValue 6:7 → \"1\"",
+        "│     │     │     │  └─ Number 6:7 → \"1\"",
+        "│     │     │     └─ WOpt 7:7 → \"\"",
+        "│     │     └─ List 7:7 → \"\"",
+        "│     └─ Text 7:8 → \"}\"",
+        "└─ WOpt 8:8 → \"\""
+      ]
+    },
+    {
+      "name": "number debug trace (snapshot)",
+      "src": "7",
+      "snapshot": [
+        "trace"
+      ],
+      "trace": [
+        "Root",
+        "└─ Value 0:1 → \"7\"",
+        "   ├─ WOpt 0:0 → \"\"",
+        "   ├─ TValue 0:1 → \"7\"",
+        "   │  ├─ Null",
+        "   │  ├─ Boolean",
+        "   │  ├─ String",
+        "   │  ├─ Object",
+        "   │  │  └─ Text",
+        "   │  ├─ Array",
+        "   │  │  └─ Text",
+        "   │  └─ Number 0:1 → \"7\"",
+        "   └─ WOpt 1:1 → \"\""
+      ]
+    }
+  ]
+}

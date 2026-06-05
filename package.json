@@ -44,6 +44,7 @@
     "clean": "npx rimraf@5.0.5 lib es6 es2019 es2020 esm typedocs coverage gh-pages yarn-error.log",
     "build": "tsc --project tsconfig.build.json --module commonjs --target es2020 --outDir lib",
     "jest": "node -r ts-node/register ./node_modules/.bin/jest",
+    "grammar-test": "node -r ts-node/register src/testing/cli.ts",
     "test": "jest --maxWorkers 7",
     "test:ci": "yarn jest --maxWorkers 3 --no-cache",
     "coverage": "yarn test --collectCoverage",
