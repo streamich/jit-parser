@@ -12,6 +12,7 @@ A high-performance parser library that compiles grammar definitions into efficie
 - [Tree Types](#tree-types)
 - [Grammar Compilation](#grammar-compilation)
 - [Debug Mode](#debug-mode)
+- [Testing](#testing)
 - [Examples](#examples)
 - [API Reference](#api-reference)
 
@@ -505,6 +506,16 @@ Root
    │     └─ Text 21:22 → "}"
    └─ WOpt 22:22 → ""
 ```
+
+## Testing
+
+Because a JSON Grammar is portable data, its tests can be too. Grammars are
+tested with a small, standardized schema where each test is written as JSON — an
+input plus the expected output (AST, CST, trace, consumed length, and more). The
+same test files work across programming languages and across test runners, so
+you develop a grammar by editing just two things: the grammar and its tests.
+
+See [docs/testing.md](docs/testing.md) for a introduction.
 
 ## Examples
 
