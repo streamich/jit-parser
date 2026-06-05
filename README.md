@@ -47,7 +47,7 @@ console.log(cst); // CST node representing the parse result
 
 ## Grammar Node Types
 
-JIT Parser supports five main grammar node types for defining parsing rules. Grammar rules can be fully defined in JSON, making them language-agnostic and easy to serialize.
+JIT Parser supports six main grammar node types for defining parsing rules. Grammar rules can be fully defined in JSON, making them language-agnostic and easy to serialize.
 
 ### 1. RefNode (Reference Node)
 
@@ -247,6 +247,49 @@ Arguments: {
   }
 }
 ```
+
+### 6. PredicateNode (Lookahead Node)
+
+A syntactic predicate (PEG lookahead). It matches **zero-width** — it never consumes input and never produces an AST node — and succeeds or fails purely based on whether its inner node matches at the current position.
+
+**Interface:**
+```typescript
+interface PredicateNode {
+  not?: GrammarNode;   // Negative lookahead (!e)
+  and?: GrammarNode;   // Positive lookahead (&e)
+  type?: string;       // Type name (default: "Predicate")
+}
+```
+
+A node has exactly one of `not` or `and`:
+
+- `{not: e}` — **negative** lookahead (`!e`): succeeds (zero-width) iff `e` does **not** match here.
+- `{and: e}` — **positive** lookahead (`&e`): succeeds (zero-width) iff `e` matches here. This is sugar for `{not: {not: e}}`.
+
+**Syntax:**
+```typescript
+{not: pattern}   // assert pattern is NOT ahead
+{and: pattern}   // assert pattern IS ahead
+```
+
+**Examples:**
+```typescript
+// Keyword boundary: match `null`, but only if it is not the prefix of a
+// longer identifier (so `nullish` does NOT match).
+Null: ['null', {not: /[a-zA-Z0-9_]/}]
+
+// End-of-input: "not any character".
+EOF: {not: /[\s\S]/}
+
+// Disambiguation: a value that is not the start of an assignment.
+Value: [{not: {r: 'Assignment'}}, {r: 'Expression'}]
+
+// Positive lookahead: a digit run, but only when it starts with "9"
+// (the `9` is asserted, not consumed, so `Number` still sees it).
+NineNumber: [{and: '9'}, {r: 'Number'}]
+```
+
+Because a predicate is zero-width and produces no AST, it never appears in the AST and does not shift `children` indices.
 
 ## Tree Types
 

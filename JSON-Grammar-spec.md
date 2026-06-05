@@ -71,7 +71,7 @@ interface Grammar {
 #### CST Rules
 - **`cst`**: Object mapping rule names to grammar node definitions
 - Contains all named grammar rules that can be referenced
-- Supports all five grammar node types (Reference, Terminal, Production, Union, List)
+- Supports all six grammar node types (Reference, Terminal, Production, Union, List, Predicate)
 
 #### AST Transformations
 - **`ast`**: Optional object defining custom AST generation rules
@@ -80,7 +80,7 @@ interface Grammar {
 
 ## Grammar Node Types
 
-The JSON grammar specification supports five fundamental node types for defining parsing rules. Each type has a specific JSON representation with both full interface and shorthand syntax options.
+The JSON grammar specification supports six fundamental node types for defining parsing rules. Each type has a specific JSON representation with both full interface and shorthand syntax options.
 
 ### 1. RefNode (Reference Node)
 
@@ -347,6 +347,44 @@ interface ListNode {
   }
 }
 ```
+
+### 6. PredicateNode (Lookahead Node)
+
+A syntactic predicate (PEG lookahead). It matches **zero-width** — it never consumes input and never produces an AST node — and succeeds or fails based only on whether its inner node matches at the current position. This is the one node type that cannot be expressed in terms of the others.
+
+#### Interface
+```js
+interface PredicateNode {
+  not?: GrammarNode;   // Negative lookahead (!e)
+  and?: GrammarNode;   // Positive lookahead (&e)
+  type?: string;       // Type name (default: "Predicate")
+}
+```
+
+A node has exactly one of `not` or `and`:
+
+- **`{not: e}`** — negative lookahead (`!e`): succeeds (zero-width) iff `e` does **not** match here.
+- **`{and: e}`** — positive lookahead (`&e`): succeeds (zero-width) iff `e` matches here; sugar for `{not: {not: e}}`.
+
+#### Syntax
+```js
+{"not": "pattern"}  // Succeeds (consuming nothing) if pattern is NOT ahead
+{"and": "pattern"}  // Succeeds (consuming nothing) if pattern IS ahead
+```
+
+#### Examples
+
+```js
+{
+  "cst": {
+    "Null": ["null", {"not": "/[a-zA-Z0-9_]/"}],                        // `null`, not `nullish`
+    "EOF": {"not": "/[\\s\\S]/"},                                       // "not any char" = end of input
+    "NineNumber": [{"and": "9"}, {"r": "Number"}]                       // a number that starts with 9
+  }
+}
+```
+
+Because a predicate is zero-width and emits no AST, it never appears in the AST and does not shift `children` indices.
 
 ## AST Conversion
 
