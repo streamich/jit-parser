@@ -2,6 +2,7 @@ import {evaluate, Vars} from '@jsonjoy.com/json-expression';
 import {CodegenGrammar} from '../../codegen/CodegenGrammar';
 import {ParseContext} from '../../context';
 import {grammar} from '../json-expression';
+import type {TerminalNode} from '../../types';
 
 const codegen = new CodegenGrammar(grammar);
 const parser = codegen.compile();
@@ -223,6 +224,14 @@ describe('comments', () => {
   test('a comment-only input has no expression and is rejected', () => {
     expect(parse('// just a comment')).toBeUndefined();
     expect(parse('// a\n// b\n')).toBeUndefined();
+  });
+
+  test('the Comment rule fully matches its own sample (Generator useSamples round-trips)', () => {
+    const sample = (grammar.cst.Comment as TerminalNode).sample!;
+    const pattern = codegen.compileRule('Comment');
+    const cst = pattern.parser(new ParseContext(sample, false), 0);
+    expect(cst).toBeDefined();
+    expect(cst!.end).toBe(sample.length);
   });
 });
 

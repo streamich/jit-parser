@@ -84,7 +84,7 @@ export const grammar: Grammar = {
     // A `// ...` single-line comment runs to the end of the line (or input) and
     // is treated exactly like whitespace anywhere `WOpt`/`W` are allowed.
     WsChar: {t: [' ', '\n', '\t', '\r'], repeat: '+', sample: ' '},
-    Comment: {t: /\/\/[^\n]*/, sample: '// comment\n'},
+    Comment: {t: /\/\/[^\n]*(\n|$)/, sample: '// comment\n'},
     WsUnit: {u: [{r: 'WsChar'}, {r: 'Comment'}]},
     // Optional run of whitespace/comments.
     WOpt: {l: {r: 'WsUnit'}, ast: null, sample: ' '},
