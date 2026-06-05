@@ -1,6 +1,7 @@
 import {printTree} from 'tree-dump/lib/printTree';
 import {
   isListNode,
+  isPredNode,
   isProductionNode,
   isProductionShorthandNode,
   isRefNode,
@@ -70,6 +71,13 @@ export class GrammarPrinter {
     } else if (isListNode(node)) {
       return (
         `${node.type ?? type ?? 'List'} (list)` + printTree(tab, [(tab) => this.printNode(node.l, undefined, tab)])
+      );
+    } else if (isPredNode(node)) {
+      const negative = node.not !== undefined;
+      const inner = (negative ? node.not : node.and) as GrammarNode;
+      return (
+        `${node.type ?? type ?? 'Predicate'} (predicate: ${negative ? '!' : '&'})` +
+        printTree(tab, [(tab) => this.printNode(inner, undefined, tab)])
       );
     }
     return 'unknown';

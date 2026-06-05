@@ -32,12 +32,13 @@ export type GrammarNode =
   | ProductionNodeShorthand
   | ProductionNode
   | UnionNode
-  | ListNode;
+  | ListNode
+  | PredicateNode;
 
 /**
  * Grammar without references and shorthand definitions.
  */
-export type ResolvedGrammarNode = TerminalNode | ProductionNode | UnionNode | ListNode;
+export type ResolvedGrammarNode = TerminalNode | ProductionNode | UnionNode | ListNode | PredicateNode;
 
 /**
  * A named node reference is a reference to a named node in the top-level grammar
@@ -114,6 +115,36 @@ export interface ListNode extends GrammarNodeBase {
 
   /**
    * Type of the list node, if not provided "List" will be used.
+   */
+  type?: string;
+}
+
+/**
+ * A syntactic predicate (lookahead). A predicate matches **zero-width** — it
+ * never consumes input and never produces an AST node — and only succeeds or
+ * fails based on whether its inner node matches at the current position. This
+ * is the PEG `&` / `!` operator, the one combinator that cannot be expressed in
+ * terms of {@link ProductionNode}, {@link UnionNode}, and {@link ListNode}.
+ *
+ * A node has exactly one of `not` or `and`:
+ *
+ * - `{not: e}` — negative lookahead (`!e`): succeeds iff `e` does NOT match.
+ * - `{and: e}` — positive lookahead (`&e`): succeeds iff `e` matches. This is
+ *   sugar for `{not: {not: e}}`.
+ *
+ * Typical uses: keyword boundaries (`['null', {not: /[a-zA-Z0-9_]/}]`),
+ * end-of-input (`{not: /[\s\S]/}` — "not any character"), and "match X unless
+ * it is actually a Y" disambiguation.
+ */
+export interface PredicateNode extends GrammarNodeBase {
+  /** Negative lookahead (`!e`). Mutually exclusive with `and`. */
+  not?: GrammarNode;
+
+  /** Positive lookahead (`&e`); sugar for `{not: {not: e}}`. Mutually exclusive with `not`. */
+  and?: GrammarNode;
+
+  /**
+   * Type of the predicate node, if not provided "Predicate" will be used.
    */
   type?: string;
 }

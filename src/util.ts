@@ -2,6 +2,7 @@ import type {
   Grammar,
   GrammarNode,
   ListNode,
+  PredicateNode,
   ProductionNode,
   ProductionNodeShorthand,
   RefNode,
@@ -31,6 +32,9 @@ export const isListNode = (item: any): item is ListNode =>
   typeof item === 'object' && item && typeof item.l !== 'undefined';
 
 export const isRefNode = (item: any): item is RefNode => typeof item === 'object' && item && typeof item.r === 'string';
+
+export const isPredNode = (item: any): item is PredicateNode =>
+  typeof item === 'object' && item && (typeof item.not !== 'undefined' || typeof item.and !== 'undefined');
 
 /**
  * Helper for constructing grammar nodes for a delimited list of elements.
