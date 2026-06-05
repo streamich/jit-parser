@@ -67,6 +67,9 @@ export const mulberry32 = (seed: number): (() => number) => {
 
 /** Resolve a case's input: an explicit `src`, or a generated string. */
 export const resolveInput = (grammar: Grammar, tc: TestCase): string => {
+  if (tc.src !== undefined && tc.generate !== undefined) {
+    throw new Error('a test case must set either "src" or "generate", not both');
+  }
   if (tc.src !== undefined) return tc.src;
   if (tc.generate !== undefined) {
     const spec = tc.generate === 'sample' ? {sample: true} : tc.generate;

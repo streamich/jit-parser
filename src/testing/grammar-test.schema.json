@@ -53,8 +53,7 @@
               "additionalProperties": false,
               "properties": {
                 "sample": {"type": "boolean"},
-                "seed": {"type": "integer"},
-                "count": {"type": "integer", "minimum": 1}
+                "seed": {"type": "integer"}
               }
             }
           ]

@@ -109,9 +109,9 @@ export interface TestCase {
  * How to generate an input for a case. `"sample"` is shorthand for
  * `{sample: true}` — drive generation from each rule's `sample` field, which is
  * deterministic wherever samples are defined. A `seed` makes random generation
- * reproducible; `count` repeats the case with fresh inputs.
+ * reproducible.
  */
-export type GenerateSpec = 'sample' | {sample?: boolean; seed?: number; count?: number};
+export type GenerateSpec = 'sample' | {sample?: boolean; seed?: number};
 
 /** Portable, structural representation of a CST node (no in-memory pointers). */
 export interface StructuralCst {

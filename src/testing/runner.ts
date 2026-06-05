@@ -88,8 +88,12 @@ export const runCase = (grammar: Grammar, suite: TestSuite, tc: TestCase, opts: 
     const actual = actualOf(channel, d);
     const bag = tc as unknown as Record<string, unknown>;
     if (opts.update && snapshot.has(channel)) {
-      bag[channel] = actual;
-      channels.push({channel, status: 'wrote', actual});
+      if (actual === undefined) {
+        channels.push({channel, status: 'fail', actual});
+      } else {
+        bag[channel] = actual;
+        channels.push({channel, status: 'wrote', actual});
+      }
     } else if (channel in tc) {
       const expected = bag[channel];
       channels.push({channel, status: deepEqual(actual, expected) ? 'pass' : 'fail', expected, actual});

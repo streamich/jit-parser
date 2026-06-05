@@ -118,6 +118,13 @@ describe('snapshots', () => {
     runSuite(grammar, s, {update: true});
     expect((s.tests[0] as {cstPrint?: string[]}).cstPrint).toEqual(['Number 0:1 → "7"']);
   });
+
+  test('--update on a non-parsing input does not write a phantom ast snapshot', () => {
+    const s = suite([{name: 'np', src: '%'}], {snapshot: ['ast']});
+    const res = runSuite(grammar, s, {update: true});
+    expect(res.cases[0].channels.find((c) => c.channel === 'ast')!.status).toBe('fail');
+    expect('ast' in s.tests[0]).toBe(false);
+  });
 });
 
 describe('suite controls', () => {
@@ -143,5 +150,11 @@ describe('generated inputs', () => {
   test('a rule sample round-trips through its own parser', () => {
     const res = runCase(grammar, suite([]), {name: 'gen', rule: 'Number', generate: 'sample', consumes: 'all'});
     expect(res.status).toBe('pass');
+  });
+
+  test('setting both src and generate is rejected', () => {
+    const res = runCase(grammar, suite([]), {name: 'both', rule: 'Number', src: '1', generate: 'sample'});
+    expect(res.status).toBe('fail');
+    expect(res.error).toMatch(/both/);
   });
 });

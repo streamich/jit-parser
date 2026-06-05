@@ -515,7 +515,7 @@ input plus the expected output (AST, CST, trace, consumed length, and more). The
 same test files work across programming languages and across test runners, so
 you develop a grammar by editing just two things: the grammar and its tests.
 
-See [docs/testing.md](docs/testing.md) for a introduction.
+See [docs/testing.md](docs/testing.md) for an introduction.
 
 ## Examples
 

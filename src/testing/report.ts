@@ -18,7 +18,12 @@ const show = (value: unknown): string => {
     // Printed-tree channels (cstPrint/trace): show as the rendered tree.
     return '\n' + (value as string[]).map((l) => '    ' + l).join('\n');
   }
-  return JSON.stringify(value);
+  try {
+    const json = JSON.stringify(value);
+    return json === undefined ? String(value) : json;
+  } catch {
+    return String(value);
+  }
 };
 
 const channelLine = (ch: ChannelResult, c: boolean): string => {
@@ -53,7 +58,7 @@ export const formatCase = (res: CaseResult, useColor = true): string => {
 /** Full suite rendering with a trailing summary line. */
 export const formatSuite = (res: SuiteResult, useColor = true): string => {
   const lines: string[] = [];
-  if (res.describe) lines.push(color(useColor, '', res.describe));
+  if (res.describe) lines.push(res.describe);
   for (const c of res.cases) lines.push(formatCase(c, useColor));
   const summary =
     `  ${res.pass} passed` +
