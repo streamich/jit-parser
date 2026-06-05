@@ -88,6 +88,28 @@ describe('AST', () => {
         value: 'abc',
       });
     });
+
+    test('can parse a string containing an escaped quote', () => {
+      const src = '"a\\"b"';
+      expect(toAstRule('String', src)).toEqual({
+        type: 'String',
+        pos: 0,
+        end: src.length,
+        raw: src,
+        value: 'a\\"b',
+      });
+    });
+
+    test('does not catastrophically backtrack on an unterminated string', () => {
+      const pattern = codegen.compileRule('String');
+      const evil = '"' + 'a'.repeat(5000); // no closing quote
+      const ctx = new ParseContext(evil, false);
+      const start = Date.now();
+      const cst = pattern.parser(ctx, 0);
+      const elapsed = Date.now() - start;
+      expect(cst).toBe(undefined);
+      expect(elapsed).toBeLessThan(1000);
+    });
   });
 
   describe('arrays', () => {
