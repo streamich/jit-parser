@@ -220,6 +220,9 @@ Matches zero or more repetitions of a pattern.
 ```typescript
 interface ListNode {
   l: GrammarNode;              // Node to repeat
+  min?: number;                // Minimum number of repetitions (default: 0)
+  max?: number;                // Maximum number of repetitions
+  sep?: GrammarNode;           // Optional separator node
   type?: string;               // Type name (default: "List")
   ast?: AstNodeExpression;     // AST transformation
 }
@@ -228,7 +231,10 @@ interface ListNode {
 **Syntax:**
 ```typescript
 {
-  l: pattern
+  l: pattern,       // Matches: zero or more occurrences of pattern
+  min: 1,           // Require at least 1 match
+  max: 5,           // Stop after 5 matches
+  sep: separator    // Optional separator between pattern matches
 }
 ```
 
@@ -239,12 +245,11 @@ Statements: {
   l: {r: 'Statement'}
 }
 
-// Comma-separated list
+// Comma-separated list with at least 1 item
 Arguments: {
-  l: {
-    p: [',', {r: 'Expression'}],
-    ast: ['$', '/children/1']  // Extract the expression, ignore comma
-  }
+  l: {r: 'Expression'},
+  min: 1,
+  sep: ','
 }
 ```
 

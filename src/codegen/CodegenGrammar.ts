@@ -119,7 +119,8 @@ export class CodegenGrammar {
     }
     pattern ??= new Pattern(node.type ?? 'List');
     const childParser = this.getNodeParser(node.l);
-    pattern.parser = CodegenList.compile(node, pattern, childParser, this.ctx);
+    const sepParser: Parser | undefined = node.sep !== void 0 ? this.getNodeParser(node.sep) : void 0;
+    pattern.parser = CodegenList.compile(node, pattern, childParser, this.ctx, sepParser);
     pattern.toAst = CodegenAstFactory.compile(node, pattern, this.ctx);
     return pattern;
   }
