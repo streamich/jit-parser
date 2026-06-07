@@ -1,9 +1,9 @@
-import {ParseContext} from '../../context';
+import {CodegenContext, ParseContext} from '../../context';
 import {CodegenGrammar} from '../CodegenGrammar';
 import {CodegenList} from '../CodegenList';
 import {CodegenTerminal} from '../CodegenTerminal';
 import {Pattern} from '../Pattern';
-import type {Grammar, TerminalNode} from '../../types';
+import type {Grammar, RootTraceNode, TerminalNode} from '../../types';
 
 /**
  * Runs `parse` in a way that fails the test (instead of hanging the whole
@@ -305,6 +305,73 @@ describe('CodegenList', () => {
           {pos: 5, end: 6}, // Comma
         ],
       });
+    });
+  });
+
+  describe('debug trace', () => {
+    const compileDebug = (grammar: Grammar) =>
+      new CodegenGrammar(grammar, new CodegenContext(true, true, true)).compile();
+
+    test('a successful list leaves the trace stack balanced', () => {
+      const grammar: Grammar = {
+        start: 'L',
+        cst: {A: {t: 'a'}, L: {l: {r: 'A'}, min: 2}},
+      };
+      const parser = compileDebug(grammar);
+      const root: RootTraceNode = {pos: 0, children: []};
+      const ctx = new ParseContext('aa', false, [root]);
+      const cst = parser(ctx, 0);
+      expect(cst).toBeDefined();
+      expect(ctx.trace!.length).toBe(1);
+    });
+
+    test('a list that fails its `min` constraint still pops its debug trace node', () => {
+      const grammar: Grammar = {
+        start: 'L',
+        cst: {A: {t: 'a'}, L: {l: {r: 'A'}, sep: ',', min: 2}},
+      };
+      const parser = compileDebug(grammar);
+      const src = 'a,';
+      const root: RootTraceNode = {pos: 0, children: []};
+      const ctx = new ParseContext(src, false, [root]);
+      const cst = parser(ctx, 0);
+      expect(cst).toBeUndefined();
+      expect(ctx.trace!.length).toBe(1);
+      expect(root.children[0]!.children!.length).toBe(3);
+    });
+
+    test('a `min`-failing list with a separator also pops its debug trace node', () => {
+      const grammar: Grammar = {
+        start: 'List',
+        cst: {A: {t: 'a'}, Comma: {t: ','}, List: {l: {r: 'A'}, min: 2, sep: {r: 'Comma'}}},
+      };
+      const src = 'a,';
+      const parser = compileDebug(grammar);
+      const root: RootTraceNode = {pos: 0, children: []};
+      const ctx = new ParseContext(src, false, [root]);
+      const cst = parser(ctx, 0);
+      expect(cst).toBeUndefined();
+      expect(ctx.trace!.length).toBe(1);
+      expect(root.children[0]!.children!.length).toBe(3);
+    });
+  });
+
+  describe('separator AST', () => {
+    test('separators marked `ast: null` do not appear in the AST', () => {
+      const grammar: Grammar = {
+        start: 'L',
+        cst: {
+          A: {t: /[a-z]/, ast: ['$', '/raw']},
+          // The separator carries `ast: null`, so it is dropped from the AST.
+          Comma: {t: ',', ast: null},
+          L: {l: {r: 'A'}, sep: {r: 'Comma'}, ast: ['$', '/children']},
+        },
+      };
+      const parser = CodegenGrammar.compile(grammar);
+      const ctx = new ParseContext('a,b,c', true);
+      const cst = parser(ctx, 0)!;
+      const ast = cst.ptr.toAst(cst, 'a,b,c');
+      expect(ast).toEqual(['a', 'b', 'c']);
     });
   });
 });

@@ -58,6 +58,7 @@ export class CodegenList {
     }
     if (dSepParser) {
       const rSep = codegen.var();
+      const rSepPos = codegen.var();
       codegen.js(`${rChild} = ${dParser}(ctx, pos);`);
       codegen.if(`${rChild} && ${rChild}.end !== pos`, () => {
         codegen.js(`${rChildren}.push(${rChild});`);
@@ -65,13 +66,13 @@ export class CodegenList {
         codegen.js(`${rCount}++;`);
         const maxCondition = max > 0 ? ` && ${rCount} < ${max}` : '';
         codegen.while(`1${maxCondition}`, () => {
-          codegen.js(`var sepPos = pos;`);
+          codegen.js(`${rSepPos} = pos;`);
           codegen.js(`${rSep} = ${dSepParser}(ctx, pos);`);
           codegen.js(`if (!${rSep} || ${rSep}.end === pos) break;`);
           codegen.js(`pos = ${rSep}.end;`);
           codegen.js(`${rChild} = ${dParser}(ctx, pos);`);
-          codegen.js(`if(!${rChild} || ${rChild}.end === pos){`);
-          codegen.js(`pos=sepPos;break;`);
+          codegen.js(`if (!${rChild} || ${rChild}.end === pos) {`);
+          codegen.js(`pos = ${rSepPos}; break;`);
           codegen.js(`}`);
           codegen.js(`${rChildren}.push(${rSep}, ${rChild});`);
           codegen.js(`pos = ${rChild}.end;`);
@@ -90,7 +91,14 @@ export class CodegenList {
       });
     }
     if (min > 0) {
-      codegen.js(`if (${rCount} < ${min}) return undefined;`);
+      codegen.if(`${rCount} < ${min}`, () => {
+        if (this.ctx.debug) {
+          codegen.if(rTraceNodeParent, () => {
+            codegen.js(`ctx.trace.pop();`);
+          });
+        }
+        codegen.return('');
+      });
     }
     const rResult = codegen.var(`new ${dCstMatch}(${rStart}, pos, ${dPattern}, ${rChildren})`);
     if (this.ctx.debug) {
