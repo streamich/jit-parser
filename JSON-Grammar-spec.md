@@ -314,6 +314,9 @@ Matches zero or more repetitions of a pattern.
 ```js
 interface ListNode {
   l: GrammarNode;              // Node to repeat
+  min?: number;                // Minimum number of repetitions (default: 0)
+  max?: number;                // Maximum number of repetitions
+  sep?: GrammarNode;           // Optional separator node
   type?: string;               // Type name (default: "List")
   ast?: AstNodeExpression;     // AST transformation
 }
@@ -322,7 +325,10 @@ interface ListNode {
 #### Syntax
 ```js
 {
-  "l": "pattern"  // Matches: zero or more occurrences of pattern
+  "l": "pattern",       // Matches: zero or more occurrences of pattern
+  "min": 1,             // Require at least 1 match
+  "max": 5,             // Stop after 5 matches
+  "sep": "separator"    // Optional separator between pattern matches
 }
 ```
 
@@ -335,14 +341,20 @@ interface ListNode {
       "l": {"r": "Statement"}                                           // Matches: multiple statements
     },
     "Parameters": {
-      "l": {                                                            // Matches: param1, param2, param3
-        "p": [",", {"r": "Parameter"}],
-        "ast": ["$", "/children/1"]
-      }
+      "l": {"r": "Parameter"},
+      "sep": ","                                                        // Matches: param1, param2, param3
     },
     "Digits": {
       "l": "/[0-9]/",                                                   // Matches: 123456789
       "type": "DigitSequence"
+    },
+    "OneOrMoreSpaces": {
+      "l": " ",
+      "min": 1                                                          // Requires at least one space
+    },
+    "UpToThreeItems": {
+      "l": {"r": "Item"},
+      "max": 3                                                          // Matches up to 3 items
     }
   }
 }
@@ -785,16 +797,8 @@ Most JSON Grammar implementations provide utilities to:
 #### Comma-Separated Lists
 ```js
 {
-  "u": [
-    {
-      "p": [                                     // Matches: item1, item2, item3
-        {"r": "Item"},
-        {"l": {"p": [",", {"r": "Item"}], "ast": ["$", "/children/1"]}}
-      ],
-      "ast": ["concat", ["push", [[]], ["$", "/children/0"]], ["$", "/children/1"]]
-    },
-    ""                                           // OR empty list
-  ]
+  "l": {"r": "Item"},
+  "sep": ","
 }
 ```
 
