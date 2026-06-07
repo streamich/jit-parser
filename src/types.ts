@@ -114,6 +114,21 @@ export interface ListNode extends GrammarNodeBase {
   l: GrammarNode;
 
   /**
+   * Minimum number of elements to match. Defaults to 0.
+   */
+  min?: number;
+
+  /**
+   * Maximum number of elements to match. Defaults to infinity.
+   */
+  max?: number;
+
+  /**
+   * Optional separator between elements.
+   */
+  sep?: GrammarNode;
+
+  /**
    * Type of the list node, if not provided "List" will be used.
    */
   type?: string;
