@@ -6,6 +6,7 @@ import type {
   ProductionNode,
   ProductionNodeShorthand,
   RefNode,
+  RegexPattern,
   ResolvedGrammarNode,
   TerminalNode,
   TerminalNodeShorthand,
@@ -13,6 +14,9 @@ import type {
 } from './types';
 
 export const scrub = (str: string) => JSON.parse(JSON.stringify(str));
+
+export const isRegexPattern = (item: any): item is RegexPattern =>
+  typeof item === 'object' && !!item && typeof item.rx === 'string' && !Array.isArray(item);
 
 export const isTerminalShorthandNode = (item: any): item is TerminalNodeShorthand =>
   typeof item === 'string' || item instanceof RegExp;

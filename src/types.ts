@@ -53,6 +53,26 @@ export type RefNode<Name extends string = string> = {r: Name};
 export type TerminalNodeShorthand = RegExp | string | '';
 
 /**
+ * A regex pattern expressed as a plain JSON object. This is the canonical form
+ * for embedding regular expressions in JSON grammars, where native `RegExp`
+ * literals are unavailable.
+ *
+ * - `rx` — the RegExp source string (ECMAScript dialect, anchored by the engine)
+ * - `flags` — optional flag string; allowed values: `i`, `s`, `m`, `u`, `v`
+ *   (do **not** use `g` or `y` — the engine manages position internally)
+ *
+ * @example
+ * // case-insensitive word
+ * {t: {rx: "[a-z]+", flags: "i"}}
+ * // digits, no flags
+ * {t: {rx: "\\d+"}}
+ */
+export interface RegexPattern {
+  rx: string;
+  flags?: string;
+}
+
+/**
  * A terminal node definition. A terminal node is a leaf node in the grammar
  * tree. It specifies a single match pattern either as a string or a regular
  * expression.
@@ -64,10 +84,11 @@ export interface TerminalNode extends GrammarNodeBase {
   type?: string;
 
   /**
-   * The terminal node pattern. It can be a regular expression or a string.
-   * When an array of strings is specified, it will match any of the strings.
+   * The terminal node pattern. It can be a regular expression, a
+   * {@link RegexPattern} object (for JSON-serialisable grammars), a literal
+   * string, or an array of literal strings.
    */
-  t: TerminalNodeShorthand | string[];
+  t: TerminalNodeShorthand | RegexPattern | string[];
 
   /**
    * When true, the terminal node will be repeated until no more matches are

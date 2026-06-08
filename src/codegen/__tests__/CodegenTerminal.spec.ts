@@ -96,6 +96,42 @@ describe('CodegenTerminal', () => {
     });
   });
 
+  describe('{rx} object', () => {
+    test('can match using rx object syntax', () => {
+      const node = {type: 'Boolean', t: {rx: '(true|false)'}};
+      const pattern = createPattern(node);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext('foo', false), 0)).toBe(undefined);
+      expect(parser(new ParseContext('true', false), 0)).toStrictEqual(new LeafCstMatch(0, 4, pattern));
+      expect(parser(new ParseContext('a = false', false), 4)).toStrictEqual(new LeafCstMatch(4, 9, pattern));
+    });
+
+    test('supports flags via rx object', () => {
+      const node = {type: 'Word', t: {rx: '[a-z]+', flags: 'i'}};
+      const pattern = createPattern(node);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext('Hello', false), 0)).toStrictEqual(new LeafCstMatch(0, 5, pattern));
+      expect(parser(new ParseContext('WORLD', false), 0)).toStrictEqual(new LeafCstMatch(0, 5, pattern));
+      expect(parser(new ParseContext('123', false), 0)).toBe(undefined);
+    });
+
+    test('anchors at current position', () => {
+      const node = {type: 'Digit', t: {rx: '\\d+'}};
+      const pattern = createPattern(node);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext('abc123', false), 3)).toStrictEqual(new LeafCstMatch(3, 6, pattern));
+      expect(parser(new ParseContext('abc123', false), 0)).toBe(undefined);
+    });
+
+    test('rx without flags defaults to no flags', () => {
+      const node = {type: 'Lower', t: {rx: '[a-z]+'}};
+      const pattern = createPattern(node);
+      const parser = pattern.parser;
+      expect(parser(new ParseContext('abc', false), 0)).toStrictEqual(new LeafCstMatch(0, 3, pattern));
+      expect(parser(new ParseContext('ABC', false), 0)).toBe(undefined);
+    });
+  });
+
   describe('string[]', () => {
     test('can match one of the strings', () => {
       const terminal = {

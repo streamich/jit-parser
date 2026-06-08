@@ -53,7 +53,7 @@ interface Grammar {
   "start": "Value",
   "cst": {
     "Value": {"r": "Number"},
-    "Number": {"t": "/\\d+/"}
+    "Number": {"t": {"rx": "\\d+"}}
   },
   "ast": {
     "Number": ["num", ["$", "/raw"]]
@@ -119,30 +119,46 @@ Matches literal strings, regular expressions, or arrays of alternatives. Termina
 #### Interface
 ```js
 interface TerminalNode {
-  type?: string;                           // Type name (default: "Text")
-  t: RegExp | string | '' | string[];      // Pattern(s) to match
-  repeat?: '*' | '+';                      // Repetition (only for string arrays)
-  sample?: string;                         // Sample text for generation
-  ast?: AstNodeExpression;                 // AST transformation
+  type?: string;                                    // Type name (default: "Text")
+  t: RegExp | RegexPattern | string | '' | string[]; // Pattern(s) to match
+  repeat?: '*' | '+';                               // Repetition (only for string arrays)
+  sample?: string;                                  // Sample text for generation
+  ast?: AstNodeExpression;                          // AST transformation
 }
 
-// Shorthand: string, RegExp, or empty string
+// Shorthand: string, RegExp, or empty string (TypeScript/JS only)
 type TerminalNodeShorthand = RegExp | string | '';
+
+// JSON-serialisable regex form
+interface RegexPattern {
+  rx: string;      // ECMAScript RegExp source
+  flags?: string;  // Allowed: i, s, m, u, v  (do NOT use g or y)
+}
 ```
 
 #### Syntax Options
 
 **String Literal:**
 ```js
-"hello"  // Matches exactly: hello
+"hello"              // Matches exactly: hello
+{"t": "hello"}       // Equivalent full form
 ```
 
-**Regular Expression:**
+**Regular Expression — JSON form (canonical):**
 ```js
-{"t": "/[a-z]+/"}  // Matches: abc, hello, test
+{"t": {"rx": "[a-z]+"}}              // Matches: abc, hello, test
+{"t": {"rx": "[a-z]+", "flags": "i"}} // Matches: ABC, Hello, TEST (case-insensitive)
+{"t": {"rx": "\\d+"}}                // Matches: 123, 456 (escape \ in JSON strings)
 ```
 
-Note: Regular expressions in JSON must be represented as objects with a `t` property containing the regex pattern as a string.
+The `{rx, flags}` object is the only unambiguous regex form in JSON. Bare strings
+under `t` are **always** treated as literal matches, not patterns.
+
+**Regular Expression — TypeScript/JavaScript shorthand:**
+```js
+{t: /[a-z]+/}    // native RegExp literal; equivalent to {t: {rx: "[a-z]+"}}
+{t: /[a-z]+/i}   // with flags
+```
 
 **Array of Alternatives:**
 ```js
@@ -157,7 +173,7 @@ Note: Regular expressions in JSON must be represented as objects with a `t` prop
 **Full Terminal Node:**
 ```js
 {
-  "t": "/\\d+/",           // Matches: 123, 456, 7890
+  "t": {"rx": "\\-?(0|[1-9][0-9]*)(\\.\\d+)?([eE][+\\-]?\\d+)?"},
   "type": "Number",
   "sample": "123",
   "ast": ["num", ["$", "/raw"]]
@@ -166,10 +182,16 @@ Note: Regular expressions in JSON must be represented as objects with a `t` prop
 
 #### Important Notes
 
-**Regular Expression Syntax:**
-- In TypeScript/JavaScript, regex can be written as `/pattern/flags`
-- In JSON, regex must be a string: `{"t": "/pattern/flags"}`
-- Escape characters must be double-escaped in JSON strings: `"\\d+"` instead of `\d+`
+**Regular Expression Dialect:**
+- The canonical dialect is ECMAScript (`RegExp`). The `rx` string is the exact RegExp source.
+- The engine anchors every match at the current position by wrapping with `^(?:…)` internally — do **not** add a leading `^` yourself.
+- Allowed flags: `i`, `s`, `m`, `u`, `v`. Never use `g` or `y`; the engine owns position management.
+- For portability across implementations, prefer the common portable core (character classes, quantifiers, groups, alternation) and avoid JS-specific features (lookbehind, named groups, `\p{…}`) unless you target JS only.
+
+**Bare strings are always literals:**
+- `{"t": "null"}` matches the four characters `null` — it is never interpreted as a regex.
+- `{"t": "/[a-z]+/"}` matches the literal text `/[a-z]+/` (slash, bracket, …), **not** a regex.
+- Use `{"t": {"rx": "[a-z]+"}}` for regex patterns in JSON grammars.
 
 **Repetition Patterns:**
 - `repeat: "*"` means zero or more matches (equivalent to regex `*`)
@@ -181,14 +203,17 @@ Note: Regular expressions in JSON must be represented as objects with a `t` prop
 ```js
 {
   "cst": {
-    "Null": "null",                          // Matches: null
-    "Number": "/\\-?\\d+(\\.\\d+)?/",       // Matches: 123, -45.67, 0.5
-    "Boolean": {"t": ["true", "false"]},     // Matches: true OR false
-    "Whitespace": {"t": [" ", "\t", "\n"], "repeat": "*"},  // Matches: any whitespace
+    "Null": "null",
+    "Number": {"t": {"rx": "\\-?\\d+(\\.\\d+)?"}},
+    "Boolean": {"t": ["true", "false"]},
+    "Whitespace": {"t": [" ", "\t", "\n"], "repeat": "*"},
     "Identifier": {
-      "t": "/[a-zA-Z_][a-zA-Z0-9_]*/",      // Matches: varName, _temp, MY_CONST
+      "t": {"rx": "[a-zA-Z_][a-zA-Z0-9_]*"},
       "type": "Identifier",
       "sample": "variable_name"
+    },
+    "HexColor": {
+      "t": {"rx": "#[0-9a-f]{3,6}", "flags": "i"}
     }
   }
 }
