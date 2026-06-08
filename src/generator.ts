@@ -4,6 +4,7 @@ import {
   isProductionNode,
   isProductionShorthandNode,
   isRefNode,
+  isRegexPattern,
   isTerminalNode,
   isTerminalShorthandNode,
   isUnionNode,
@@ -49,6 +50,9 @@ export class Generator {
       return node.t;
     } else if (node.t instanceof RegExp) {
       const r = new ReRegExp(node.t);
+      return r.build();
+    } else if (isRegexPattern(node.t)) {
+      const r = new ReRegExp(new RegExp(node.t.rx, node.t.flags));
       return r.build();
     } else if (Array.isArray(node.t)) {
       const pick = Math.floor(Math.random() * node.t.length);

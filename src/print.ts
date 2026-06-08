@@ -5,6 +5,7 @@ import {
   isProductionNode,
   isProductionShorthandNode,
   isRefNode,
+  isRegexPattern,
   isTerminalNode,
   isTerminalShorthandNode,
   isUnionNode,
@@ -34,7 +35,9 @@ export class GrammarPrinter {
           ? JSON.stringify(node.t)
           : Array.isArray(node.t)
             ? '(' + node.t.map((c) => JSON.stringify(c)).join(' | ') + ')' + (node.repeat ?? '')
-            : node.t;
+            : isRegexPattern(node.t)
+              ? `/${node.t.rx}/${node.t.flags ?? ''}`
+              : node.t;
       return `${node.type ?? type ?? 'Text'} (terminal): ${pattern}`;
     } else if (isTerminalShorthandNode(node)) {
       return this.printNode({t: node}, type, tab);

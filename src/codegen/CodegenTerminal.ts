@@ -1,7 +1,7 @@
 import {Codegen} from '@jsonjoy.com/util/lib/codegen';
 import {emitStringMatch} from '@jsonjoy.com/util/lib/codegen/util/helpers';
 import {LeafCstMatch} from '../matches';
-import {scrub} from '../util';
+import {isRegexPattern, scrub} from '../util';
 import {CodegenContext} from '../context';
 import type {Parser, TerminalNode, TerminalNodeShorthand} from '../types';
 import type {Pattern} from './Pattern';
@@ -36,7 +36,8 @@ export class CodegenTerminal {
 
   public generate() {
     const {codegen, node, pattern} = this;
-    const match = node.t;
+    const raw = node.t;
+    const match = isRegexPattern(raw) ? new RegExp(raw.rx, raw.flags) : raw;
     const dPattern = codegen.linkDependency(pattern);
     const dLeafCstMatch = codegen.linkDependency(LeafCstMatch);
     let rDebug = '';
