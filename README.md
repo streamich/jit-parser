@@ -32,8 +32,8 @@ import {ParseContext} from 'jit-parser';
 const grammar = {
   start: 'Value',
   cst: {
-    Value: 'hello'
-  }
+    Value: 'hello',
+  },
 };
 
 // Compile the grammar to JavaScript
@@ -54,23 +54,28 @@ JIT Parser supports six main grammar node types for defining parsing rules. Gram
 References a named node defined elsewhere in the grammar.
 
 **Interface:**
+
 ```typescript
 type RefNode<Name extends string = string> = {r: Name};
 ```
 
 **Syntax:**
+
 ```typescript
-{r: 'NodeName'}
+{
+  r: 'NodeName';
+}
 ```
 
 **Example:**
+
 ```typescript
 const grammar = {
   start: 'Program',
   cst: {
     Program: {r: 'Statement'},
-    Statement: 'return;'
-  }
+    Statement: 'return;',
+  },
 };
 ```
 
@@ -79,13 +84,20 @@ const grammar = {
 Matches literal strings, regular expressions, or arrays of strings. Terminal nodes are leaf nodes in the parse tree.
 
 **Interface:**
+
 ```typescript
 interface TerminalNode {
-  type?: string;                           // Type name (default: "Text")
-  t: RegExp | string | '' | string[];      // Pattern(s) to match
-  repeat?: '*' | '+';                      // Repetition (only for string arrays)
-  sample?: string;                         // Sample text for generation
-  ast?: AstNodeExpression;                 // AST transformation
+  type?: string; // Type name (default: "Text")
+  t: RegExp | RegexPattern | string | '' | string[]; // Pattern(s) to match
+  repeat?: '*' | '+'; // Repetition (only for string arrays)
+  sample?: string; // Sample text for generation
+  ast?: AstNodeExpression; // AST transformation
+}
+
+// JSON-serialisable regex: use instead of a RegExp literal in JSON grammars
+interface RegexPattern {
+  rx: string; // RegExp source (ECMAScript dialect)
+  flags?: string; // Optional flags: 'i', 's', 'm', 'u', 'v' (never 'g' or 'y')
 }
 
 // Shorthand: string, RegExp, or empty string
@@ -93,12 +105,17 @@ type TerminalNodeShorthand = RegExp | string | '';
 ```
 
 **Syntax:**
+
 ```typescript
 // String literal
 'hello'
 
-// Regular expression  
+// Regular expression (JavaScript only)
 /[a-z]+/
+
+// JSON-serialisable regex object (works everywhere)
+{t: {rx: '[a-z]+'}}
+{t: {rx: '[a-z]+', flags: 'i'}}
 
 // Array of alternatives
 {t: ['true', 'false']}
@@ -115,12 +132,19 @@ type TerminalNodeShorthand = RegExp | string | '';
 ```
 
 **Examples:**
+
 ```typescript
 // Simple string terminal
 Value: 'null'
 
-// RegExp terminal  
+// RegExp terminal (JavaScript environment)
 Number: /\-?\d+(\.\d+)?/
+
+// RegexPattern object (JSON-serialisable, works in any environment)
+Number: {t: {rx: '\\-?\\d+(\\.\\d+)?'}}
+
+// Case-insensitive match via flags
+Keyword: {t: {rx: 'true|false', flags: 'i'}}
 
 // Alternative strings
 Boolean: {t: ['true', 'false']}
@@ -129,17 +153,22 @@ Boolean: {t: ['true', 'false']}
 WS: {t: [' ', '\t', '\n'], repeat: '*'}
 ```
 
+> **Note:** A bare string `t` is always a literal match — `{t: "/[a-z]+/"}` matches
+> the seven-character text `/[a-z]+/`, not a regex. Use `{t: {rx: "[a-z]+"}}` for
+> a JSON-encoded pattern.
+
 ### 3. ProductionNode (Production Node)
 
 Matches a sequence of grammar nodes in order. All nodes in the sequence must match for the production to succeed.
 
 **Interface:**
+
 ```typescript
 interface ProductionNode {
-  p: GrammarNode[];                    // Sequence of nodes to match
-  type?: string;                       // Type name (default: "Production")
-  children?: Record<number, string>;   // Child index to property mapping
-  ast?: AstNodeExpression;             // AST transformation
+  p: GrammarNode[]; // Sequence of nodes to match
+  type?: string; // Type name (default: "Production")
+  children?: Record<number, string>; // Child index to property mapping
+  ast?: AstNodeExpression; // AST transformation
 }
 
 // Shorthand: array of grammar nodes
@@ -147,6 +176,7 @@ type ProductionNodeShorthand = GrammarNode[];
 ```
 
 **Syntax:**
+
 ```typescript
 // Shorthand array
 ['{', {r: 'Content'}, '}']
@@ -162,6 +192,7 @@ type ProductionNodeShorthand = GrammarNode[];
 ```
 
 **Examples:**
+
 ```typescript
 // Function call: func()
 FunctionCall: ['func', '(', ')']
@@ -180,35 +211,34 @@ Object: {
 Matches one of several alternative patterns. The first matching alternative is selected (ordered choice).
 
 **Interface:**
+
 ```typescript
 interface UnionNode {
-  u: GrammarNode[];           // Array of alternative nodes
-  type?: string;              // Type name (default: "Union")
-  ast?: AstNodeExpression;    // AST transformation
+  u: GrammarNode[]; // Array of alternative nodes
+  type?: string; // Type name (default: "Union")
+  ast?: AstNodeExpression; // AST transformation
 }
 ```
 
 **Syntax:**
+
 ```typescript
 {
-  u: [pattern1, pattern2, pattern3]
+  u: [pattern1, pattern2, pattern3];
 }
 ```
 
 **Examples:**
+
 ```typescript
 // Literal values
 Literal: {
-  u: ['null', 'true', 'false', {r: 'Number'}, {r: 'String'}]
+  u: ['null', 'true', 'false', {r: 'Number'}, {r: 'String'}];
 }
 
 // Statement types
 Statement: {
-  u: [
-    {r: 'IfStatement'},
-    {r: 'ReturnStatement'}, 
-    {r: 'ExpressionStatement'}
-  ]
+  u: [{r: 'IfStatement'}, {r: 'ReturnStatement'}, {r: 'ExpressionStatement'}];
 }
 ```
 
@@ -216,19 +246,21 @@ Statement: {
 
 Matches zero or more repetitions of a pattern.
 
-**Interface:**  
+**Interface:**
+
 ```typescript
 interface ListNode {
-  l: GrammarNode;              // Node to repeat
-  min?: number;                // Minimum number of repetitions (default: 0)
-  max?: number;                // Maximum number of repetitions
-  sep?: GrammarNode;           // Optional separator node
-  type?: string;               // Type name (default: "List")
-  ast?: AstNodeExpression;     // AST transformation
+  l: GrammarNode; // Node to repeat
+  min?: number; // Minimum number of repetitions (default: 0)
+  max?: number; // Maximum number of repetitions
+  sep?: GrammarNode; // Optional separator node
+  type?: string; // Type name (default: "List")
+  ast?: AstNodeExpression; // AST transformation
 }
 ```
 
 **Syntax:**
+
 ```typescript
 {
   l: pattern,       // Matches: zero or more occurrences of pattern
@@ -239,6 +271,7 @@ interface ListNode {
 ```
 
 **Examples:**
+
 ```typescript
 // Zero or more statements
 Statements: {
@@ -258,11 +291,12 @@ Arguments: {
 A syntactic predicate (PEG lookahead). It matches **zero-width** — it never consumes input and never produces an AST node — and succeeds or fails purely based on whether its inner node matches at the current position.
 
 **Interface:**
+
 ```typescript
 interface PredicateNode {
-  not?: GrammarNode;   // Negative lookahead (!e)
-  and?: GrammarNode;   // Positive lookahead (&e)
-  type?: string;       // Type name (default: "Predicate")
+  not?: GrammarNode; // Negative lookahead (!e)
+  and?: GrammarNode; // Positive lookahead (&e)
+  type?: string; // Type name (default: "Predicate")
 }
 ```
 
@@ -272,26 +306,34 @@ A node has exactly one of `not` or `and`:
 - `{and: e}` — **positive** lookahead (`&e`): succeeds (zero-width) iff `e` matches here. This is sugar for `{not: {not: e}}`.
 
 **Syntax:**
+
 ```typescript
-{not: pattern}   // assert pattern is NOT ahead
-{and: pattern}   // assert pattern IS ahead
+{
+  not: pattern;
+} // assert pattern is NOT ahead
+{
+  and: pattern;
+} // assert pattern IS ahead
 ```
 
 **Examples:**
+
 ```typescript
 // Keyword boundary: match `null`, but only if it is not the prefix of a
 // longer identifier (so `nullish` does NOT match).
-Null: ['null', {not: /[a-zA-Z0-9_]/}]
+Null: ['null', {not: /[a-zA-Z0-9_]/}];
 
 // End-of-input: "not any character".
-EOF: {not: /[\s\S]/}
+EOF: {
+  not: /[\s\S]/;
+}
 
 // Disambiguation: a value that is not the start of an assignment.
-Value: [{not: {r: 'Assignment'}}, {r: 'Expression'}]
+Value: [{not: {r: 'Assignment'}}, {r: 'Expression'}];
 
 // Positive lookahead: a digit run, but only when it starts with "9"
 // (the `9` is asserted, not consumed, so `Number` still sees it).
-NineNumber: [{and: '9'}, {r: 'Number'}]
+NineNumber: [{and: '9'}, {r: 'Number'}];
 ```
 
 Because a predicate is zero-width and produces no AST, it never appears in the AST and does not shift `children` indices.
@@ -309,16 +351,18 @@ The grammar definition that describes the parsing rules. These are the node type
 The parse tree that contains every matched token and maintains the complete structure of the parsed input.
 
 **Interface:**
+
 ```typescript
 interface CstNode {
-  ptr: Pattern;         // Reference to grammar pattern
-  pos: number;          // Start position in input
-  end: number;          // End position in input  
+  ptr: Pattern; // Reference to grammar pattern
+  pos: number; // Start position in input
+  end: number; // End position in input
   children?: CstNode[]; // Child nodes
 }
 ```
 
 **Example CST:**
+
 ```typescript
 // For input: '{"foo": 123}'
 {
@@ -335,24 +379,26 @@ interface CstNode {
 }
 ```
 
-### 3. AST (Abstract Syntax Tree) 
+### 3. AST (Abstract Syntax Tree)
 
 A simplified tree structure derived from the CST, typically containing only semantically meaningful nodes.
 
 **Default AST Interface:**
+
 ```typescript
 interface CanonicalAstNode {
-  type: string;                                    // Node type
-  pos: number;                                     // Start position
-  end: number;                                     // End position
-  raw?: string;                                    // Raw matched text
-  children?: (CanonicalAstNode | unknown)[];      // Child nodes
+  type: string; // Node type
+  pos: number; // Start position
+  end: number; // End position
+  raw?: string; // Raw matched text
+  children?: (CanonicalAstNode | unknown)[]; // Child nodes
 }
 ```
 
 **Example AST:**
+
 ```typescript
-// For input: '{"foo": 123}' 
+// For input: '{"foo": 123}'
 {
   type: 'Object',
   pos: 0,
@@ -372,16 +418,18 @@ interface CanonicalAstNode {
 1. **Default Conversion**: Each CST node becomes an AST node with `type`, `pos`, `end`, and `children` properties.
 
 2. **AST Expressions**: Use `ast` property in grammar nodes to customize AST generation:
-   - `ast: null` - Skip this node in AST
-   - `ast: ['$', '/children/0']` - Use first child's AST
-   - `ast: {...}` - Custom JSON expression for transformation
+   - `ast: null` — Drop this node; the parent omits it from its children
+   - `ast: ['$', '/children/0']` — Use first child's AST (propagates drop if the child was dropped)
+   - `ast: [...]` — Any JSON Expression; its return value becomes the AST node (`null` is kept, not dropped)
+   - absent — Use the default factory (canonical `{type, pos, end, children}` node)
 
 3. **Children Mapping**: Use `children` property to map CST child indices to AST properties:
+
    ```typescript
    {
      children: {
        0: 'key',      // CST child 0 -> AST property 'key'
-       2: 'value'     // CST child 2 -> AST property 'value'  
+       2: 'value'     // CST child 2 -> AST property 'value'
      }
    }
    ```
@@ -393,13 +441,14 @@ interface CanonicalAstNode {
 If debug mode is enabled during compilation, the parser captures all grammar node tree paths that were attempted during parsing. This debug trace tree is useful for debugging parser behavior and improving parser performance by understanding which rules were tried and failed.
 
 **Interface:**
+
 ```typescript
 interface TraceNode {
-  type: string;         // Grammar rule name that was attempted
-  pos: number;          // Start position where rule was tried
-  end?: number;         // End position if rule succeeded  
+  type: string; // Grammar rule name that was attempted
+  pos: number; // Start position where rule was tried
+  end?: number; // End position if rule succeeded
   children?: TraceNode[]; // Nested rule attempts
-  success: boolean;     // Whether the rule matched successfully
+  success: boolean; // Whether the rule matched successfully
 }
 ```
 
@@ -418,11 +467,11 @@ const grammar = {
   start: 'Value',
   cst: {
     Value: {r: 'Number'},
-    Number: /\d+/
-  }
+    Number: /\d+/,
+  },
 };
 
-// Compile to parser function  
+// Compile to parser function
 const parser = CodegenGrammar.compile(grammar);
 ```
 
@@ -432,9 +481,9 @@ const parser = CodegenGrammar.compile(grammar);
 import {CodegenContext} from 'jit-parser';
 
 const ctx = new CodegenContext(
-  true,  // positions: Include pos/end in AST
-  true,  // astExpressions: Process AST transformations
-  false  // debug: Generate debug trace code
+  true, // positions: Include pos/end in AST
+  true, // astExpressions: Process AST transformations
+  false, // debug: Generate debug trace code
 );
 
 const parser = CodegenGrammar.compile(grammar, ctx);
@@ -452,6 +501,7 @@ console.log(grammarString);
 ```
 
 **Example output:**
+
 ```
 Value (reference)
 └─ Number (terminal): /\d+/
@@ -466,9 +516,9 @@ const jsonGrammar = {
     WOpt: {t: [' ', '\n', '\t', '\r'], repeat: '*', ast: null},
     Value: [{r: 'WOpt'}, {r: 'TValue'}, {r: 'WOpt'}],
     TValue: {
-      u: ['null', {r: 'Boolean'}, {r: 'Number'}, {r: 'String'}, {r: 'Object'}, {r: 'Array'}]
+      u: ['null', {r: 'Boolean'}, {r: 'Number'}, {r: 'String'}, {r: 'Object'}, {r: 'Array'}],
     },
-    Boolean: {t: ['true', 'false']},  
+    Boolean: {t: ['true', 'false']},
     Number: /\-?\d+(\.\d+)?([eE][\+\-]?\d+)?/,
     String: /"[^"\\]*(?:\\.[^"\\]*)*"/,
     Object: ['{', {r: 'Members'}, '}'],
@@ -476,23 +526,23 @@ const jsonGrammar = {
       u: [
         {
           p: [{r: 'Entry'}, {l: {p: [',', {r: 'Entry'}], ast: ['$', '/children/1']}}],
-          ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']]
+          ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
         },
-        {r: 'WOpt'}
-      ]
+        {r: 'WOpt'},
+      ],
     },
     Entry: {
       p: [{r: 'String'}, ':', {r: 'Value'}],
-      children: {0: 'key', 2: 'value'}
+      children: {0: 'key', 2: 'value'},
     },
-    Array: ['[', {r: 'Elements'}, ']']
+    Array: ['[', {r: 'Elements'}, ']'],
     // ... more rules
   },
   ast: {
-    Value: ['$', '/children/1'],      // Extract middle child (TValue)  
-    Boolean: ['==', ['$', '/raw'], 'true'],  // Convert to boolean
-    Number: ['num', ['$', '/raw']]    // Convert to number
-  }
+    Value: ['$', '/children/1'], // Extract middle child (TValue)
+    Boolean: ['==', ['$', '/raw'], 'true'], // Convert to boolean
+    Number: ['num', ['$', '/raw']], // Convert to number
+  },
 };
 
 const parser = CodegenGrammar.compile(jsonGrammar);
@@ -512,7 +562,7 @@ import {CodegenContext, ParseContext} from 'jit-parser';
 const debugCtx = new CodegenContext(true, true, true); // debug = true
 const parser = CodegenGrammar.compile(grammar, debugCtx);
 
-// Create trace collection  
+// Create trace collection
 const rootTrace = {pos: 0, children: []};
 const parseCtx = new ParseContext('input text', false, [rootTrace]);
 
@@ -527,19 +577,21 @@ console.log(printTraceNode(rootTrace, '', 'input text'));
 ### Debug Trace Output
 
 The debug trace shows:
+
 - Which grammar rules were attempted
 - At what positions in the input
 - Whether each attempt succeeded or failed
 - The hierarchical structure of rule attempts
 
 **Example trace output:**
+
 ```
 Root
 └─ Value 0:22 → ' {"foo": ["bar", 123]}'
    ├─ WOpt 0:1 → " "
    ├─ TValue 1:22 → '{"foo": ["bar", 123]}'
    │  ├─ Null
-   │  ├─ Boolean  
+   │  ├─ Boolean
    │  ├─ String
    │  └─ Object 1:22 → '{"foo": ["bar", 123]}'
    │     ├─ Text 1:2 → "{"
@@ -548,7 +600,7 @@ Root
    │     │     ├─ Entry 2:21 → '"foo": ["bar", 123]'
    │     │     │  ├─ String 2:7 → '"foo"'
    │     │     │  ├─ Text 7:8 → ":"
-   │     │     │  └─ Value 8:21 → ' ["bar", 123]' 
+   │     │     │  └─ Value 8:21 → ' ["bar", 123]'
    │     │     │     └─ ...
    │     │     └─ List 21:21 → ""
    │     └─ Text 21:22 → "}"
@@ -576,9 +628,9 @@ const exprGrammar = {
     Expression: {r: 'Number'},
     Number: {
       t: /\d+/,
-      type: 'Number'
-    }
-  }
+      type: 'Number',
+    },
+  },
 };
 
 const parser = CodegenGrammar.compile(exprGrammar);
@@ -605,23 +657,23 @@ console.log(ast);
 
 ```typescript
 const grammar = {
-  start: 'KeyValue', 
+  start: 'KeyValue',
   cst: {
     KeyValue: {
       p: [{r: 'Key'}, '=', {r: 'Value'}],
       children: {0: 'key', 2: 'value'},
-      type: 'Assignment'
+      type: 'Assignment',
     },
     Key: /[a-zA-Z]+/,
-    Value: /\d+/
+    Value: /\d+/,
   },
   ast: {
     KeyValue: {
       type: 'Assignment',
       key: ['$', '/children/0/raw'],
-      value: ['num', ['$', '/children/2/raw']]
-    }
-  }
+      value: ['num', ['$', '/children/2/raw']],
+    },
+  },
 };
 ```
 
@@ -636,13 +688,13 @@ const listGrammar = {
       u: [
         {
           p: [{r: 'Item'}, {l: {p: [',', {r: 'Item'}], ast: ['$', '/children/1']}}],
-          ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']]
+          ast: ['concat', ['push', [[]], ['$', '/children/0']], ['$', '/children/1']],
         },
-        ''  // Empty list
-      ]
+        '', // Empty list
+      ],
     },
-    Item: /\w+/
-  }
+    Item: /\w+/,
+  },
 };
 ```
 
@@ -651,24 +703,30 @@ const listGrammar = {
 ### Core Classes
 
 #### `CodegenGrammar`
+
 - `static compile(grammar: Grammar, ctx?: CodegenContext): Parser`
 - `compileRule(ruleName: string): Pattern`
 
-#### `ParseContext`  
+#### `ParseContext`
+
 - `constructor(str: string, ast: boolean, trace?: RootTraceNode[])`
 
 #### `CodegenContext`
+
 - `constructor(positions: boolean, astExpressions: boolean, debug: boolean)`
 
 #### `GrammarPrinter`
+
 - `static print(grammar: Grammar, tab?: string): string`
 
 ### Utility Functions
 
 #### `printCst(cst: CstNode, tab: string, src: string): string`
+
 Print a formatted CST tree
 
-#### `printTraceNode(trace: RootTraceNode | ParseTraceNode, tab: string, src: string): string`  
+#### `printTraceNode(trace: RootTraceNode | ParseTraceNode, tab: string, src: string): string`
+
 Print a formatted debug trace
 
 ### Type Definitions
