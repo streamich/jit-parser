@@ -241,12 +241,10 @@ export type Parser = (ctx: ParseContext, pos: number) => CstNode | undefined;
 /**
  * When parser is executed with "ast" flag on, it will generate an AST tree next
  * to its CST tree. The "ast" properties in grammar nodes can specify how the AST
- * tree should be generated. `undefined` means the default AST generation, `null`
- * means that no AST node will be generated
+ * tree should be generated.
  *
- * If not `null` or `undefined` the value will be treated as a JSON Expression,
- * which will be executed and its return value will be used as the AST node. The
- * expression will run with the {@link AstExpressionData} object as its context.
+ * The **drop sentinel** is `undefined`: a factory that returns `undefined` causes
+ * the parent to omit that child. A factory that returns `null` is kept.
  */
 export type AstNodeExpression = undefined | null | unknown | Expr;
 

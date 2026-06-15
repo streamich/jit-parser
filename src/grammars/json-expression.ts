@@ -42,32 +42,6 @@ import type {AstNodeExpression, Grammar} from '../types';
  * ```
  */
 
-// ---------------------------------------------------------------- AST helpers
-
-/**
- * The framework drops `null` AST results when it collects a node's children
- * (it treats `null` as "no AST node"). That is the wrong semantics for literal
- * JSON `null` *values*, which must be preserved. To work around it we "box"
- * each (possibly-`null`) value into a single-element array — a box is never
- * `null`, so it survives child collection — and later "unbox" by concatenating.
- *
- * `box(path)` reads the (possibly-`null`) value at `path` and wraps it: `[v]`.
- */
-const box = (path: string): AstNodeExpression => ['push', [[]], ['$', path, null]];
-
-/**
- * Flattens the boxes collected by a list node (`['$', '/children']` is the
- * list's array of box values) back into a single array, preserving `null`s.
- */
-const UNBOX_LIST: AstNodeExpression = [
-  'reduce',
-  ['$', '/children'],
-  [[]],
-  'acc',
-  'b',
-  ['concat', ['$', 'acc'], ['$', 'b']],
-];
-
 // JSON literal terminals (borrowed from the JSON grammar).
 const NUMBER = /\-?(0|([1-9][0-9]{0,25}))(\.[0-9]{1,25})?([eE][\+\-]?[0-9]{1,25})?/;
 const STRING = /"(?:[^"\\]|\\.)*"/;
@@ -117,8 +91,8 @@ export const grammar: Grammar = {
 
     // Zero or more whitespace-separated operands -> flat array of values.
     OperandList: {
-      l: {p: [{r: 'W'}, {r: 'Operand'}], ast: box('/children/0')},
-      ast: UNBOX_LIST,
+      l: {p: [{r: 'W'}, {r: 'Operand'}], ast: ['$', '/children/0', null]},
+      ast: ['$', '/children'],
     },
     Operand: {
       u: [{r: 'Expression'}, {r: 'ArrayOperand'}, {r: 'Value'}],
@@ -156,16 +130,12 @@ export const grammar: Grammar = {
       ast: ['$', '/children/0', [[]]],
     },
     NonEmptyArray: {
-      p: [{r: 'BoxedValue'}, {r: 'ArrayTail'}],
-      ast: ['concat', ['$', '/children/0', [[]]], ['$', '/children/1', [[]]]],
-    },
-    BoxedValue: {
-      u: [{r: 'Value'}],
-      ast: box('/children/0'),
+      p: [{r: 'Value'}, {r: 'ArrayTail'}],
+      ast: ['concat', ['push', [[]], ['$', '/children/0', null]], ['$', '/children/1', [[]]]],
     },
     ArrayTail: {
-      l: {p: [{r: 'WOpt'}, ',', {r: 'WOpt'}, {r: 'Value'}], ast: box('/children/0')},
-      ast: UNBOX_LIST,
+      l: {p: [{r: 'WOpt'}, ',', {r: 'WOpt'}, {r: 'Value'}], ast: ['$', '/children/0', null]},
+      ast: ['$', '/children'],
     },
 
     // {"k": v, ...} -> raw object (null values preserved)
@@ -185,11 +155,10 @@ export const grammar: Grammar = {
       l: {p: [{r: 'WOpt'}, ',', {r: 'WOpt'}, {r: 'Entry'}], ast: ['$', '/children/0', [[]]]},
       ast: ['$', '/children'],
     },
-    // "key": value -> [key, value] pair (built with `push` so a null value is
-    // not dropped from the pair).
+    // "key": value -> [key, value] pair
     Entry: {
       p: [{r: 'WOpt'}, {r: 'String'}, {r: 'WOpt'}, ':', {r: 'WOpt'}, {r: 'Value'}],
-      ast: ['push', ['push', [[]], ['$', '/children/0', null]], ['$', '/children/1', null]],
+      ast: ['$', '/children'],
     },
   },
 };

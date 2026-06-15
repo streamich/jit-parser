@@ -6,7 +6,7 @@ import {operatorsMap} from '@jsonjoy.com/json-expression/lib/operators';
 import {isListNode, isProductionNode, isTerminalNode, isUnionNode} from '../util';
 import type {AstNodeFactory, ResolvedGrammarNode} from '../types';
 
-const noAstFactory: AstNodeFactory = () => null;
+const noAstFactory: AstNodeFactory = () => undefined;
 
 const isSelectFirstChildExpression = (expr: unknown) => {
   return expr instanceof Array && expr.length === 2 && expr[0] === '$' && expr[1] === '/children/0';
@@ -53,18 +53,24 @@ export class CodegenAstFactory {
   public generate() {
     const {codegen, node, ptr, ctx} = this;
     if (isSelectFirstChildExpression(node.ast)) {
-      /**
-       * Select first non-null child and non-undefined child ['$', '/children/0'].
-       */
-      const rIndex = codegen.var(`0`);
-      codegen.while('1', () => {
-        const rChild = codegen.var(`cst.children[${rIndex}]`);
+      if (isUnionNode(node)) {
+        // Union has exactly one child; propagate its value, including undefined
+        // (so a dropped child propagates the drop upward).
+        const rChild = codegen.var(`cst.children[0]`);
         const rChildAst = codegen.var(`${rChild}.ptr.toAst(${rChild}, src)`);
-        codegen.if(`${rChildAst} != null`, () => {
-          codegen.return(rChildAst);
+        codegen.return(rChildAst);
+      } else {
+        // Production/list: return first non-undefined child ['$', '/children/0'].
+        const rIndex = codegen.var(`0`);
+        codegen.while('1', () => {
+          const rChild = codegen.var(`cst.children[${rIndex}]`);
+          const rChildAst = codegen.var(`${rChild}.ptr.toAst(${rChild}, src)`);
+          codegen.if(`${rChildAst} !== undefined`, () => {
+            codegen.return(rChildAst);
+          });
+          codegen.js(`${rIndex}++;`);
         });
-        codegen.js(`${rIndex}++;`);
-      });
+      }
       return;
     }
     const createChildrenArr = () => {
@@ -75,7 +81,7 @@ export class CodegenAstFactory {
       codegen.while(`${rIndex} < ${rLength}`, () => {
         const rChild = codegen.var(`${rChildren}[${rIndex}]`);
         const rChildAst = codegen.var(`${rChild}.ptr.toAst(${rChild}, src)`);
-        codegen.if(`${rChildAst} != null`, () => {
+        codegen.if(`${rChildAst} !== undefined`, () => {
           codegen.js(`${rChildrenAst}.push(${rChildAst});`);
         });
         codegen.js(`${rIndex}++;`);
@@ -96,7 +102,8 @@ export class CodegenAstFactory {
       childFragment = `, raw: src.slice(cst.pos, cst.end)`;
     } else if (isUnionNode(node)) {
       const rChild = codegen.var(`cst.children[0]`);
-      codegen.js(`${rChildrenAst} = [${rChild}.ptr.toAst(${rChild}, src)];`);
+      const rChildAst = codegen.var(`${rChild}.ptr.toAst(${rChild}, src)`);
+      codegen.js(`${rChildrenAst} = ${rChildAst} !== undefined ? [${rChildAst}] : [];`);
       if (!node.children && !node.leaf) {
         childFragment = `, children: ${rChildrenAst}`;
       }

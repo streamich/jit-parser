@@ -20,7 +20,7 @@ export const defaultAstFactory: AstNodeFactory = (cst: CstNode, src: string) => 
       for (let i = 0; i < length; i++) {
         const child = children[i];
         const childAst = child.ptr.toAst(child, src);
-        if (childAst != null) astChildren.push(childAst);
+        if (childAst !== undefined) astChildren.push(childAst);
       }
       ast.children = astChildren;
     }

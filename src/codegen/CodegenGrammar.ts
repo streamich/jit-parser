@@ -130,7 +130,7 @@ export class CodegenGrammar {
     const childParser = this.getNodeParser(inner);
     pattern ??= new Pattern(node.type ?? 'Predicate');
     pattern.parser = CodegenPredicate.compile(node, pattern, childParser, this.ctx);
-    pattern.toAst = () => null;
+    pattern.toAst = () => undefined;
     return pattern;
   }
 

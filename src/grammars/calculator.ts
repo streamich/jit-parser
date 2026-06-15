@@ -44,7 +44,7 @@ export const grammar: Grammar = {
         ],
         '',
       ],
-      ast: ['$', '/children/0', 0],
+      ast: ['$', '/children/0'],
     },
 
     MultiplicativeExpression: {
@@ -72,7 +72,7 @@ export const grammar: Grammar = {
         ],
         '',
       ],
-      ast: ['$', '/children/0', 0],
+      ast: ['$', '/children/0'],
     },
 
     Literal: {
